@@ -4,7 +4,7 @@
       <p class=" py-5 text-gray-500 w-1/2 m-auto text-center font-quicksand text-2xl font-semibold">Toma el control para registrar la entrada y Salida tanto de aprendices como de equipos de computo o vehiculos.</p>
       <div class="grid grid-cols-3 w-full">
         <!-- Tarjetas del dashboard -->
-        <BaseCard :-card-img="registerPerson"/>
+        <BaseCard -view-link="/general-entry" :-card-img="registerPerson"/>
         <BaseCard :-card-img="ExitDoor" card-text="Consulte acerca de los aprendices que han salido del CTA"/>
         <BaseCard :-card-img="RecordPaper" card-text="Registro historico sobre entradas y salidas en el CTA"/>
 

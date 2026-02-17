@@ -1,13 +1,16 @@
 <template>
   <!-- Tarjeta -->
+  <router-link :to="ViewLink">
   <div :class="[CardBg,'w-auto flex bg-senaColor border rounded-lg items-center gap-5 m-12 p-5 shadow-md cursor-pointer transition-transform ease-in hover:scale-105 duration-800']">
     <!-- Fondo de la imagen -->
+
     <div :class="[ImgBg,'p-2 border rounded-lg w-2/4']">
         <img :src="CardImg" alt="">
     </div>
     <!-- Texto de la tarjeta -->
     <p :class="[colorTextCard]" class="text-robotoSlab font-semibold text-lg">{{ cardText }}</p>
   </div>
+  </router-link>
 </template>
 
 <script setup lang="ts">
@@ -20,11 +23,13 @@ const props = withDefaults(defineProps<{
   cardText? : string,
   CardBg? : 'white' | 'green',
   CardImg? : string,
+  ViewLink? : string,
 }>(),
   {
     cardText : "Consulte acerca de los aprendices ingresados al CTA",
     CardBg : 'white',
-    CardImg : registerPerson
+    CardImg : registerPerson,
+    ViewLink : '/'
   }
 )
 
