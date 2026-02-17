@@ -1,6 +1,6 @@
 <template>
   <!-- Tarjeta -->
-  <div :class="[CardBg,'w-auto flex bg-senaColor border rounded-lg items-center gap-5 m-9 p-5 shadow-md cursor-pointer transition-transform ease-in hover:scale-105 duration-800']">
+  <div :class="[CardBg,'w-auto flex bg-senaColor border rounded-lg items-center gap-5 m-12 p-5 shadow-md cursor-pointer transition-transform ease-in hover:scale-105 duration-800']">
     <!-- Fondo de la imagen -->
     <div :class="[ImgBg,'p-2 border rounded-lg w-2/4']">
         <img :src="CardImg" alt="">
@@ -9,6 +9,7 @@
     <p :class="[colorTextCard]" class="text-robotoSlab font-semibold text-lg">{{ cardText }}</p>
   </div>
 </template>
+
 <script setup lang="ts">
 import { computed } from 'vue';
 
