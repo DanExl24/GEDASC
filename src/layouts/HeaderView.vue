@@ -1,7 +1,7 @@
 <template>
-  <header class="grid w-full grid-cols-[auto_1fr_auto] py-3 px-4 items-center bg-senaColor">
+  <header class="grid w-full grid-cols-[auto_1fr_auto] py-2 px-4 items-center bg-senaColor">
 
-    <img class="h-[80px] border rounded-lg" :src="senaLogo" alt="">
+    <img class="h-[50px] border rounded-lg" :src="senaLogo" alt="">
 
   <h1 class="font-robotoSlab text-white text-center text-xl font-semibold">
     {{ HeaderTitle }}
