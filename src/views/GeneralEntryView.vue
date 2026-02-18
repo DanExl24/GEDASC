@@ -2,14 +2,12 @@
   <HeaderView -header-title="INGRESO DE APRENDICES AL CENTRO DE FORMACION"/>
   <ExitButton to="/"/>
   <div class="mx-20 my-3">
-    <section class="flex items-center justify-between w-full border">
-      <div class="flex items-center gap-2">
+    <section class="flex items-center justify-between">
+      <div class="flex items-center gap-2 w-4/5">
         <SearchBar/>
         <SearchUser/>
       </div>
-      <div>
-        <BaseButton to="/" button-message="Registro Manual"/>
-      </div>
+      <BaseButton to="/" button-message="Registro Manual" button-class="w-full"/>
     </section>
   </div>
 </template>
