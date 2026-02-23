@@ -1,4 +1,5 @@
 <template>
+  <!-- Tabla de componente-->
   <table class="p-2">
     <slot>
 

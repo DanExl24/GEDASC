@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { query } from '../config/db'
 
+// controlador de testeo del servidor
 export const testDB = async (req: Request, res: Response) => {
   try {
     const result = await query('SELECT NOW()')

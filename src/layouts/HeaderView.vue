@@ -1,4 +1,5 @@
 <template>
+  <!--Encabezado  -->
   <header class="grid w-full grid-cols-[auto_1fr_auto] py-2 px-4 items-center bg-senaColor">
 
     <img class="h-[50px] border rounded-lg" :src="senaLogo" alt="">
@@ -10,8 +11,10 @@
   </header>
 </template>
 <script setup lang="ts">
+// dependencias
 import senaLogo from '@/assets/Logos/logo-del-sena-verde.jpg'
 
+// props del componente
 withDefaults(
   defineProps<{
     HeaderTitle?: string

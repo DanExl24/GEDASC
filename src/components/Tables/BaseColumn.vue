@@ -1,4 +1,5 @@
 <template>
+  <!--Columnas de la tabla -->
   <tr class="border-collapse text-center border border-black">
     <slot></slot>
   </tr>
