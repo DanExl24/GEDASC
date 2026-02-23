@@ -1,8 +1,8 @@
 <template>
   <router-link :to="to">
-    <button :class="buttonClass" class=" w-full flex items-center gap-2 bg-senaColor text-white py-1 px-4 rounded-lg hover:scale-105 transition-transform duration-800">
-      <img class="mt-2" :src="buttonImg" alt="">
+    <button :class="buttonClass" class=" w-full font-quicksand flex items-center gap-2 bg-senaColor text-white py-1 px-4 rounded-lg hover:scale-105 transition-transform duration-800">
       <p>{{ buttonMessage }}</p>
+      <img class="mt-2" :src="buttonImg" alt="">
     </button>
   </router-link>
 </template>

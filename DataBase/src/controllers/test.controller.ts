@@ -1,0 +1,15 @@
+import { Request, Response } from 'express'
+import { query } from '../config/db'
+
+export const testDB = async (req: Request, res: Response) => {
+  try {
+    const result = await query('SELECT NOW()')
+    res.json(result.rows)
+  } catch (error) {
+    console.error('DB ERROR:', error)
+    res.status(500).json({
+      ok: false,
+      message: 'Error interno del servidor'
+    })
+  }
+}
