@@ -1,0 +1,9 @@
+{
+    "formaciones" : [
+        {"id_formacion" : "1" , "nombre" : "ANALISIS Y DESARROLLO DE SOFTWARE" , "nivel" : "TECNOLOGO"}
+    ],
+    "aprendices" : [
+        {"id_aprendiz" : "1", "documento" : "1099742508" , "nombre" : "JORGE ALEJANDRO" , "apellido" : "PEÑA MOTTA", "id_formacion" : "1"},
+        {"id_aprendiz" : "2", "documento" : "1117811948" , "nombre" : "EMERSON" , "apellido" : "CORREDOR MURCIA", "id_formacion" : "1"}
+    ]
+}

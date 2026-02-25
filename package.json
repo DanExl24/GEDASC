@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ericblade/quagga2": "^1.12.1",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "pinia": "^3.0.4",
     "quagga2-vue3": "^1.0.1",

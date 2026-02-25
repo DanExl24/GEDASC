@@ -12,12 +12,14 @@ import  {ref, nextTick, watch}  from 'vue';
 import Quagga from '@ericblade/quagga2'; // ES6
 import BaseModal from '../Modals/BaseModal.vue';
 
+// interfaz del componente
+
 // variables del componente
 const scannerContainer = ref<HTMLDivElement | null>(null)
 const result = ref<HTMLDivElement | null>(null)
 const resultText = ref<string>('')
 const active = ref(false)
-
+const detectedCode = ref<string>('');
 
 // Mirar cambios en la variable active (aparecer o desaparecer el modal)
 watch(active, (value) =>{
@@ -25,7 +27,6 @@ watch(active, (value) =>{
     Quagga.stop()
   }
 })
-
 
 // Funcion que abre la lectura de codigo de barras
 const openScanner = async () => {
@@ -50,10 +51,10 @@ const openScanner = async () => {
     },
     locate : true, //encontrar codigo aunque no este alineado
     canvas: {
-      createOverlay: true //dibujar canvas encima del video
+      createOverlay: false //dibujar canvas encima del video
     },
     decoder: {
-      readers: ["code_128_reader"]
+      readers: ["code_128_reader"] // Tipo de lector de codigo
     },
     locator: {
         halfSample: false,
@@ -69,12 +70,43 @@ const openScanner = async () => {
     Quagga.start();
     // Limpiar eventos para no sobrecargar
     Quagga.offDetected()
-    Quagga.onDetected((result) => {
-      const code = result.codeResult.code
-      resultText.value = `Aprendiz Encontrado: ${code}`
+    Quagga.onDetected(async(result) => {
+      const code = result.codeResult.code ?? ''
+      detectedCode.value = code
+      await QueryDocument()
+      resultText.value = `Aprendiz Encontrado: ${detectedCode.value}`
+
     })
   })
 }
+
+// Funcion para consultar Documento de Aprendiz
+const QueryDocument = async () => {
+  console.log(detectedCode.value)
+  // Evitar mandar codigo vacio
+  if(!detectedCode.value) return;
+  // Realizar consulta
+  try{
+    const response = await fetch(`http://localhost:3000/api/aprendiz/${detectedCode.value}`)
+    const data = await response.json()
+    if(response.ok && data){
+      emit('aprendiz-detectado',detectedCode.value)
+    }
+    else{
+      console.log(data.error)
+    }
+    console.log(data)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+
+
+// Definir emits del componente
+const emit = defineEmits<{
+  (e: 'aprendiz-detectado', code : string): void
+}>()
 
 // props del componente
 withDefaults(defineProps<{
@@ -85,7 +117,7 @@ withDefaults(defineProps<{
 
 // Dejar expuesta la funcion para que el padre sepa de su existencia (DE LA FUNCION) y pueda manejarla a su gusto
 defineExpose({
-  openScanner
+  openScanner,
 })
 
 </script>

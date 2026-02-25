@@ -6,9 +6,6 @@
     },
     {
       "path": "./tsconfig.app.json"
-    },
-    {
-      "exclude": ["node_modules", "dist"]
     }
   ]
 }

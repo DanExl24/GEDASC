@@ -1,22 +1,22 @@
 import express from 'express'
-
-// importar rutas
+import cors from 'cors'
 import testRoutes from './routes/test.routes'
+import QueryId from './routes/QueryId.routes'
+import EntryRecord from './routes/entry.routes'
 
-// crear la app
 const app = express()
 const PORT = 3000
 app.use(express.json())
+app.use(cors());
 
-// Mensaje de activacion del servidor
 app.get('/', (req, res) => {
   res.send('Servidor activo')
 })
 
-// Crear rutas para navegar entre las diferentes rutas hechas para los controladores
 app.use('/api', testRoutes)
+app.use('/api/aprendiz',QueryId)
+app.use('/api/registroIngresos',EntryRecord)
 
-// Crear ruta del servidor para comprobar su activacion
 app.listen(PORT, () => {
   console.log(` Servidor corriendo en http://localhost:${PORT}`)
 })

@@ -10,7 +10,7 @@
       <BaseButtonOpen @click="open" :image="codebar" text="Escanear Aprendiz"/>
     </div>
     <!-- Escaneo de codigo de barras -->
-      <BarcodeScanner ref="scannerModal"/>
+      <BarcodeScanner ref="scannerModal" @aprendiz-detectado="detectAprendiz"/>
       <!-- Div para insertar el apartado de aprendices-->
     <div class="mx-20 my-3">
       <section class="flex items-center justify-between mb-10">
@@ -35,13 +35,21 @@
           <BaseTableHead name="Registro de Maquina"/>
         </BaseColumn>
         <!--Registros -->
+        <BaseColumn v-for="aprendiz in aprendizData" :key="aprendiz.id_aprendiz">
+          <td>{{ aprendiz.nombre }}</td>
+          <td>{{ aprendiz.apellido }}</td>
+          <td>{{ aprendiz.documento }}</td>
+          <td>{{ aprendiz.formacion }}</td>
+          <td>{{ aprendiz.hora_ingreso }}</td>
+          <td>''</td>
+        </BaseColumn>
       </BaseTable>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 // dependencias
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import ExitButton from '@/components/UI/ExitButton.vue';
 import SearchBar from '@/components/UI/SearchBar.vue';
@@ -57,10 +65,74 @@ import BarcodeScanner from '@/components/Library/BarcodeScanner.vue';
 // variables del componente
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
 
+const aprendizData = ref<Aprendiz[]>([]) // inicialmente vacío
+
+// Interfaz aprendiz
+export interface Aprendiz {
+  id_aprendiz: number,
+  nombre: string,
+  apellido: string,
+  documento: string,
+  formacion: string,
+  hora_ingreso: string
+}
+
+
+// funcion que trae el documento del aprendiz hacia el padre
+const detectAprendiz = (code: string) => {
+  if(!code) {
+    console.error("Código vacío recibido");
+    return;
+  }
+  addEntry(code);
+}
+
+// funcion para ingresar aprendices
+const addEntry = async (code : string) => {
+  if(!code) return //si el codigo llega vacio
+
+  try{
+    const response = await fetch(`http://localhost:3000/api/registroIngresos/addEntry/${code}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+
+    if(!response.ok){
+      const error = await response.json()
+      console.error("Error backend:", error)
+      return
+    }
+
+    const data = await response.json();
+    console.log("Ingreso registrado:", data);
+    detectEntrys();  // refrescar tabla
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+
+const detectEntrys = async () => {
+  try{
+    const response = await fetch(`http://localhost:3000/api/registroIngresos/historial`)
+    const data = await response.json()
+    console.log(data)
+    aprendizData.value = data
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+// Ejecutar al montar el componente
+onMounted(() => {
+  detectEntrys(); // esto trae el historial apenas se abre la vista
+});
+
 // emision del evento para abrir el escaner
 const open = () => {
   scannerModal.value?.openScanner()
 }
+
 
 
 </script>

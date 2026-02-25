@@ -10,5 +10,7 @@
 </script>
 
 <style>
-
+tr td{
+  border: solid black 1px;
+}
 </style>
