@@ -12,6 +12,7 @@ import  {ref, nextTick, watch}  from 'vue';
 import Quagga from '@ericblade/quagga2'; // ES6
 import BaseModal from '../Modals/BaseModal.vue';
 import { QueryDocument } from '@/Services/QueryDocument';
+import { DetectEntry } from '@/Services/DetectEntrys';
 // interfaz del componente
 
 // variables del componente
@@ -28,10 +29,18 @@ watch(active, (value) =>{
   }
 })
 
+const closeScanner = () =>{
+  setTimeout(() => {
+    active.value = false
+    Quagga.stop()
+  }, 1000);
+}
+
+
 // Funcion que abre la lectura de codigo de barras
 const openScanner = async () => {
   active.value = true
-  resultText.value = ''
+  resultText.value = 'Esperando aprendiz...'
   // Esperar que cargue el DOM
   await nextTick()
   // Libreria Quagga para lector de codigo de barras,  .init para crear el componente que leera el codigo
@@ -71,16 +80,23 @@ const openScanner = async () => {
     // Limpiar eventos para no sobrecargar
     Quagga.offDetected()
     Quagga.onDetected(async(result) => {
-      const code = result.codeResult.code ?? ''
+      const code = result.codeResult.code ?? '' // Codigo del scanner
       detectedCode.value = code
-      if(!code) return
-      const validacion = await QueryDocument(code)
+      if(!code) return // Verificar que no llegue vacio
+
+
+      const validacion = await QueryDocument(code) // Verificar si existe el aprendiz
       if(validacion){
-      emit('aprendiz-detectado',detectedCode.value)
-      resultText.value = `Aprendiz Encontrado: ${detectedCode.value}`
+        emit('aprendiz-detectado',detectedCode.value)
+        resultText.value = `Aprendiz Encontrado: ${detectedCode.value}`
       }
       else{
-        resultText.value = `Aprendiz No encontrado: ${detectedCode.value}`
+        resultText.value = `Aprendiz No encontrado: ${detectedCode.value}` // Si no hay, decir que no existe aprendiz
+      }
+      const yaIngresado = await DetectEntry(code) // Verificar si ya tiene ingreso
+      if(yaIngresado){
+        resultText.value = `El aprendiz ya esta registrado...`
+        return
       }
     })
   })
@@ -103,6 +119,7 @@ withDefaults(defineProps<{
 // Dejar expuesta la funcion para que el padre sepa de su existencia (DE LA FUNCION) y pueda manejarla a su gusto
 defineExpose({
   openScanner,
+  closeScanner
 })
 
 </script>

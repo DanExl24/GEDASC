@@ -61,6 +61,8 @@ import BaseTableHead from '@/components/Tables/BaseTableHead.vue';
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue';
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import BarcodeScanner from '@/components/Library/BarcodeScanner.vue';
+import { DetectEntry } from '@/Services/DetectEntrys';
+
 
 // variables del componente
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
@@ -79,12 +81,22 @@ export interface Aprendiz {
 
 
 // funcion que trae el documento del aprendiz hacia el padre
-const detectAprendiz = (code: string) => {
+const detectAprendiz = async (code: string) => {
   if(!code) {
     console.error("Código vacío recibido");
     return;
   }
-  addEntry(code);
+
+  const NoIngresado = await DetectEntry(code)
+  if(NoIngresado){
+  addEntry(code)
+  scannerModal.value?.closeScanner()
+    return
+  }
+  else{
+    console.log("El aprendiz ya tiene un ingreso")
+    return
+  }
 }
 
 // funcion para ingresar aprendices
@@ -96,23 +108,25 @@ const addEntry = async (code : string) => {
       method: 'POST',
       headers: {'Content-Type': 'application/json'}
     });
+    const data = await response.json()
 
     if(!response.ok){
-      const error = await response.json()
-      console.error("Error backend:", error)
-      return
+      if (response.status === 409) {
+          // Mostrar mensaje del backend
+          console.log("Info:", data.message)
+          return
+      }
     }
 
-    const data = await response.json();
     console.log("Ingreso registrado:", data);
-    detectEntrys();  // refrescar tabla
+    HistorialIngresos();  // refrescar tabla
   } catch (error) {
     console.error(error);
   }
 }
 
 
-const detectEntrys = async () => {
+const HistorialIngresos = async () => {
   try{
     const response = await fetch(`http://localhost:3000/api/registroIngresos/historial`)
     const data = await response.json()
@@ -125,14 +139,13 @@ const detectEntrys = async () => {
 
 // Ejecutar al montar el componente
 onMounted(() => {
-  detectEntrys(); // esto trae el historial apenas se abre la vista
+  HistorialIngresos(); // esto trae el historial apenas se abre la vista
 });
 
 // emision del evento para abrir el escaner
 const open = () => {
   scannerModal.value?.openScanner()
 }
-
 
 
 </script>

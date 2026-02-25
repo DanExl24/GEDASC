@@ -9,4 +9,5 @@ const router = Router()
 router.post('/addEntry/:documento', AddEntry)
 router.get('/historial', EntryRecord)
 router.get('/verificarEntrada/:documento',DetectEntry)
+
 export default router

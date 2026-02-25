@@ -60,19 +60,19 @@ export const AddEntry = async (req: Request, res: Response) => {
 // Funcion para verificar la salida de un aprendiz
 export const DetectEntry = async (request : Request, response : Response) =>{
   try{
-    const documento = request.params
+    const {documento} = request.params
     // Verificar si ya tiene ingreso
-    const salidaVerificada = await pool.query(
+    const IngresoVerificado = await pool.query(
       'SELECT * FROM detalles_ingreso WHERE id_aprendiz = $1',
       [documento]
     );
 
     // si se encuentra un registro, no permitir un nuevo registro
-    if (salidaVerificada.rowCount! > 0) {
-      return response.status(409).json({ message: "El aprendiz ya tiene un registro", ingreso : false });
+    if (IngresoVerificado.rowCount! > 0) {
+      return response.status(200).json({ message: "El aprendiz ya tiene un registro", yaIngresado : true }); //Si el aprendiz ya esta ingresado, se retorna el registro como verdadero
     }
     else{
-      return response.status(200).json({ message: "El aprendiz no tiene un registro", ingreso : true });
+      return response.status(200).json({ message: "El aprendiz no tiene un registro", yaIngresado : false }); //Si el aprendiz ya esta ingresado, se retorna el registro como falso
     }
 
   } catch (error) {
