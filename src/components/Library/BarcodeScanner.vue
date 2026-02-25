@@ -2,7 +2,7 @@
   <!-- Componente tipo modal que contendra el escaner -->
     <BaseModal @close="active = false" class="text-center" v-if="active" title="ESCANEAR APRENDICES" text="Empieza a escanear">
       <div class="overflow-hidden h-[400px] relative rounded-lg" ref="scannerContainer"></div>
-      <p class="my-10 absolute bottom-0 w-full font-quicksand text-lg text-senaColor " ref="result">{{ resultText }}</p>
+      <p class="my-10 absolute bottom-0 w-full font-quicksand font-semibold text-lg text-senaColor " ref="result">{{ resultText }}</p>
     </BaseModal>
 </template>
 
@@ -11,7 +11,7 @@
 import  {ref, nextTick, watch}  from 'vue';
 import Quagga from '@ericblade/quagga2'; // ES6
 import BaseModal from '../Modals/BaseModal.vue';
-
+import { QueryDocument } from '@/Services/QueryDocument';
 // interfaz del componente
 
 // variables del componente
@@ -73,32 +73,17 @@ const openScanner = async () => {
     Quagga.onDetected(async(result) => {
       const code = result.codeResult.code ?? ''
       detectedCode.value = code
-      await QueryDocument()
+      if(!code) return
+      const validacion = await QueryDocument(code)
+      if(validacion){
+      emit('aprendiz-detectado',detectedCode.value)
       resultText.value = `Aprendiz Encontrado: ${detectedCode.value}`
-
+      }
+      else{
+        resultText.value = `Aprendiz No encontrado: ${detectedCode.value}`
+      }
     })
   })
-}
-
-// Funcion para consultar Documento de Aprendiz
-const QueryDocument = async () => {
-  console.log(detectedCode.value)
-  // Evitar mandar codigo vacio
-  if(!detectedCode.value) return;
-  // Realizar consulta
-  try{
-    const response = await fetch(`http://localhost:3000/api/aprendiz/${detectedCode.value}`)
-    const data = await response.json()
-    if(response.ok && data){
-      emit('aprendiz-detectado',detectedCode.value)
-    }
-    else{
-      console.log(data.error)
-    }
-    console.log(data)
-  } catch (error) {
-    console.error(error)
-  }
 }
 
 

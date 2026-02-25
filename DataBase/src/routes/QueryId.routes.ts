@@ -5,6 +5,6 @@ import { getId } from '../controllers/QueryId.controller'
 const router = Router()
 
 // crear una ruta para ver la respuesta de la Query
-router.get('/:id', getId)
+router.get('/:documento', getId)
 
 export default router

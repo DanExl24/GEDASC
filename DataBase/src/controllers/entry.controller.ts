@@ -2,6 +2,7 @@
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
 
+// Funcion para el ingreso de aprendiz
 export const AddEntry = async (req: Request, res: Response) => {
   console.log("Documento recibido:", req.params.documento);
   try {
@@ -51,6 +52,40 @@ export const AddEntry = async (req: Request, res: Response) => {
   }
 };
 
+
+
+
+
+
+// Funcion para verificar la salida de un aprendiz
+export const DetectEntry = async (request : Request, response : Response) =>{
+  try{
+    const documento = request.params
+    // Verificar si ya tiene ingreso
+    const salidaVerificada = await pool.query(
+      'SELECT * FROM detalles_ingreso WHERE id_aprendiz = $1',
+      [documento]
+    );
+
+    // si se encuentra un registro, no permitir un nuevo registro
+    if (salidaVerificada.rowCount! > 0) {
+      return response.status(409).json({ message: "El aprendiz ya tiene un registro", ingreso : false });
+    }
+    else{
+      return response.status(200).json({ message: "El aprendiz no tiene un registro", ingreso : true });
+    }
+
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({message:"Hay un error", error: error});
+  }
+}
+
+
+
+
+
+// Funcion para el historial de ingresos
 export const EntryRecord = async (request: Request, response: Response) => {
   try{
     // consulta de todos los aprendices

@@ -7,7 +7,7 @@ export const getId = async (request : Request , response : Response) => {
   try{
     // traer documento
     const { documento } = request.params
-
+    console.log(request.params)
     if(!documento) return response.status(400).json({message:"Datos invalidos"})
 
     // traer id del aprendiz mediante su documento
