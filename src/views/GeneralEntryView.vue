@@ -9,8 +9,10 @@
       <!-- Boton para abrir el modal -->
       <BaseButtonOpen @click="open" :image="codebar" text="Escanear Aprendiz"/>
     </div>
+
     <!-- Escaneo de codigo de barras -->
       <BarcodeScanner ref="scannerModal" @aprendiz-detectado="detectAprendiz"/>
+
       <!-- Div para insertar el apartado de aprendices-->
     <div class="mx-20 my-3">
       <section class="flex items-center justify-between mb-10">
@@ -20,8 +22,20 @@
           <!-- Boton para encontrar resultados -->
           <SearchUser/>
         </div>
+
         <!--Boton de registro manual  -->
-        <BaseButton to="/" button-message="Registro Manual" button-class="w-full"/>
+        <BaseButtonOpen @click="openManual" :image="add" text="Ingreso Manual"/>
+        <!--Modal de registro Manual  -->
+        <BaseModal ref="modalManual" title="Registro Manual">
+          <BaseForm method="POST" :submit="submit">
+            <BaseField :input-event="EventoManual" v-model="formManual.documento" label="Documento de Identidad" place-holder="Documento de Identidad" type="text"/>
+            <BaseField v-model="formManual.nombre" label="Nombre del aprendiz" place-holder="Esperando Documento..." type="text" readonly/>
+            <BaseField v-model="formManual.apellido" label="Apellido del aprendiz" place-holder="Esperando Documento..." type="text" readonly/>
+            <BaseField v-model="formManual.formacion" label="Nombre de la Formacion" place-holder="Esperando Documento..." type="text" readonly/>
+            <BaseButton text="Añadir Ingreso" type="submit"/>
+          </BaseForm>
+        </BaseModal>
+
       </section>
       <!-- tabla de aprendices-->
       <BaseTable>
@@ -49,12 +63,11 @@
 </template>
 <script setup lang="ts">
 // dependencias
-import { ref,onMounted } from 'vue';
+import { ref,onMounted,reactive } from 'vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import ExitButton from '@/components/UI/ExitButton.vue';
 import SearchBar from '@/components/UI/SearchBar.vue';
 import SearchUser from '@/components/UI/SearchUser.vue';
-import BaseButton from '@/components/Buttons/BaseButton.vue';
 import BaseTable from '@/components/Tables/BaseTable.vue';
 import BaseColumn from '@/components/Tables/BaseColumn.vue';
 import BaseTableHead from '@/components/Tables/BaseTableHead.vue';
@@ -62,12 +75,18 @@ import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue';
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import BarcodeScanner from '@/components/Library/BarcodeScanner.vue';
 import { DetectEntry } from '@/Services/DetectEntrys';
-
-
+import BaseModal from '@/components/Modals/BaseModal.vue';
+import add from '@/assets/Icons/add.png'
+import BaseForm from '@/components/Forms/BaseForm.vue';
+import BaseField from '@/components/Forms/BaseField.vue';
+import BaseButton from '@/components/Buttons/BaseButton.vue';
+const API = import.meta.env.VITE_API_URL
 // variables del componente
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
+const modalManual = ref()
 
 const aprendizData = ref<Aprendiz[]>([]) // inicialmente vacío
+
 
 // Interfaz aprendiz
 export interface Aprendiz {
@@ -104,7 +123,7 @@ const addEntry = async (code : string) => {
   if(!code) return //si el codigo llega vacio
 
   try{
-    const response = await fetch(`http://localhost:3000/api/registroIngresos/addEntry/${code}`, {
+    const response = await fetch(`${API}/api/registroIngresos/addEntry/${code}`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'}
     });
@@ -128,7 +147,7 @@ const addEntry = async (code : string) => {
 
 const HistorialIngresos = async () => {
   try{
-    const response = await fetch(`http://localhost:3000/api/registroIngresos/historial`)
+    const response = await fetch(`${API}/api/registroIngresos/historial`)
     const data = await response.json()
     console.log(data)
     aprendizData.value = data
@@ -145,6 +164,60 @@ onMounted(() => {
 // emision del evento para abrir el escaner
 const open = () => {
   scannerModal.value?.openScanner()
+}
+
+// emision del evento para abrir el modal manual
+const openManual = ()=>{
+  modalManual.value.openModal()
+    formManual.documento = ''
+    formManual.nombre = ''
+    formManual.apellido = ''
+    formManual.formacion = ''
+}
+
+// Campos del formulario
+const formManual = reactive({
+  documento: '',
+  nombre: '',
+  apellido: '',
+  formacion: ''
+})
+
+
+const EventoManual = async (DocumentoManual : string) =>{
+  if(!DocumentoManual) return
+  if(DocumentoManual.length!=10){
+    console.log("el dni debe tener 10 digitos")
+    formManual.nombre = ''
+    formManual.apellido = ''
+    formManual.formacion = ''
+    return
+  }
+  console.log("documento recibido",DocumentoManual)
+  try{
+    const response = await fetch(`${API}/api/registroIngresos/ingresoManual/${DocumentoManual}`)
+
+    const data = await response.json()
+
+    if(!response.ok){
+      console.log(data.message)
+      return
+    }
+    console.log(data)
+    formManual.nombre = data.result.nombre
+    console.log(data.result.nombre)
+    formManual.apellido = data.result.apellido
+    formManual.formacion = data.result.formacion
+
+    console.log(formManual)
+    // Rellenar campos
+  } catch(error) {
+    console.error(error)
+  }
+}
+
+// Crear registro manual
+const submit = async () =>{
 }
 
 

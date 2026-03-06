@@ -1,27 +1,31 @@
 <template>
-  <!-- Componente tipo ruta -->
-  <router-link :to="to">
-    <button :class="buttonClass" class=" w-full font-quicksand flex items-center gap-2 bg-senaColor text-white py-1 px-4 rounded-lg hover:scale-105 transition-transform duration-800">
-      <p>{{ buttonMessage }}</p>
+  <!-- Componente tipo boton -->
+    <button :type="type" :class="[buttonClass,ifImage]" class=" w-full font-quicksand flex items-center gap-2 bg-senaColor text-white py-3 mt-5 text-center px-4 rounded-lg hover:scale-105 transition-transform duration-800">
+      <p>{{ text }}</p>
       <img class="mt-2" :src="buttonImg" alt="">
     </button>
-  </router-link>
 </template>
 
 <script setup lang="ts">
-// dependencias
-import add from '@/assets/Icons/add.png'
+import { computed } from 'vue';
 
 // props del componente
-withDefaults(defineProps<{
-  to:string,
+const props = withDefaults(defineProps<{
+  type? : 'button' | 'reset' | 'submit',
   buttonImg?:string,
-  buttonMessage:string,
+  text:string,
   buttonClass?:string,
 }>(),{
-  buttonImg:add,
-  buttonMessage:'Mensaje...'
+  type : 'button',
+  text:'Mensaje...',
+  buttonImg : 'undefined'
 })
+
+const ifImage = computed(()=>{
+  if(props.buttonImg=='undefined') return 'justify-center'
+  else return ''
+})
+
 </script>
 
 <style>

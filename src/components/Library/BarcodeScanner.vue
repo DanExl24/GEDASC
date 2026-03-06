@@ -1,6 +1,6 @@
 <template>
   <!-- Componente tipo modal que contendra el escaner -->
-    <BaseModal @close="active = false" class="text-center" v-if="active" title="ESCANEAR APRENDICES" text="Empieza a escanear">
+    <BaseModal @close="closeScanner" ref="modal" class="text-center" title="ESCANEAR APRENDICES" text="Empieza a escanear">
       <div class="overflow-hidden h-[400px] relative rounded-lg" ref="scannerContainer"></div>
       <p class="my-10 absolute bottom-0 w-full font-quicksand font-semibold text-lg text-senaColor " ref="result">{{ resultText }}</p>
     </BaseModal>
@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 // dependencias
-import  {ref, nextTick, watch}  from 'vue';
+import  {ref, nextTick}  from 'vue';
 import Quagga from '@ericblade/quagga2'; // ES6
 import BaseModal from '../Modals/BaseModal.vue';
 import { QueryDocument } from '@/Services/QueryDocument';
@@ -19,19 +19,15 @@ import { DetectEntry } from '@/Services/DetectEntrys';
 const scannerContainer = ref<HTMLDivElement | null>(null)
 const result = ref<HTMLDivElement | null>(null)
 const resultText = ref<string>('')
-const active = ref(false)
+const modal = ref()
 const detectedCode = ref<string>('');
 
-// Mirar cambios en la variable active (aparecer o desaparecer el modal)
-watch(active, (value) =>{
-  if(!value){
-    Quagga.stop()
-  }
-})
+
 
 const closeScanner = () =>{
   setTimeout(() => {
-    active.value = false
+    modal.value.closeModal()
+    Quagga.offDetected()
     Quagga.stop()
   }, 1000);
 }
@@ -39,7 +35,7 @@ const closeScanner = () =>{
 
 // Funcion que abre la lectura de codigo de barras
 const openScanner = async () => {
-  active.value = true
+  modal.value.openModal()
   resultText.value = 'Esperando aprendiz...'
   // Esperar que cargue el DOM
   await nextTick()

@@ -1,11 +1,12 @@
 // Servicio para detectar entradas
+const API = import.meta.env.VITE_API_URL
 
 export const DetectEntry = async (documento : string) =>{
   // Evitar mandar codigo vacio
   if(!documento) return;
   // Realizar consulta
   try{
-    const response = await fetch(`http://localhost:3000/api/registroIngresos/verificarEntrada/${documento}`)
+    const response = await fetch(`${API}/api/registroIngresos/verificarEntrada/${documento}`)
     const data = await response.json()
     if(response.ok){ // Si data.yaIngresado da false, es porque no tiene un registro
       if(!data.yaIngresado){

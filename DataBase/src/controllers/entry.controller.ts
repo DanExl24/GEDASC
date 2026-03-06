@@ -57,7 +57,7 @@ export const AddEntry = async (req: Request, res: Response) => {
 
 
 
-// Funcion para verificar la salida de un aprendiz
+// Funcion para verificar el ingreso de un aprendiz
 export const DetectEntry = async (request : Request, response : Response) =>{
   try{
     const {documento} = request.params
@@ -72,7 +72,7 @@ export const DetectEntry = async (request : Request, response : Response) =>{
       return response.status(200).json({ message: "El aprendiz ya tiene un registro", yaIngresado : true }); //Si el aprendiz ya esta ingresado, se retorna el registro como verdadero
     }
     else{
-      return response.status(200).json({ message: "El aprendiz no tiene un registro", yaIngresado : false }); //Si el aprendiz ya esta ingresado, se retorna el registro como falso
+      return response.status(200).json({ message: "El aprendiz no tiene un registro", yaIngresado : false }); //Si el aprendiz no esta ingresado, se retorna el registro como falso
     }
 
   } catch (error) {
@@ -101,4 +101,23 @@ export const EntryRecord = async (request: Request, response: Response) => {
     console.error(error);
     response.status(500).json({message:"Hay un error", error: error});
   }
+}
+
+
+// Funcion para traer los datos del aprendiz
+export const EntryManual = async (request: Request, response : Response) =>{
+  const {documento} = request.params
+
+    // Obtener el aprendiz por documento
+    const aprendizRecord = await pool.query(
+      'SELECT a.nombre,a.apellido,f.nombre AS formacion FROM aprendiz AS a  JOIN formaciones AS f ON f.id_formacion = a.id_formacion WHERE documento = $1',[documento]);
+
+    // verificar si el aprendiz si esta en la base de datos
+    if (aprendizRecord.rowCount == 0) {
+      return response.status(404).json({ message: "Aprendiz no encontrado" });
+    }
+
+    const result = aprendizRecord.rows[0]
+
+    response.status(200).json({result})
 }
