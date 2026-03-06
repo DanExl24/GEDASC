@@ -32,6 +32,7 @@
             <BaseField v-model="formManual.nombre" label="Nombre del aprendiz" place-holder="Esperando Documento..." type="text" readonly/>
             <BaseField v-model="formManual.apellido" label="Apellido del aprendiz" place-holder="Esperando Documento..." type="text" readonly/>
             <BaseField v-model="formManual.formacion" label="Nombre de la Formacion" place-holder="Esperando Documento..." type="text" readonly/>
+            <!--Texto de alerta  -->
             <BaseText :text="alerta.message" :type="alerta.type"/>
             <BaseButton text="Añadir Ingreso" type="submit"/>
           </BaseForm>
@@ -82,6 +83,7 @@ import BaseForm from '@/components/Forms/BaseForm.vue';
 import BaseField from '@/components/Forms/BaseField.vue';
 import BaseButton from '@/components/Buttons/BaseButton.vue';
 import BaseText from '@/components/Text/BaseText.vue';
+// Entorno
 const API = import.meta.env.VITE_API_URL
 // variables del componente
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
@@ -109,26 +111,33 @@ export interface Aprendiz {
 
 // funcion que trae el documento del aprendiz hacia el padre
 const detectAprendiz = async (code: string): Promise<boolean> => {
+  // si llega codigo incorrecto
   if(!code) {
     console.error("Código vacío recibido");
     return false;
   }
 
+  // esperar respuesta de registro
   const NoIngresado = await DetectEntry(code)
 
+  // si esta registrado, no deja avanzar
   if(!NoIngresado){
   console.log("El aprendiz ya tiene un ingreso")
     return false
   }
 
+  // esperar respuesta del ingreso de entrada
   const registrado = await addEntry(code)
 
+  // si hay un inconveniente, retornar falso
   if (!registrado) {
     return false
   }
 
+  // cerrar modal
   scannerModal.value?.closeScanner()
 
+  // retornar verdadero
   return true
 }
 
@@ -162,6 +171,7 @@ const addEntry = async (code : string) => {
 
 const HistorialIngresos = async () => {
   try{
+    // historial de ingresos
     const response = await fetch(`${API}/api/registroIngresos/historial`)
     const data = await response.json()
     console.log(data)
@@ -184,6 +194,7 @@ const open = () => {
 // emision del evento para abrir el modal manual
 const openManual = ()=>{
   modalManual.value.openModal()
+  // vaciar todos los campos
     alerta.value.message = ''
     formManual.documento = ''
     formManual.nombre = ''
@@ -201,14 +212,14 @@ const formManual = reactive({
 
 
 const EventoManual = async (DocumentoManual : string) =>{
-  if(!DocumentoManual) return
+  if(!DocumentoManual) return // si el documento esta mal
   if(DocumentoManual.length!=10){
     console.log("el dni debe tener 10 digitos")
     alerta.value.message = ''
     formManual.nombre = ''
     formManual.apellido = ''
     formManual.formacion = ''
-    return
+    return // si el documento no tiene 10 digitos
   }
   console.log("documento recibido",DocumentoManual)
   try{
@@ -221,6 +232,7 @@ const EventoManual = async (DocumentoManual : string) =>{
       return
     }
     console.log(data)
+    // Obtener datos del aprendiz
     formManual.nombre = data.result.nombre
     console.log(data.result.nombre)
     formManual.apellido = data.result.apellido
@@ -233,20 +245,42 @@ const EventoManual = async (DocumentoManual : string) =>{
   }
 }
 
-// Crear registro manual
-const submit = async () =>{
-  if(await detectAprendiz(formManual.documento)){
-    alerta.value.message = 'Registro aceptado'
-    alerta.value.type = 'success'
+const submit = async () => {
+  // validar campo vacío
+  if (!formManual.documento) {
+    alerta.value.message = 'Ingrese un documento de identidad';
+    alerta.value.type = 'error';
+    return; // detener ejecución
+  }
+
+  // validar longitud
+  if (formManual.documento.length !== 10) {
+    alerta.value.message = 'El DNI debe tener 10 dígitos';
+    alerta.value.type = 'error';
+    return; // detener ejecución
+  }
+
+  // Opcional: validar que solo sean números
+  if (!/^\d{10}$/.test(formManual.documento)) {
+    alerta.value.message = 'El DNI debe contener solo números';
+    alerta.value.type = 'error';
+    return;
+  }
+
+  // Ahora sí llamamos a la función de registro
+  const registrado = await detectAprendiz(formManual.documento);
+
+  if (registrado) {
+    alerta.value.message = 'Registro aceptado';
+    alerta.value.type = 'success';
     setTimeout(() => {
-      modalManual.value.closeModal()
+      modalManual.value.closeModal();
     }, 1000);
+  } else {
+    alerta.value.message = 'El aprendiz ya tiene un registro';
+    alerta.value.type = 'error';
   }
-  else{
-    alerta.value.message = 'El aprendiz ya tiene un registro'
-    alerta.value.type = 'error'
-  }
-}
+};
 
 
 </script>

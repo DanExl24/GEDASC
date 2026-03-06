@@ -121,3 +121,5 @@ export const EntryManual = async (request: Request, response : Response) =>{
 
     response.status(200).json({result})
 }
+
+
