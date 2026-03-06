@@ -32,6 +32,7 @@
             <BaseField v-model="formManual.nombre" label="Nombre del aprendiz" place-holder="Esperando Documento..." type="text" readonly/>
             <BaseField v-model="formManual.apellido" label="Apellido del aprendiz" place-holder="Esperando Documento..." type="text" readonly/>
             <BaseField v-model="formManual.formacion" label="Nombre de la Formacion" place-holder="Esperando Documento..." type="text" readonly/>
+            <BaseText :text="alerta.message" :type="alerta.type"/>
             <BaseButton text="Añadir Ingreso" type="submit"/>
           </BaseForm>
         </BaseModal>
@@ -80,12 +81,19 @@ import add from '@/assets/Icons/add.png'
 import BaseForm from '@/components/Forms/BaseForm.vue';
 import BaseField from '@/components/Forms/BaseField.vue';
 import BaseButton from '@/components/Buttons/BaseButton.vue';
+import BaseText from '@/components/Text/BaseText.vue';
 const API = import.meta.env.VITE_API_URL
 // variables del componente
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
 const modalManual = ref()
 
 const aprendizData = ref<Aprendiz[]>([]) // inicialmente vacío
+
+// alerta del texto
+const alerta = ref({
+  message: '',
+  type: 'error' as 'error' | 'success'
+})
 
 
 // Interfaz aprendiz
@@ -100,22 +108,28 @@ export interface Aprendiz {
 
 
 // funcion que trae el documento del aprendiz hacia el padre
-const detectAprendiz = async (code: string) => {
+const detectAprendiz = async (code: string): Promise<boolean> => {
   if(!code) {
     console.error("Código vacío recibido");
-    return;
+    return false;
   }
 
   const NoIngresado = await DetectEntry(code)
-  if(NoIngresado){
-  addEntry(code)
+
+  if(!NoIngresado){
+  console.log("El aprendiz ya tiene un ingreso")
+    return false
+  }
+
+  const registrado = await addEntry(code)
+
+  if (!registrado) {
+    return false
+  }
+
   scannerModal.value?.closeScanner()
-    return
-  }
-  else{
-    console.log("El aprendiz ya tiene un ingreso")
-    return
-  }
+
+  return true
 }
 
 // funcion para ingresar aprendices
@@ -139,6 +153,7 @@ const addEntry = async (code : string) => {
 
     console.log("Ingreso registrado:", data);
     HistorialIngresos();  // refrescar tabla
+    return true
   } catch (error) {
     console.error(error);
   }
@@ -169,6 +184,7 @@ const open = () => {
 // emision del evento para abrir el modal manual
 const openManual = ()=>{
   modalManual.value.openModal()
+    alerta.value.message = ''
     formManual.documento = ''
     formManual.nombre = ''
     formManual.apellido = ''
@@ -188,6 +204,7 @@ const EventoManual = async (DocumentoManual : string) =>{
   if(!DocumentoManual) return
   if(DocumentoManual.length!=10){
     console.log("el dni debe tener 10 digitos")
+    alerta.value.message = ''
     formManual.nombre = ''
     formManual.apellido = ''
     formManual.formacion = ''
@@ -218,6 +235,17 @@ const EventoManual = async (DocumentoManual : string) =>{
 
 // Crear registro manual
 const submit = async () =>{
+  if(await detectAprendiz(formManual.documento)){
+    alerta.value.message = 'Registro aceptado'
+    alerta.value.type = 'success'
+    setTimeout(() => {
+      modalManual.value.closeModal()
+    }, 1000);
+  }
+  else{
+    alerta.value.message = 'El aprendiz ya tiene un registro'
+    alerta.value.type = 'error'
+  }
 }
 
 
