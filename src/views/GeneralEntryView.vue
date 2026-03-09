@@ -18,7 +18,7 @@
       <section class="flex items-center justify-between mb-10">
         <div class="flex items-center gap-2 w-4/5">
           <!-- Buscar aprendices -->
-          <SearchBar/>
+          <SearchBar v-model="queryAprendices"/>
           <!-- Boton para encontrar resultados -->
           <SearchUser/>
         </div>
@@ -65,7 +65,7 @@
 </template>
 <script setup lang="ts">
 // dependencias
-import { ref,onMounted,reactive } from 'vue';
+import { ref,onMounted,reactive,watch } from 'vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import ExitButton from '@/components/UI/ExitButton.vue';
 import SearchBar from '@/components/UI/SearchBar.vue';
@@ -83,13 +83,15 @@ import BaseForm from '@/components/Forms/BaseForm.vue';
 import BaseField from '@/components/Forms/BaseField.vue';
 import BaseButton from '@/components/Buttons/BaseButton.vue';
 import BaseText from '@/components/Text/BaseText.vue';
+import { SearchAprendiz } from '@/Services/SearchAprendiz';
 // Entorno
 const API = import.meta.env.VITE_API_URL
+
 // variables del componente
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
 const modalManual = ref()
-
 const aprendizData = ref<Aprendiz[]>([]) // inicialmente vacío
+const queryAprendices = ref('')
 
 // alerta del texto
 const alerta = ref({
@@ -175,7 +177,9 @@ const HistorialIngresos = async () => {
     const response = await fetch(`${API}/api/registroIngresos/historial`)
     const data = await response.json()
     console.log(data)
+
     aprendizData.value = data
+
   } catch (error) {
     console.error(error)
   }
@@ -282,6 +286,18 @@ const submit = async () => {
   }
 };
 
+watch(queryAprendices, async (nuevoTexto) => {
+
+  if (!nuevoTexto.trim()) {
+    await HistorialIngresos()
+    return
+  }
+
+  const data = await SearchAprendiz(nuevoTexto)
+
+  aprendizData.value = data
+
+})
 
 </script>
 <style>

@@ -123,3 +123,48 @@ export const EntryManual = async (request: Request, response : Response) =>{
 }
 
 
+
+export const SearchAprendiz = async (request: Request, response: Response) => {
+  try {
+
+    const text = (request.query.q as string)?.trim()
+
+    if (!text) {
+      return response.status(400).json({
+        message: "Debe escribir algo"
+      })
+    }
+
+    const pattern = `%${text}%`
+
+    const result = await pool.query(`
+      SELECT
+        a.id_aprendiz,
+        a.nombre,
+        a.apellido,
+        a.documento,
+        f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso
+      FROM detalles_ingreso AS di
+      JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
+      JOIN formaciones AS f ON f.id_formacion = a.id_formacion
+      WHERE
+        a.documento ILIKE $1
+        OR a.nombre ILIKE $1
+        OR a.apellido ILIKE $1
+    `, [pattern])
+
+    console.log("Busqueda:", text)
+
+    response.status(200).json(result.rows)
+
+  } catch (error) {
+
+    console.error(error)
+
+    response.status(500).json({
+      message: "Error en la busqueda"
+    })
+
+  }
+}
