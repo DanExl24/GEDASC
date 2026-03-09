@@ -55,15 +55,30 @@
           <td>{{ aprendiz.documento }}</td>
           <td>{{ aprendiz.formacion }}</td>
           <td>{{ aprendiz.hora_ingreso }}</td>
-          <td>''</td>
+          <td><BaseButtonOpen @click="openMachine(aprendiz)" class-button="m-auto my-1 py-0 px-2 rounded-sm bg-lightBlue min-w-min text-center" text="Ingresar Maquina"/></td>
         </BaseColumn>
       </BaseTable>
+        <!--Modal de registro Manual  -->
+        <BaseModal ref="modalMachine" :title="`Registro de máquina de ${aprendizMachine?.nombre}`">
+          <BaseForm method="POST" :submit="() => submitMachine(aprendizMachine?.id_aprendiz)">
+            <BaseSelect placeholder="Tipo de Maquina" v-model:model-value="formMachine.TipoMaquina" :options="optionsMachine"/>
+            <BaseSelect v-if="formMachine.TipoMaquina == 'vh'" placeholder="Tipo de Vehiculo" v-model:model-value="formMachine.tipoVehiculo" :options="optionsVehicle"/>
+            <BaseField v-model="formMachine.modeloMaquina" label="Modelo de Maquina" place-holder="Esperando Documento..." type="text"/>
+            <BaseField v-model="formMachine.placaSerial" label="Placa/Serial de Maquina" place-holder="Esperando Documento..." type="text" />
+            <BaseField v-model="formMachine.firma" label="Firma del aprendiz" place-holder="Esperando Documento..." type="text" />
+            <!--Texto de alerta  -->
+            <BaseText :text="errorMachine" :type="mensajeMachine.type"/>
+            <BaseButton text="Añadir Maquina" type="submit"/>
+          </BaseForm>
+        </BaseModal>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-// dependencias
-import { ref,onMounted,reactive,watch } from 'vue';
+
+// ==================== DEPENDENCIAS ============================= //
+
+import { ref,onMounted,reactive,watch,computed } from 'vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import ExitButton from '@/components/UI/ExitButton.vue';
 import SearchBar from '@/components/UI/SearchBar.vue';
@@ -81,23 +96,34 @@ import BaseField from '@/components/Forms/BaseField.vue';
 import BaseButton from '@/components/Buttons/BaseButton.vue';
 import BaseText from '@/components/Text/BaseText.vue';
 import { SearchAprendiz } from '@/Services/SearchAprendiz';
-// Entorno
+import BaseSelect from '@/components/Forms/BaseSelect.vue';
+import { optionsMachine } from '@/constants/optionsMachine';
+import { optionsVehicle } from '@/constants/optionsVehicle';
+
+// ============================== ENTORNO ====================== //
+
 const API = import.meta.env.VITE_API_URL
 
-// variables del componente
+
+// ========================= VARIABLES REACTIVAS Y REFS ================== //
+
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
 const modalManual = ref()
-const aprendizData = ref<Aprendiz[]>([]) // inicialmente vacío
+const aprendizData = ref<Aprendiz[]>([])
 const queryAprendices = ref('')
+const modalMachine = ref()
 
-// alerta del texto
-const alerta = ref({
-  message: '',
-  type: 'error' as 'error' | 'success'
-})
+// -- Alerta de formulario manual -- //
+const alerta = ref({message: '', type: 'error' as 'error' | 'success'})
+
+// -- Alerta de formulario de maquina -- //
+const mensajeMachine = ref({message: '', type: 'error' as 'error' | 'success'})
 
 
-// Interfaz aprendiz
+
+// ============================== INTERFACES ======================== //
+
+// -- Interfaz para aprendices --
 export interface Aprendiz {
   id_aprendiz: number,
   nombre: string,
@@ -108,7 +134,10 @@ export interface Aprendiz {
 }
 
 
-// funcion que trae el documento del aprendiz hacia el padre
+// ========================== FUNCIONES ================================ //
+
+
+// -- DETECTAR APRENDICES REGISTRADOS EN EL INGRESO DE APRENDICES-- //
 const detectAprendiz = async (code: string): Promise<boolean> => {
   // si llega codigo incorrecto
   if(!code) {
@@ -140,7 +169,7 @@ const detectAprendiz = async (code: string): Promise<boolean> => {
   return true
 }
 
-// funcion para ingresar aprendices
+// -- INGRESAR APRENDICES -- //
 const addEntry = async (code : string) => {
   if(!code) return //si el codigo llega vacio
 
@@ -167,7 +196,7 @@ const addEntry = async (code : string) => {
   }
 }
 
-
+// -- HISTORIAL DE APRENDICES -- //
 const HistorialIngresos = async () => {
   try{
     // historial de ingresos
@@ -203,7 +232,7 @@ const openManual = ()=>{
     formManual.formacion = ''
 }
 
-// Campos del formulario
+// Campos del formulario manual
 const formManual = reactive({
   documento: '',
   nombre: '',
@@ -295,6 +324,46 @@ watch(queryAprendices, async (nuevoTexto) => {
   aprendizData.value = data
 
 })
+
+
+const aprendizMachine  = ref<Aprendiz>()
+const openMachine = (aprendiz : Aprendiz) =>{
+  aprendizMachine.value = aprendiz
+  modalMachine.value.openModal()
+}
+
+// Campos del formulario de maquia
+const formMachine = reactive({
+  modeloMaquina : '',
+  TipoMaquina: '',
+  tipoVehiculo: '',
+  placaSerial: '',
+  firma: ''
+})
+
+// watch de todo el formulario de maquina
+
+
+
+
+
+const errorMachine = computed(() => {
+
+  if (!formMachine.TipoMaquina) return 'Ingrese un tipo de maquina'
+  if (formMachine.TipoMaquina === 'vh' && !formMachine.tipoVehiculo) return 'Ingrese un tipo de vehiculo'
+  if (!formMachine.modeloMaquina) return 'Digite un modelo'
+  if (!formMachine.placaSerial) return 'Digite placa o serial'
+  if (!formMachine.firma) return 'Digite la firma'
+
+  return ''
+})
+
+const submitMachine = async (id_aprendiz?: number) =>{
+  if(!id_aprendiz) return
+  console.log(id_aprendiz)
+  console.log(formMachine)
+
+}
 
 </script>
 <style>

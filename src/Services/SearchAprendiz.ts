@@ -9,7 +9,7 @@ export const SearchAprendiz = async (query: string | number): Promise<Aprendiz[]
 
     const res = await fetch(`${API}/api/registroIngresos/buscar?q=${encodeURIComponent(query)}`)
     const data = await res.json()
-    return data.result.rows //retornar aprendices con busqueda
+    return data //retornar aprendices con busqueda
 
   } catch (err) {
 

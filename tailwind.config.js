@@ -11,7 +11,8 @@ export default {
         robotoSlab: ['Roboto Slab', 'serif'],
       },
       colors:{
-        senaColor : '#077E07'
+        senaColor : '#077E07',
+        lightBlue : '#205EAF'
       }
     },
   },

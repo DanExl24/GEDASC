@@ -1,6 +1,6 @@
 <template>
   <!-- Componente tipo boton -->
-    <button :type="type" :class="[buttonClass,ifImage]" class=" w-full font-quicksand flex items-center gap-2 bg-senaColor text-white py-3 mt-5 text-center px-4 rounded-lg hover:scale-105 transition-transform duration-800">
+    <button :type="type" :class="[buttonClass,ifImage,classButton]" class=" font-quicksand flex items-center gap-2 bg-senaColor text-white py-3 text-center px-4 rounded-lg hover:scale-105 transition-transform duration-800">
       <p>{{ text }}</p>
       <img class="mt-2" :src="buttonImg" alt="">
     </button>
@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   buttonImg?:string,
   text:string,
   buttonClass?:string,
+  classButton? : string
 }>(),{
   type : 'button',
   text:'Mensaje...',
