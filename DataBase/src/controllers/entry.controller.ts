@@ -127,15 +127,15 @@ export const EntryManual = async (request: Request, response : Response) =>{
 export const SearchAprendiz = async (request: Request, response: Response) => {
   try {
 
-    const text = (request.query.q as string)?.trim()
+    const text = (request.query.q as string)?.trim() //traer el texto de busqueda
 
     if (!text) {
       return response.status(400).json({
-        message: "Debe escribir algo"
+        message: "Debe escribir algo" // si no escribe algo
       })
     }
 
-    const pattern = `%${text}%`
+    const pattern = `%${text}%` //patron para la busqueda
 
     const result = await pool.query(`
       SELECT
@@ -152,11 +152,11 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         a.documento ILIKE $1
         OR a.nombre ILIKE $1
         OR a.apellido ILIKE $1
-    `, [pattern])
+    `, [pattern]) // consulta SQL
 
     console.log("Busqueda:", text)
 
-    response.status(200).json(result.rows)
+    response.status(200).json(result.rows) // mandar el array
 
   } catch (error) {
 

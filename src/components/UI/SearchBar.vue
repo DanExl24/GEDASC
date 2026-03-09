@@ -11,6 +11,7 @@
 
 <script setup lang="ts">
 
+// props del componente
 const props = withDefaults(defineProps<{
   modelValue?: string
   placeholder?: string
@@ -24,8 +25,10 @@ const props = withDefaults(defineProps<{
   readonly: false
 })
 
+// emitir evento
 const emit = defineEmits(['update:modelValue'])
 
+// funcion para input automatico
 const handleInput = (e: Event) => {
   const value = (e.target as HTMLInputElement).value
   emit('update:modelValue', value)

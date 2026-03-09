@@ -287,10 +287,10 @@ watch(queryAprendices, async (nuevoTexto) => {
 
   if (!nuevoTexto.trim()) {
     await HistorialIngresos()
-    return
+    return //si no hay texto
   }
 
-  const data = await SearchAprendiz(nuevoTexto)
+  const data = await SearchAprendiz(nuevoTexto) // si hay texto
 
   aprendizData.value = data
 
