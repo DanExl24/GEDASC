@@ -19,8 +19,6 @@
         <div class="flex items-center gap-2 w-4/5">
           <!-- Buscar aprendices -->
           <SearchBar v-model="queryAprendices"/>
-          <!-- Boton para encontrar resultados -->
-          <SearchUser/>
         </div>
 
         <!--Boton de registro manual  -->
@@ -69,7 +67,6 @@ import { ref,onMounted,reactive,watch } from 'vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import ExitButton from '@/components/UI/ExitButton.vue';
 import SearchBar from '@/components/UI/SearchBar.vue';
-import SearchUser from '@/components/UI/SearchUser.vue';
 import BaseTable from '@/components/Tables/BaseTable.vue';
 import BaseColumn from '@/components/Tables/BaseColumn.vue';
 import BaseTableHead from '@/components/Tables/BaseTableHead.vue';
