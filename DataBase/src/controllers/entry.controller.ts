@@ -53,10 +53,6 @@ export const AddEntry = async (req: Request, res: Response) => {
 };
 
 
-
-
-
-
 // Funcion para verificar el ingreso de un aprendiz
 export const DetectEntry = async (request : Request, response : Response) =>{
   try{
@@ -80,8 +76,6 @@ export const DetectEntry = async (request : Request, response : Response) =>{
     response.status(500).json({message:"Hay un error", error: error});
   }
 }
-
-
 
 
 
@@ -123,7 +117,7 @@ export const EntryManual = async (request: Request, response : Response) =>{
 }
 
 
-
+// Funcion para la busqueda de un aprendiz
 export const SearchAprendiz = async (request: Request, response: Response) => {
   try {
 
@@ -166,5 +160,19 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
       message: "Error en la busqueda"
     })
 
+  }
+}
+
+
+// Funcion para ingresar la maquina del aprendiz
+export const AddMachine = async(request : Request, response : Response)=>{
+  try{
+
+  } catch (error) {
+    console.error(error)
+    response.status(500).json({
+      message: "Error en el ingreso de maquina",
+      error : error
+    })
   }
 }

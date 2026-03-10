@@ -100,6 +100,7 @@ import BaseSelect from '@/components/Forms/BaseSelect.vue';
 import { optionsMachine } from '@/constants/optionsMachine';
 import { optionsVehicle } from '@/constants/optionsVehicle';
 
+
 // ============================== ENTORNO ====================== //
 
 const API = import.meta.env.VITE_API_URL
@@ -112,6 +113,7 @@ const modalManual = ref()
 const aprendizData = ref<Aprendiz[]>([])
 const queryAprendices = ref('')
 const modalMachine = ref()
+const aprendizMachine  = ref<Aprendiz>()
 
 // -- Alerta de formulario manual -- //
 const alerta = ref({message: '', type: 'error' as 'error' | 'success'})
@@ -120,18 +122,26 @@ const alerta = ref({message: '', type: 'error' as 'error' | 'success'})
 const mensajeMachine = ref({message: '', type: 'error' as 'error' | 'success'})
 
 
+// =================================== FORMS ================================ //
+
+// Campos del formulario manual
+const formManual = reactive({documento: '', nombre: '', apellido: '', formacion: ''})
+
+// Campos del formulario de maquia
+const formMachine = reactive({modeloMaquina : '', TipoMaquina: '', tipoVehiculo: '', placaSerial: '', firma: ''})
+
+
+
+
+
 
 // ============================== INTERFACES ======================== //
 
-// -- Interfaz para aprendices --
-export interface Aprendiz {
-  id_aprendiz: number,
-  nombre: string,
-  apellido: string,
-  documento: string,
-  formacion: string,
-  hora_ingreso: string
-}
+// -- Interfaz para aprendices --S
+export interface Aprendiz {id_aprendiz: number, nombre: string, apellido: string, documento: string, formacion: string, hora_ingreso: string}
+
+
+
 
 
 // ========================== FUNCIONES ================================ //
@@ -211,17 +221,18 @@ const HistorialIngresos = async () => {
   }
 }
 
-// Ejecutar al montar el componente
+//  -- EJECUTAR ONMOUNTED -- //
 onMounted(() => {
   HistorialIngresos(); // esto trae el historial apenas se abre la vista
 });
 
-// emision del evento para abrir el escaner
+
+// -- ABRIR SCANNER -- //
 const open = () => {
   scannerModal.value?.openScanner()
 }
 
-// emision del evento para abrir el modal manual
+// -- ABRIR EL MODAL PARA REGISTRO MANUAL -- //
 const openManual = ()=>{
   modalManual.value.openModal()
   // vaciar todos los campos
@@ -232,49 +243,19 @@ const openManual = ()=>{
     formManual.formacion = ''
 }
 
-// Campos del formulario manual
-const formManual = reactive({
-  documento: '',
-  nombre: '',
-  apellido: '',
-  formacion: ''
-})
-
-
-const EventoManual = async (DocumentoManual : string) =>{
-  if(!DocumentoManual) return // si el documento esta mal
-  if(DocumentoManual.length!=10){
-    console.log("el dni debe tener 10 digitos")
-    alerta.value.message = ''
-    formManual.nombre = ''
-    formManual.apellido = ''
-    formManual.formacion = ''
-    return // si el documento no tiene 10 digitos
-  }
-  console.log("documento recibido",DocumentoManual)
-  try{
-    const response = await fetch(`${API}/api/registroIngresos/ingresoManual/${DocumentoManual}`)
-
-    const data = await response.json()
-
-    if(!response.ok){
-      console.log(data.message)
-      return
-    }
-    console.log(data)
-    // Obtener datos del aprendiz
-    formManual.nombre = data.result.nombre
-    console.log(data.result.nombre)
-    formManual.apellido = data.result.apellido
-    formManual.formacion = data.result.formacion
-
-    console.log(formManual)
-    // Rellenar campos
-  } catch(error) {
-    console.error(error)
+// -- ABRIR EL MODAL PARA INGRESAR MAQUINA -- //
+const openMachine = (aprendiz : Aprendiz) =>{
+  aprendizMachine.value = aprendiz
+  modalMachine.value.openModal()
+  for(const key in formMachine){
+    formMachine[key as keyof typeof formMachine] = '' // Vaciar campos
   }
 }
 
+
+// =========================== EVENTOS SUBMITS ============================= //
+
+// -- INGRESAR APRENDIZ A REGISTRO DE INGRESO -- //
 const submit = async () => {
   // validar campo vacío
   if (!formManual.documento) {
@@ -312,40 +293,85 @@ const submit = async () => {
   }
 };
 
+// -- CONSULTAR DATOS DEL APRENDIZ PARA EL REGISTRO MANUAL -- //
+const EventoManual = async (DocumentoManual : string) =>{
+  if(!DocumentoManual) return // si el documento esta mal
+  if(DocumentoManual.length!=10){
+    console.log("el dni debe tener 10 digitos")
+    alerta.value.message = ''
+    formManual.nombre = ''
+    formManual.apellido = ''
+    formManual.formacion = ''
+    return // si el documento no tiene 10 digitos
+  }
+  console.log("documento recibido",DocumentoManual)
+  try{
+    const response = await fetch(`${API}/api/registroIngresos/ingresoManual/${DocumentoManual}`)
+    const data = await response.json()
+
+    if(!response.ok){console.log(data.message); return}
+
+    console.log(data)
+    // Obtener datos del aprendiz
+    formManual.nombre = data.result.nombre
+    console.log(data.result.nombre)
+    formManual.apellido = data.result.apellido
+    formManual.formacion = data.result.formacion
+
+    console.log(formManual)
+    // Rellenar campos
+  } catch(error) {console.error(error)}
+}
+
+// -- INGRESAR MAQUINA DEL APRENDIZ -- //
+const submitMachine = async (id_aprendiz?: number) =>{
+  if(!id_aprendiz) return
+  console.log(id_aprendiz)
+  const maquina = formMachine.TipoMaquina
+  const vehiculo = formMachine.tipoVehiculo
+  const modelo = formMachine.modeloMaquina
+  const placaSerial = formMachine.placaSerial
+  const firma = formMachine.firma
+
+  try{
+    const response = await fetch(`${API}/api/registroIngresos/ingresoMaquina/${id_aprendiz}`,{
+      method : 'POST',
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        tipoMaquina : maquina,
+        tipoVehiculo : vehiculo,
+        modelo : modelo,
+        placaSerial : placaSerial,
+        firma : firma
+      })
+    })
+    const data = await response.json()
+    console.log(data)
+  } catch (error){
+    console.error(error)
+  }
+}
+
+
+
+// ================================== WATCHS =========================== //
+
+// -- VERIFICAR SI HAY BUSQUEDA DE APRENDICES -- //
 watch(queryAprendices, async (nuevoTexto) => {
 
-  if (!nuevoTexto.trim()) {
-    await HistorialIngresos()
-    return //si no hay texto
-  }
+  if (!nuevoTexto.trim()) {await HistorialIngresos(); return} //si no hay texto
 
   const data = await SearchAprendiz(nuevoTexto) // si hay texto
 
-  aprendizData.value = data
+  aprendizData.value = data // Pasar el aprendiz encontrado en busqueda
 
 })
 
 
-const aprendizMachine  = ref<Aprendiz>()
-const openMachine = (aprendiz : Aprendiz) =>{
-  aprendizMachine.value = aprendiz
-  modalMachine.value.openModal()
-}
 
-// Campos del formulario de maquia
-const formMachine = reactive({
-  modeloMaquina : '',
-  TipoMaquina: '',
-  tipoVehiculo: '',
-  placaSerial: '',
-  firma: ''
-})
-
-// watch de todo el formulario de maquina
-
-
-
-
+// ========================== COMPUTEDS ================================= //
 
 const errorMachine = computed(() => {
 
@@ -358,12 +384,6 @@ const errorMachine = computed(() => {
   return ''
 })
 
-const submitMachine = async (id_aprendiz?: number) =>{
-  if(!id_aprendiz) return
-  console.log(id_aprendiz)
-  console.log(formMachine)
-
-}
 
 </script>
 <style>
