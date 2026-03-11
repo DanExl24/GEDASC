@@ -10,7 +10,13 @@ const router = createRouter({
     {
       path: '/general-entry',
       name: 'GeneralEntryView',
-      component: () => import('../views/GeneralEntryView.vue')
+      component: () => import('../views/GeneralEntryView.vue'),
+      children: [
+        {
+          path: "firma/:documento",
+          component: () => import('../views/GeneralEntryView.vue')
+        }
+      ]
     },
   ],
 })

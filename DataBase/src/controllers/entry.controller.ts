@@ -165,14 +165,111 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
 
 
 // Funcion para ingresar la maquina del aprendiz
-export const AddMachine = async(request : Request, response : Response)=>{
-  try{
+export const AddMachine = async (request: Request, response: Response) => {
+  const client = await pool.connect(); // Conexión para transacción
 
-  } catch (error) {
-    console.error(error)
-    response.status(500).json({
-      message: "Error en el ingreso de maquina",
-      error : error
-    })
+  try {
+    const id_aprendiz = request.params.id;
+    const { tipoMaquina, tipoVehiculo, modelo, placaSerial, firma } = request.body;
+
+    if (!id_aprendiz) {
+      return response.status(400).json({ message: "Aprendiz inválido" });
+    }
+
+    // Validar campos obligatorios
+    if (!tipoMaquina || !modelo || !placaSerial || !firma || (tipoMaquina === 'vh' && !tipoVehiculo)) {
+      return response.status(400).json({ message: "Todos los campos son obligatorios" });
+    }
+
+    await client.query('BEGIN'); // Iniciar transacción
+
+    let idMaquina: number | null = null;
+
+    if (tipoMaquina === 'vh') {
+      // Verificar si el vehículo ya existe
+      const vehiculo = await client.query(
+        "SELECT id_vehiculo FROM vehiculos WHERE placa = $1",
+        [placaSerial]
+      );
+
+      if (vehiculo.rowCount && vehiculo.rowCount > 0) {
+        idMaquina = vehiculo.rows[0].id_vehiculo; // ya existe
+      } else {
+        // Insertar nuevo vehículo
+        const result = await client.query(
+          "INSERT INTO vehiculos(tipo_vehiculo, placa, modelo, firma_ingreso) VALUES ($1,$2,$3,$4) RETURNING id_vehiculo",
+          [tipoVehiculo, placaSerial, modelo, firma]
+        );
+        idMaquina = result.rows[0].id_vehiculo;
+      }
+    } else if (tipoMaquina === 'pc') {
+      // Verificar si la PC ya existe
+      const pc = await client.query(
+        "SELECT id_computador FROM computadores WHERE serial = $1",
+        [placaSerial]
+      );
+
+      if (pc.rowCount && pc.rowCount > 0) {
+        idMaquina = pc.rows[0].id_computador; // ya existe
+      } else {
+        // Insertar nueva PC
+        const result = await client.query(
+          "INSERT INTO computadores(serial, modelo, firma_ingreso) VALUES ($1,$2,$3) RETURNING id_computador",
+          [placaSerial, modelo, firma]
+        );
+        idMaquina = result.rows[0].id_computador;
+      }
+    }
+
+      // Antes de insertar en detalles_maquinas
+    const checkExist = await client.query(
+      "SELECT dm.id_detallemaquina FROM detalles_maquinas dm " +
+      "JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina " +
+      "WHERE di.id_aprendiz = $1 AND (dm.id_computador = $2 OR dm.id_vehiculo = $3)",
+      [id_aprendiz, tipoMaquina === 'pc' ? idMaquina : null, tipoMaquina === 'vh' ? idMaquina : null]
+    );
+
+    if (checkExist.rowCount && checkExist.rowCount > 0) {
+      await client.query('ROLLBACK');
+      return response.status(409).json({ message: "Esta máquina ya está registrada para este aprendiz hoy" });
+    }
+
+    // Insertar en detalles_maquinas (colocando los IDs en la columna correcta)
+    const resultDetallesMaquina = await client.query(
+      "INSERT INTO detalles_maquinas(id_computador, id_vehiculo) VALUES ($1, $2) RETURNING id_detallemaquina",
+      [
+        tipoMaquina === 'pc' ? idMaquina : null,    // id_computador
+        tipoMaquina === 'vh' ? idMaquina : null     // id_vehiculo
+      ]
+    );
+
+    const idDetallesMaquina = resultDetallesMaquina.rows[0].id_detallemaquina;
+
+    // Actualizar detalles_ingreso con id_detalles_maquinas
+    await client.query(
+      "UPDATE detalles_ingreso SET id_detallemaquina = $1 WHERE id_aprendiz = $2",
+      [idDetallesMaquina, id_aprendiz]
+    );
+
+    await client.query('COMMIT'); // Confirmar transacción
+
+    return response.status(201).json({
+      message: "Máquina registrada y vinculada correctamente",
+      idDetallesMaquina
+    });
+
+  } catch (error: unknown) {
+    await client.query('ROLLBACK'); // Deshacer si falla algo
+
+    if (error instanceof Error) {
+      console.error('Error completo:', error.message);
+      console.error(error.stack);
+      return response.status(500).json({ message: "Error en el ingreso de máquina", error: error.message });
+    } else {
+      console.error('Error inesperado:', error);
+      return response.status(500).json({ message: "Error en el ingreso de máquina", error: String(error) });
+    }
+  } finally {
+    client.release(); // Liberar conexión
   }
-}
+};

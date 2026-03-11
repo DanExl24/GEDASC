@@ -9,6 +9,7 @@
       :placeholder="placeHolder"
       @input="handleInput"
       class="border border-gray-400 focus:outline-none rounded-lg p-2 py-2.5 font-quicksand"
+      :maxlength="maxLength"
     />
   </div>
 </template>
@@ -21,7 +22,8 @@ const props = withDefaults(defineProps<{
   placeHolder?: string
   label: string
   readonly?: boolean
-  inputEvent?: (value:string)=>void
+  inputEvent?: (value:string)=>void,
+  maxLength? : number
 }>(),{
   type:'text',
   placeHolder:'Write something...',

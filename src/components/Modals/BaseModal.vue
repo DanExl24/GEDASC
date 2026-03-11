@@ -1,7 +1,7 @@
 <template>
   <!-- Creacion del modal -->
   <section v-if="active" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-hidden">
-    <div class="bg-white min-h-[400px]  rounded-xl shadow-xl w-4/12 overflow">
+    <div class="bg-white min-h-[100px]  rounded-xl shadow-xl w-4/12 overflow">
       <!-- Texto del modal y su imagen -->
         <p class="text-white bg-senaColor text-center py-3 font-robotoSlab text-xl flex justify-center items-center relative">
           {{ title }}
