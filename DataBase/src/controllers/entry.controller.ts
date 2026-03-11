@@ -83,7 +83,7 @@ export const DetectEntry = async (request : Request, response : Response) =>{
 export const EntryRecord = async (request: Request, response: Response) => {
   try{
     // consulta de todos los aprendices
-    const result = await pool.query("SELECT a.id_aprendiz, a.nombre, a.apellido, a.documento, f.nombre AS formacion, TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso FROM detalles_ingreso AS di JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz JOIN formaciones AS f ON f.id_formacion = a.id_formacion");
+    const result = await pool.query("SELECT a.id_aprendiz, a.nombre, a.apellido, a.documento, f.nombre AS formacion, TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso, di.id_detallemaquina  FROM detalles_ingreso AS di JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz JOIN formaciones AS f ON f.id_formacion = a.id_formacion LEFT JOIN detalles_maquinas AS dm ON dm.id_detallemaquina = di.id_detallemaquina ORDER BY di.id_ingreso DESC");
     // verificar si hay aprendices
     if(result.rowCount===0){
       response.status(404).json({ message: "No se encontraron registros" });

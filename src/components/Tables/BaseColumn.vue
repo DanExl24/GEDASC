@@ -12,5 +12,6 @@
 <style>
 tr td{
   border: solid black 1px;
+  padding: 0.5rem 0 0.5rem 0;
 }
 </style>

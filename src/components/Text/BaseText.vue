@@ -17,7 +17,7 @@ const active = ref(true)
 // clases dinamicas segun props
 const ClaseDinamica = computed(()=>{
   if(props.type == 'error') return 'text-red-700'
-  else if (props.type == 'success') return 'text-green-700'
+  else if (props.type == 'success') return 'text-senaColor'
   else return ''
 })
 

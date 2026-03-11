@@ -49,15 +49,16 @@
           <BaseTableHead name="Registro de Maquina"/>
         </BaseColumn>
         <!--Registros -->
-        <BaseColumn v-for="aprendiz in aprendizData" :key="aprendiz.id_aprendiz">
+        <BaseColumn v-for="(aprendiz,index) in aprendizData" :key="aprendiz.id_aprendiz">
           <td>{{ aprendiz.nombre }}</td>
           <td>{{ aprendiz.apellido }}</td>
           <td>{{ aprendiz.documento }}</td>
           <td>{{ aprendiz.formacion }}</td>
           <td>{{ aprendiz.hora_ingreso }}</td>
           <td>
-            <BaseButtonOpen v-if="aprendiz.maquina == null" @click="openMachine(aprendiz)" class-button="m-auto my-1 py-0 px-2 rounded-sm bg-blue-700 min-w-min text-center" text="Ingresar Maquina"/>
-            <BaseText v-if="aprendiz.maquina == 1" text="Registro Exitoso" type="success"/>
+            <BaseButtonOpen v-if="index === 0" @click="openMachine(aprendiz)" class-button="m-auto my-1 py-0 px-2 rounded-sm bg-blue-700 min-w-min text-center" text="Ingresar Maquina"/>
+            <BaseText v-else-if="aprendiz.id_detallemaquina == null" text="No registrada" type="error"/>
+            <BaseText v-else-if="aprendiz.id_detallemaquina != null" text="Registro Exitoso" type="success"/>
           </td>
         </BaseColumn>
       </BaseTable>
@@ -150,7 +151,7 @@ const formMachine = reactive({modeloMaquina : '', TipoMaquina: '', tipoVehiculo:
 // ============================== INTERFACES ======================== //
 
 // -- Interfaz para aprendices --S
-export interface Aprendiz {id_aprendiz: number, nombre: string, apellido: string, documento: string, formacion: string, hora_ingreso: string, maquina : number}
+export interface Aprendiz {id_aprendiz: number, nombre: string, apellido: string, documento: string, formacion: string, hora_ingreso: string, id_detallemaquina : number}
 
 
 
@@ -408,23 +409,6 @@ const submitMachine = async (id_aprendiz?: number) => {
       modalMachine.value.closeModal();
       submittedMachine.value = false; // desbloquear después de cerrar
     }, 1000);
-
-  // Actualizar la propiedad "maquina" del aprendiz en la lista
-  if (aprendizMachine.value) {
-    const aprendizId = aprendizMachine.value.id_aprendiz;
-
-    // buscar índice de aprendiz
-    const index = aprendizData.value.findIndex(a => a.id_aprendiz === aprendizId);
-
-    // si lo encuentra, actualizar la propiedad "maquina"
-    if (index !== -1) {
-      // forzamos a TS a entender que el objeto existe
-      const aprendiz = aprendizData.value[index];
-      if (aprendiz) {
-        aprendiz.maquina = 1;
-      }
-    }
-  }
 
   } catch (error) {
     console.error(error);
