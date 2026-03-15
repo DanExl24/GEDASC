@@ -11,8 +11,6 @@
 import  {ref, nextTick}  from 'vue';
 import Quagga from '@ericblade/quagga2'; // ES6
 import BaseModal from '../Modals/BaseModal.vue';
-import { QueryDocument } from '@/Services/QueryDocument';
-import { DetectEntry } from '@/Services/DetectEntrys';
 // interfaz del componente
 
 // variables del componente
@@ -21,7 +19,7 @@ const result = ref<HTMLDivElement | null>(null)
 const resultText = ref<string>('')
 const modal = ref()
 const detectedCode = ref<string>('');
-
+const scanningLocked = ref(false)
 
 
 const closeScanner = () =>{
@@ -37,6 +35,7 @@ const closeScanner = () =>{
 const openScanner = async () => {
   modal.value.openModal()
   resultText.value = 'Esperando aprendiz...'
+  scanningLocked.value = false
   // Esperar que cargue el DOM
   await nextTick()
   // Libreria Quagga para lector de codigo de barras,  .init para crear el componente que leera el codigo
@@ -75,26 +74,26 @@ const openScanner = async () => {
     Quagga.start();
     // Limpiar eventos para no sobrecargar
     Quagga.offDetected()
-    Quagga.onDetected(async(result) => {
-      const code = result.codeResult.code ?? '' // Codigo del scanner
-      detectedCode.value = code
-      if(!code) return // Verificar que no llegue vacio
+Quagga.onDetected((result) => {
 
+  if (scanningLocked.value) return
 
-      const validacion = await QueryDocument(code) // Verificar si existe el aprendiz
-      if(validacion){
-        emit('aprendiz-detectado',detectedCode.value)
-        resultText.value = `Aprendiz Encontrado: ${detectedCode.value}`
-      }
-      else{
-        resultText.value = `Aprendiz No encontrado: ${detectedCode.value}` // Si no hay, decir que no existe aprendiz
-      }
-      const yaIngresado = await DetectEntry(code) // Verificar si ya tiene ingreso
-      if(yaIngresado){
-        resultText.value = `El aprendiz ya esta registrado...`
-        return
-      }
-    })
+  const code = result.codeResult?.code
+  if (!code) return
+
+  scanningLocked.value = true
+
+  Quagga.offDetected()
+  Quagga.stop()
+
+  detectedCode.value = code
+
+  resultText.value = `Código detectado: ${code}`
+
+  // emitir al padre
+  emit('aprendiz-detectado', code)
+
+})
   })
 }
 

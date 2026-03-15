@@ -273,3 +273,65 @@ export const AddMachine = async (request: Request, response: Response) => {
     client.release(); // Liberar conexión
   }
 };
+
+
+// Funcion para la doble maquina del aprendiz
+export const UpdateMachine = async (request: Request, response: Response) => {
+
+  const { tipoMaquina, tipoVehiculo, modelo, placaSerial, firma } = request.body
+  const { id_aprendiz } = request.params
+
+  const detalle = await pool.query(
+    "SELECT id_detallemaquina FROM detalles_ingreso WHERE id_aprendiz = $1",
+    [id_aprendiz]
+  )
+
+  if (detalle.rowCount === 0) {
+    return response.status(404).json({
+      message: "No existe un detalle de ingreso para este aprendiz"
+    })
+  }
+
+  const id_detallemaquina = detalle.rows[0].id_detallemaquina
+
+  if (tipoMaquina == 'pc') {
+
+    const computador = await pool.query(
+      "INSERT INTO computadores(serial,modelo,firma_ingreso) VALUES($1,$2,$3) RETURNING id_computador",
+      [placaSerial, modelo, firma]
+    )
+
+    const id_computador = computador.rows[0].id_computador
+
+    if (computador.rowCount && computador.rowCount > 0) {
+
+      const result = await pool.query(
+        "UPDATE detalles_maquinas SET id_computador = $1 WHERE id_detallemaquina = $2",
+        [id_computador, id_detallemaquina]
+      )
+
+      return response.status(201).json(result.rows)
+    }
+
+  } else if (tipoMaquina == 'vh') {
+
+    const vehiculo = await pool.query(
+      "INSERT INTO vehiculos(tipo_vehiculo, placa, modelo, firma_ingreso) VALUES($1,$2,$3,$4) RETURNING id_vehiculo",
+      [tipoVehiculo, placaSerial, modelo, firma]
+    )
+
+    const id_vehiculo = vehiculo.rows[0].id_vehiculo
+
+    if (vehiculo.rowCount && vehiculo.rowCount > 0) {
+
+      const result = await pool.query(
+        "UPDATE detalles_maquinas SET id_vehiculo = $1 WHERE id_detallemaquina = $2",
+        [id_vehiculo, id_detallemaquina]
+      )
+
+      return response.status(201).json(result.rows)
+    }
+
+  }
+
+}

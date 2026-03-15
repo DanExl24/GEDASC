@@ -2,6 +2,11 @@
   <div class="relative">
     <!-- Header del componente-->
     <HeaderView -header-title="INGRESO DE APRENDICES AL CENTRO DE FORMACION"/>
+    <img
+      v-if="firmaTemporal && machineModalOpen"
+      :src="firmaTemporal"
+      class="fixed top-20 right-10 w-40 border-2 border-gray-300 rounded-lg shadow-lg bg-white z-[9999] pointer-events-none"
+    />
     <!-- Div para la mini navegacion-->
     <div class="flex relative overflow-hidden justify-between">
       <!-- Boton para salir -->
@@ -56,36 +61,65 @@
           <td>{{ aprendiz.formacion }}</td>
           <td>{{ aprendiz.hora_ingreso }}</td>
           <td>
-            <BaseButtonOpen v-if="index === 0" @click="openMachine(aprendiz)" class-button="m-auto my-1 py-0 px-2 rounded-sm bg-blue-700 min-w-min text-center" text="Ingresar Maquina"/>
-            <BaseText v-else-if="aprendiz.id_detallemaquina == null" text="No registrada" type="error"/>
-            <BaseText v-else-if="aprendiz.id_detallemaquina != null" text="Registro Exitoso" type="success"/>
+            <BaseButtonOpen v-if="index === 0 && aprendiz.id_detallemaquina ==null" @click="openMachine(aprendiz)" class-button="m-auto my-0 py-0 px-2 rounded-lg bg-blue-700 min-w-min text-center font-semibold" text="Ingresar Maquina"/>
+            <BaseText v-else-if="aprendiz.id_detallemaquina == null" text="No registrada" type="error" class="font-semibold"/>
+            <BaseText v-else-if="aprendiz.id_detallemaquina != null" text="Registrada" type="success" class="font-semibold"/>
+            <BaseText v-else-if="firmaTemporal" text="Firma registrada" type="success" class="font-semibold"/>
           </td>
         </BaseColumn>
       </BaseTable>
         <!--Modal de registro Manual  -->
         <BaseModal ref="modalMachine" :title="`Registro de máquina de ${aprendizMachine?.nombre}`">
           <BaseForm method="POST" :submit="() => submitMachine(aprendizMachine?.id_aprendiz)">
-            <BaseSelect placeholder="Tipo de Maquina" v-model:model-value="formMachine.TipoMaquina" :options="optionsMachine"/>
+            <BaseSelect :disabled="maquinaRegistrada.pc || maquinaRegistrada.vh" placeholder="Tipo de Maquina" v-model:model-value="formMachine.TipoMaquina" :options="optionsMachine"/>
             <BaseSelect v-if="formMachine.TipoMaquina == 'vh'" placeholder="Tipo de Vehiculo" v-model:model-value="formMachine.tipoVehiculo" :options="optionsVehicle"/>
-            <BaseField v-model="formMachine.modeloMaquina" label="Modelo de Maquina" place-holder="Modelo" type="text"/>
+            <BaseField v-model="formMachine.modeloMaquina" label="Marca de la Maquina" place-holder="Marca" type="text"/>
             <BaseField :disabled="submittedMachine" :max-length="formMachine.TipoMaquina=='vh' ? 7 : 100"  v-model="formMachine.placaSerial" label="Placa/Serial de Maquina" place-holder="Placa o Serial" type="text" />            <!--Texto de alerta  -->
             <BaseText :text="displayMachineMessage" :type="mensajeMachine.type"/>
-            <BaseButtonOpen class="!bg-orange-500 px-1 py-1" text="Ingresar Firma" @click="openFirma"/>
-
+            <BaseButtonOpen v-if="!firmaTemporal" class="!bg-orange-500 px-1 py-1" text="Ingresar Firma" @click="openFirma"/>
+            <BaseText v-if="firmaTemporal" text="Firma ya registrada" type="success" class="font-semibold" />
             <BaseButton text="Añadir Maquina" type="submit"/>
           </BaseForm>
+        </BaseModal>
+        <!-- Modal de otro registro -->
+        <BaseModal ref="machineConfirmModal" title="Registrar otra máquina">
+          <div class="flex flex-col gap-4 items-center">
+
+            <BaseText
+              :text="confirmMessage"
+              type="success"
+              class="text-center font-semibold"
+            />
+
+            <div class="flex gap-4">
+              <BaseButtonOpen
+                text="Sí, registrar"
+                class-button="bg-green-600"
+                @click="registrarOtra"
+              />
+
+              <BaseButtonOpen
+                text="No, finalizar"
+                class-button="bg-red-600"
+                @click="finalizarRegistro"
+              />
+            </div>
+
+          </div>
         </BaseModal>
         <!--Modal de Firma del aprendiz  -->
         <BaseModal class="flex items-center justify-center" @close="closeFirma" ref="modalFirma" :title="`Firma de ${aprendizMachine?.nombre}`">
           <!-- Renderizar la firma-->
-           <SignaturePad v-model:signature="formMachine.firma" />
+           <SignaturePad @update:signature="guardarFirma" />
         </BaseModal>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 
-// ==================== DEPENDENCIAS ============================= //
+// ====================================================================
+// DEPENDENCIAS
+// ===================================================================
 
 import { ref,onMounted,reactive,watch,computed } from 'vue';
 import router from '@/router';
@@ -112,12 +146,24 @@ import { optionsVehicle } from '@/constants/optionsVehicle';
 import SignaturePad from '@/components/Library/SignaturePad.vue';
 import { useRoute } from 'vue-router'
 
-// ============================== ENTORNO ====================== //
+
+// ==========================================================================
+// ENTORNO
+// ==========================================================================
 
 const API = import.meta.env.VITE_API_URL
 
 
-// ========================= VARIABLES REACTIVAS Y REFS ================== //
+
+
+
+// -------------------------------------- LOGICA DEL COMPONENTE --------------------------- //
+
+
+
+// ======================================================
+// REFERENCIA A VARIABLES
+//  =====================================================
 
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
 const modalManual = ref()
@@ -128,7 +174,10 @@ const aprendizMachine  = ref<Aprendiz>()
 const modalFirma = ref()
 const submittedMachine = ref(false);
 const route = useRoute()
-
+const machineConfirmModal = ref()
+const firmaTemporal = ref('')
+const machineModalOpen = ref(false)
+const dobleMaquina = ref(false)
 // -- Alerta de formulario manual -- //
 const alerta = ref({message: '', type: 'error' as 'error' | 'success'})
 
@@ -136,31 +185,40 @@ const alerta = ref({message: '', type: 'error' as 'error' | 'success'})
 const mensajeMachine = ref({message: '', type: 'error' as 'error' | 'success'})
 
 
-// =================================== FORMS ================================ //
 
+
+// ======================================================
+// VARIABLES REACTIVAS
+//  =====================================================
+
+// Tipo de Maquin registrada
+const maquinaRegistrada = reactive({pc: false, vh: false})
 // Campos del formulario manual
 const formManual = reactive({documento: '', nombre: '', apellido: '', formacion: ''})
-
 // Campos del formulario de maquia
-const formMachine = reactive({modeloMaquina : '', TipoMaquina: '', tipoVehiculo: '', placaSerial: '', firma: ''})
+const formMachine = reactive({modeloMaquina : '', TipoMaquina: '', tipoVehiculo: '', placaSerial: ''})
 
 
 
 
+// ==========================================================
+// INTERFACES
+// ==========================================================
 
-// ============================== INTERFACES ======================== //
 
-// -- Interfaz para aprendices --S
+// -- Interfaz para aprendices
 export interface Aprendiz {id_aprendiz: number, nombre: string, apellido: string, documento: string, formacion: string, hora_ingreso: string, id_detallemaquina : number}
 
 
 
 
 
-// ========================== FUNCIONES ================================ //
+// ===================================================
+// FUNCIONES AUXILIARES
+// ===================================================
 
 
-// -- DETECTAR APRENDICES REGISTRADOS EN EL INGRESO DE APRENDICES-- //
+// -- Detectar aprendices registrados a el registro de ingreso
 const detectAprendiz = async (code: string): Promise<boolean> => {
   // si llega codigo incorrecto
   if(!code) {
@@ -192,7 +250,9 @@ const detectAprendiz = async (code: string): Promise<boolean> => {
   return true
 }
 
-// -- INGRESAR APRENDICES -- //
+
+
+// -- Ingresar Aprendices
 const addEntry = async (code : string) => {
   if(!code) return //si el codigo llega vacio
 
@@ -219,7 +279,9 @@ const addEntry = async (code : string) => {
   }
 }
 
-// -- HISTORIAL DE APRENDICES -- //
+
+
+// -- Historial de registro de ingreso de los aprendices
 const HistorialIngresos = async () => {
   try{
     // historial de ingresos
@@ -227,7 +289,7 @@ const HistorialIngresos = async () => {
     const data = await response.json()
     console.log(data)
 
-    aprendizData.value = data as  Aprendiz[]
+    aprendizData.value = data as  Aprendiz[] //Traer los aprendices
 
   } catch (error) {
     console.error(error)
@@ -235,30 +297,97 @@ const HistorialIngresos = async () => {
 }
 
 
+// -- Guardar la firma del aprendiz
+const guardarFirma = (base64:string) => {
 
-// ================================ ON MOUNTED ---------------------------- //
+  firmaTemporal.value = base64
+
+  mensajeMachine.value = {
+    message: 'Firma registrada con éxito',
+    type: 'success'
+  } // Mensaje de ayuda
+
+  router.push('/general-entry') // Regresar al main
+
+  setTimeout(() => {
+    mensajeMachine.value = {
+      message: '',
+      type: 'success'
+    }
+  }, 1000) // Esperar 1 seg para quitar el mensaje
+
+  submittedMachine.value = false // Evitar submit
+}
+
+
+// -- Registrar otra maquina y bloquear selects
+const registrarOtra = () => {
+  dobleMaquina.value = true
+  machineConfirmModal.value.closeModal()
+
+  if (maquinaRegistrada.pc) {
+    formMachine.TipoMaquina = 'vh'
+  }
+
+  if (maquinaRegistrada.vh) {
+    formMachine.TipoMaquina = 'pc'
+  }
+
+  modalMachine.value.openModal()
+}
+
+// -- Vaciar campos del formulario
+const resetMachineForm = () => {
+
+  // limpiar formulario
+  formMachine.TipoMaquina = ''
+  formMachine.tipoVehiculo = ''
+  formMachine.modeloMaquina = ''
+  formMachine.placaSerial = ''
+
+  // limpiar firma
+  firmaTemporal.value = ''
+
+  // limpiar estados
+  maquinaRegistrada.pc = false
+  maquinaRegistrada.vh = false
+
+  dobleMaquina.value = false
+  submittedMachine.value = false
+
+  // limpiar mensajes
+  mensajeMachine.value = { message: '', type: 'error' }
+
+  // cerrar modales por seguridad
+  machineModalOpen.value = false
+}
+
+// =======================================================
+// ON MOUNTED (Se ejecuta al montar el DOM)
+// =======================================================
+
 onMounted(() => {
   HistorialIngresos(); // esto trae el historial apenas se abre la vista
-
-
   // cerrar modal automáticamente si la ruta es de firma
-
   if (route.path.startsWith('/general-entry/firma/')) {
     modalFirma.value?.closeModal()
     router.push('/general-entry') // Para que no haya conveniente3s entre ruats
   }
+})
 
-});
 
 
-// ============================== MODALES ============================== //
 
-// -- ABRIR SCANNER -- //
+// =======================================================
+// FUNCIONES OPEN Y SUS MODALES
+// ========================================================
+
+// -- Abrir Scanner
 const open = () => {
   scannerModal.value?.openScanner()
 }
 
-// -- ABRIR EL MODAL PARA REGISTRO MANUAL -- //
+// -- Abrir modal de registro Manual
 const openManual = ()=>{
   modalManual.value.openModal()
   // vaciar todos los campos
@@ -269,15 +398,24 @@ const openManual = ()=>{
     formManual.formacion = ''
 }
 
-// -- ABRIR EL MODAL PARA INGRESAR MAQUINA -- //
+// -- Abrir modal para ingresar maquina
 const openMachine = (aprendiz : Aprendiz) =>{
+  machineModalOpen.value = true
+  firmaTemporal.value = '' // 👈 limpiar firma anterior
+
+  maquinaRegistrada.pc = false
+  maquinaRegistrada.vh = false
+
   aprendizMachine.value = aprendiz
   modalMachine.value.openModal()
-  for(const key in formMachine){
-    formMachine[key as keyof typeof formMachine] = '' // Vaciar campos
+
+  for (const key in formMachine) {
+    formMachine[key as keyof typeof formMachine] = ''
   }
 }
 
+
+// -- Abrir modal de firma
 const openFirma = () => {
   if (!aprendizMachine.value) return
 
@@ -286,13 +424,41 @@ const openFirma = () => {
   router.push(`/general-entry/firma/${aprendizMachine.value.documento}`)
 }
 
+
+
+// =======================================================
+// FUNCIONES CLOSE Y SUS MODALES
+// ========================================================
+
+// -- Cerrar modal de firma
 const closeFirma = () =>{
   router.push(`/general-entry`)
 }
 
-// =========================== EVENTOS SUBMITS ============================= //
 
-// -- INGRESAR APRENDIZ A REGISTRO DE INGRESO -- //
+// -- Cerrar modal para finalizar el registro
+const finalizarRegistro = () => {
+  dobleMaquina.value = false
+  machineConfirmModal.value.closeModal()
+  resetMachineForm()
+  // limpiar firma
+  firmaTemporal.value = ''
+
+  // limpiar formulario
+  formMachine.TipoMaquina = ''
+  formMachine.tipoVehiculo = ''
+  formMachine.modeloMaquina = ''
+  formMachine.placaSerial = ''
+  console.log(firmaTemporal)
+}
+
+
+
+// ========================================================
+// EVENTOS SUBMITS
+// =========================================================
+
+// -- Ingresar aprendiz a registro de ingreso
 const submit = async () => {
   // validar campo vacío
   if (!formManual.documento) {
@@ -315,7 +481,7 @@ const submit = async () => {
     return;
   }
 
-  // Ahora sí llamamos a la función de registro
+  // llamar a la función de registro
   const registrado = await detectAprendiz(formManual.documento);
 
   if (registrado) {
@@ -362,65 +528,181 @@ const EventoManual = async (DocumentoManual : string) =>{
 
 // -- INGRESAR MAQUINA DEL APRENDIZ -- //
 const submitMachine = async (id_aprendiz?: number) => {
-  if (!id_aprendiz) return;
   if (!id_aprendiz || submittedMachine.value) return; // bloquea si ya se está enviando
+
+// validar que tipoMaquina exista
+if (!formMachine.TipoMaquina) {
+  mensajeMachine.value = {
+    message: 'Debe seleccionar el tipo de máquina',
+    type: 'error'
+  }
+  return
+}
+
+if (formMachine.TipoMaquina !== 'vh') {
+  formMachine.tipoVehiculo = ''
+}
+
+// validación para pc
+if (formMachine.TipoMaquina === 'pc') {
+  if (!formMachine.modeloMaquina || !formMachine.placaSerial) {
+    mensajeMachine.value = {
+      message: 'Todos los campos son obligatorios',
+      type: 'error'
+    }
+    return
+  }
+
+  if (!firmaTemporal.value) {
+    mensajeMachine.value = {
+      message: 'Debe ingresar una firma',
+      type: 'error'
+    }
+    return
+  }
+}
+
+// validación para vehículo
+if (formMachine.TipoMaquina === 'vh') {
+  if (
+    !formMachine.tipoVehiculo ||
+    !formMachine.modeloMaquina ||
+    !formMachine.placaSerial
+  ) {
+    mensajeMachine.value = {
+      message: 'Todos los campos son obligatorios',
+      type: 'error'
+    }
+    return
+  }
+
+  if (!firmaTemporal.value) {
+    mensajeMachine.value = {
+      message: 'Debe ingresar la firma',
+      type: 'error'
+    }
+    return
+  }
+}
 
   // marcar que se hizo submit
   submittedMachine.value = true;
 
-  // VALIDACIÓN DE CAMPOS VACÍOS
-  // tipoVehiculo solo es obligatorio si es vehículo
-  if (!formMachine.TipoMaquina ||
-      (formMachine.TipoMaquina === 'vh' && !formMachine.tipoVehiculo) ||
-      !formMachine.modeloMaquina ||
-      !formMachine.placaSerial ||
-      !formMachine.firma) {
-    mensajeMachine.value = {
-      message: 'Todos los campos son obligatorios',
-      type: 'error'
-    };
-    return; // detener submit
+
+  if(dobleMaquina.value == false){
+      try {
+      const response = await fetch(`${API}/api/registroIngresos/ingresoMaquina/${id_aprendiz}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipoMaquina: formMachine.TipoMaquina,
+          tipoVehiculo: formMachine.tipoVehiculo,
+          modelo: formMachine.modeloMaquina.toUpperCase(),
+          placaSerial: formMachine.placaSerial.toUpperCase(),
+          firma: firmaTemporal.value
+        })
+      });
+
+      const data = await response.json();
+      console.log(data);
+
+      // Después de fetch exitoso
+      mensajeMachine.value = { message: 'Máquina ingresada con éxito', type: 'success' };
+
+      await HistorialIngresos();
+
+  // marcar qué tipo se registró
+  if (formMachine.TipoMaquina === 'pc') {
+    maquinaRegistrada.pc = true
   }
 
-  try {
-    const response = await fetch(`${API}/api/registroIngresos/ingresoMaquina/${id_aprendiz}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tipoMaquina: formMachine.TipoMaquina,
-        tipoVehiculo: formMachine.tipoVehiculo,
-        modelo: formMachine.modeloMaquina.toUpperCase(),
-        placaSerial: formMachine.placaSerial.toUpperCase(),
-        firma: formMachine.firma
-      })
-    });
-
-    const data = await response.json();
-    console.log(data);
-
-    // Después de fetch exitoso
-    mensajeMachine.value = { message: 'Máquina ingresada con éxito', type: 'success' };
-
-    // opcional: refrescar tabla si quieres mostrar la nueva máquina en la UI
-    await HistorialIngresos();
-
-    // Esperar un segundo antes de cerrar modal
-    setTimeout(() => {
-      modalMachine.value.closeModal();
-      submittedMachine.value = false; // desbloquear después de cerrar
-    }, 1000);
-
-  } catch (error) {
-    console.error(error);
-    mensajeMachine.value = { message: 'Error al registrar la máquina', type: 'error' };
+  if (formMachine.TipoMaquina === 'vh') {
+    maquinaRegistrada.vh = true
   }
- finally {
-    submittedMachine.value = false; // desbloquear después
+
+
+  setTimeout(() => {
+    machineModalOpen.value = false
+    modalMachine.value.closeModal()
+
+    // si solo tiene uno registrado
+    if (maquinaRegistrada.pc !== maquinaRegistrada.vh) {
+
+      machineConfirmModal.value.openModal()
+
+    }
+
+    submittedMachine.value = false
+
+  }, 1000)
+
+    } catch (error) {
+      console.error(error);
+      mensajeMachine.value = { message: 'Error al registrar la máquina', type: 'error' };
+    }
+  finally {
+      submittedMachine.value = false; // desbloquear después
+    }
   }
+
+
+
+  else if(dobleMaquina.value == true){
+          try {
+      const response = await fetch(`${API}/api/registroIngresos/ingresoDobleMaquina/${id_aprendiz}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipoMaquina: formMachine.TipoMaquina,
+          tipoVehiculo: formMachine.tipoVehiculo,
+          modelo: formMachine.modeloMaquina.toUpperCase(),
+          placaSerial: formMachine.placaSerial.toUpperCase(),
+          firma: firmaTemporal.value
+        })
+      });
+
+      const data = await response.json();
+      console.log(data);
+
+      // Después de fetch exitoso
+      mensajeMachine.value = { message: 'Máquina ingresada con éxito', type: 'success' };
+
+      await HistorialIngresos();
+
+  // marcar qué tipo se registró
+  if (formMachine.TipoMaquina === 'pc') {
+    maquinaRegistrada.pc = true
+  }
+
+  if (formMachine.TipoMaquina === 'vh') {
+    maquinaRegistrada.vh = true
+  }
+
+
+  setTimeout(() => {
+    machineModalOpen.value = false
+    modalMachine.value.closeModal()
+    resetMachineForm()   // 👈 limpiar todo
+    submittedMachine.value = false
+
+  }, 1000)
+
+    } catch (error) {
+      console.error(error);
+      mensajeMachine.value = { message: 'Error al registrar la máquina', type: 'error' };
+    }
+  finally {
+      submittedMachine.value = false; // desbloquear después
+    }
+  }
+
 };
 
 
+
 // ================================== WATCHS =========================== //
+
+
 
 // -- VERIFICAR SI HAY BUSQUEDA DE APRENDICES -- //
 watch(queryAprendices, async (nuevoTexto) => {
@@ -433,22 +715,12 @@ watch(queryAprendices, async (nuevoTexto) => {
 
 })
 
+
+
 watch(formMachine, () => {
   submittedMachine.value = false; // limpiar errores si el usuario cambia algo
 }, { deep: true });
 
-
-// Vigilar cambios en la firma
-watch(
-  () => formMachine.firma,
-  (nuevaFirma) => {
-    if (nuevaFirma) {
-      console.log(nuevaFirma)
-      // Si ya hay firma y el modal está abierto, cerramos
-      modalFirma.value.closeModal();
-    }
-  }
-);
 
 // Vigilar placa
 watch(() => formMachine.placaSerial, (nuevoValor) => {
@@ -464,13 +736,26 @@ watch(() => formMachine.placaSerial, (nuevoValor) => {
   if (value !== nuevoValor) formMachine.placaSerial = value;
 });
 
+// Formatear a uppercase la marca de la maquina
+watch(() => formMachine.modeloMaquina, (nuevoValor) => {
+  if (!nuevoValor) return
+
+  const value = nuevoValor.toUpperCase()
+
+  if (value !== nuevoValor) {
+    formMachine.modeloMaquina = value
+  }
+})
+
 // -- VIGILAR CAMBIOS EN LA RUTA DE FIRMA
 watch(() => route.fullPath, (newPath) => {
+
   if (newPath.startsWith('/general-entry/firma/')) {
     modalFirma.value?.openModal()
   } else {
     modalFirma.value?.closeModal()
   }
+
 })
 
 watch(() => formMachine.TipoMaquina, () => {
@@ -478,7 +763,6 @@ watch(() => formMachine.TipoMaquina, () => {
   formMachine.placaSerial = '';
   formMachine.tipoVehiculo = '';
   formMachine.modeloMaquina = '';
-  formMachine.firma = '';
 
   // También puedes resetear errores si quieres
   mensajeMachine.value = { message: '', type: 'error' };
@@ -490,9 +774,9 @@ const errorMachine = computed(() => {
   if (!submittedMachine.value) return '' // no mostrar nada hasta que se haga submit
   if (!formMachine.TipoMaquina) return 'Ingrese un tipo de maquina'
   if (formMachine.TipoMaquina === 'vh' && !formMachine.tipoVehiculo) return 'Ingrese un tipo de vehiculo'
-  if (!formMachine.modeloMaquina) return 'Digite un modelo'
+  if (!formMachine.modeloMaquina) return 'Digite una marca'
   if (!formMachine.placaSerial) return 'Digite placa o serial'
-  if (!formMachine.firma) return 'Digite la firma'
+  if (!firmaTemporal.value) return 'Digite la firma'
 
   return ''
 })
@@ -500,6 +784,18 @@ const errorMachine = computed(() => {
 const displayMachineMessage = computed(() => {
   return errorMachine.value || mensajeMachine.value.message;
 });
+
+const confirmMessage = computed(() => {
+  if (maquinaRegistrada.pc) {
+    return "¿Desea registrar también un vehículo?"
+  }
+
+  if (maquinaRegistrada.vh) {
+    return "¿Desea registrar también un computador?"
+  }
+
+  return ""
+})
 
 
 </script>

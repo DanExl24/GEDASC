@@ -41,6 +41,7 @@ const limpiar = () => {
   signaturePad.clear();
 };
 
+
 const guardar = () => {
   if (signaturePad.isEmpty()) {
     alert("La firma está vacía");
