@@ -63,7 +63,7 @@
           <td>
             <BaseButtonOpen v-if="index === 0 && aprendiz.id_detallemaquina ==null" @click="openMachine(aprendiz)" class-button="m-auto my-0 py-0 px-2 rounded-lg bg-blue-700 min-w-min text-center font-semibold" text="Ingresar Maquina"/>
             <BaseText v-else-if="aprendiz.id_detallemaquina == null" text="No registrada" type="error" class="font-semibold"/>
-            <BaseText v-else-if="aprendiz.id_detallemaquina != null" text="Registrada" type="success" class="font-semibold"/>
+            <BaseButtonOpen v-else-if="aprendiz.id_detallemaquina != null" text="Ver máquinas" class-button="m-auto my-0 py-0 px-0 bg-white border-none text-center font-semibold text-green-700" @click="openDetalleMaquina(aprendiz.id_aprendiz)"/>
             <BaseText v-else-if="firmaTemporal" text="Firma registrada" type="success" class="font-semibold"/>
           </td>
         </BaseColumn>
@@ -111,6 +111,47 @@
         <BaseModal class="flex items-center justify-center" @close="closeFirma" ref="modalFirma" :title="`Firma de ${aprendizMachine?.nombre}`">
           <!-- Renderizar la firma-->
            <SignaturePad @update:signature="guardarFirma" />
+        </BaseModal>
+        <!-- Modal para ver los detalles de las maquinas-->
+        <BaseModal ref="modalDetalleMaquina" title="Máquinas Registradas">
+
+          <div class="flex flex-col gap-6">
+
+            <!-- COMPUTADOR -->
+            <div v-if="maquinaDetalle.pc" class="border rounded-lg p-4">
+
+              <h3 class="font-bold font-robotoSlab text-lg mb-2">Computador</h3>
+
+              <BaseText type="success" :text="`Marca: ${maquinaDetalle.pc.modelo}`"/>
+              <BaseText type="success" :text="`Serial: ${maquinaDetalle.pc.placa_serial}`"/>
+
+            </div>
+
+            <!-- VEHICULO -->
+            <div v-if="maquinaDetalle.vh" class="border rounded-lg p-4">
+
+              <h3 class="font-bold font-robotoSlab text-lg mb-2">Vehículo</h3>
+
+              <BaseText type="success" :text="`Tipo: ${maquinaDetalle.vh.tipo_vehiculo}`"/>
+              <BaseText type="success" :text="`Marca: ${maquinaDetalle.vh.modelo}`"/>
+              <BaseText type="success" :text="`Placa: ${maquinaDetalle.vh.placa_serial}`"/>
+
+            </div>
+
+            <!-- FIRMA -->
+            <div v-if="maquinaDetalle.pc?.firma || maquinaDetalle.vh?.firma">
+
+              <h3 class="font-semibold mb-2">Firma del aprendiz</h3>
+
+              <img
+                :src="maquinaDetalle.pc?.firma || maquinaDetalle.vh?.firma"
+                class="border rounded-lg w-48"
+              />
+
+            </div>
+
+          </div>
+
         </BaseModal>
     </div>
   </div>
@@ -178,6 +219,11 @@ const machineConfirmModal = ref()
 const firmaTemporal = ref('')
 const machineModalOpen = ref(false)
 const dobleMaquina = ref(false)
+const modalDetalleMaquina = ref()
+const maquinaDetalle = ref<DetalleMaquinas>({
+  pc: null,
+  vh: null
+})
 // -- Alerta de formulario manual -- //
 const alerta = ref({message: '', type: 'error' as 'error' | 'success'})
 
@@ -210,6 +256,27 @@ const formMachine = reactive({modeloMaquina : '', TipoMaquina: '', tipoVehiculo:
 export interface Aprendiz {id_aprendiz: number, nombre: string, apellido: string, documento: string, formacion: string, hora_ingreso: string, id_detallemaquina : number}
 
 
+// Interfaz para computadores
+interface Computador {
+  modelo: string
+  placa_serial: string
+  firma: string
+}
+
+
+// Interfaz para vehiculos
+interface Vehiculo {
+  tipo_vehiculo: string
+  modelo: string
+  placa_serial: string
+  firma: string
+}
+
+// Interfaz para detalle de
+interface DetalleMaquinas {
+  pc: Computador | null
+  vh: Vehiculo | null
+}
 
 
 
@@ -360,6 +427,29 @@ const resetMachineForm = () => {
 
   // cerrar modales por seguridad
   machineModalOpen.value = false
+}
+
+// Consultar maquinas de los aprendices
+const openDetalleMaquina = async (id_aprendiz:number) => {
+
+  try{
+
+    const response = await fetch(`${API}/api/registroIngresos/detalleMaquinas/${id_aprendiz}`)
+    const data = await response.json()
+
+    if(!response.ok){
+      console.error(data.message)
+      return
+    }
+
+    maquinaDetalle.value = data.result
+
+    modalDetalleMaquina.value.openModal()
+
+  }catch(error){
+    console.error(error)
+  }
+
 }
 
 // =======================================================

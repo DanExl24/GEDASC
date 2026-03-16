@@ -27,10 +27,13 @@ export const AddEntry = async (req: Request, res: Response) => {
     const id_aprendiz = aprendizRecord.rows[0].id_aprendiz;
 
     // Verificar si ya tiene ingreso
-    const ingresoRecord = await pool.query(
-      'SELECT * FROM detalles_ingreso WHERE id_aprendiz = $1',
-      [id_aprendiz]
-    );
+    const ingresoRecord = await pool.query(`
+      SELECT id_ingreso
+      FROM detalles_ingreso
+      WHERE id_aprendiz = $1
+      AND hora_ingreso >= CURRENT_DATE
+      AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+    `,[id_aprendiz])
 
     // si se encuentra un registro, no permitir un nuevo registro
     if (ingresoRecord.rowCount! > 0) {
@@ -54,26 +57,40 @@ export const AddEntry = async (req: Request, res: Response) => {
 
 
 // Funcion para verificar el ingreso de un aprendiz
-export const DetectEntry = async (request : Request, response : Response) =>{
-  try{
-    const {documento} = request.params
-    // Verificar si ya tiene ingreso
-    const IngresoVerificado = await pool.query(
-      'SELECT * FROM detalles_ingreso WHERE id_aprendiz = $1',
-      [documento]
-    );
+export const DetectEntry = async (request: Request, response: Response) => {
+  try {
 
-    // si se encuentra un registro, no permitir un nuevo registro
-    if (IngresoVerificado.rowCount! > 0) {
-      return response.status(200).json({ message: "El aprendiz ya tiene un registro", yaIngresado : true }); //Si el aprendiz ya esta ingresado, se retorna el registro como verdadero
+    const { documento } = request.params
+
+    const ingresoVerificado = await pool.query(`
+      SELECT di.id_ingreso
+      FROM detalles_ingreso di
+      JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
+      WHERE a.documento = $1
+      AND di.hora_ingreso >= CURRENT_DATE
+      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+    `,[documento])
+
+    if (ingresoVerificado.rowCount! > 0) {
+      return response.status(200).json({
+        message: "El aprendiz ya tiene un registro hoy",
+        yaIngresado: true
+      })
     }
-    else{
-      return response.status(200).json({ message: "El aprendiz no tiene un registro", yaIngresado : false }); //Si el aprendiz no esta ingresado, se retorna el registro como falso
-    }
+
+    return response.status(200).json({
+      message: "El aprendiz no tiene registro hoy",
+      yaIngresado: false
+    })
 
   } catch (error) {
-    console.error(error);
-    response.status(500).json({message:"Hay un error", error: error});
+
+    console.error(error)
+
+    response.status(500).json({
+      message: "Hay un error",
+      error: error
+    })
   }
 }
 
@@ -81,21 +98,53 @@ export const DetectEntry = async (request : Request, response : Response) =>{
 
 // Funcion para el historial de ingresos
 export const EntryRecord = async (request: Request, response: Response) => {
-  try{
-    // consulta de todos los aprendices
-    const result = await pool.query("SELECT a.id_aprendiz, a.nombre, a.apellido, a.documento, f.nombre AS formacion, TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso, di.id_detallemaquina  FROM detalles_ingreso AS di JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz JOIN formaciones AS f ON f.id_formacion = a.id_formacion LEFT JOIN detalles_maquinas AS dm ON dm.id_detallemaquina = di.id_detallemaquina ORDER BY di.id_ingreso DESC");
-    // verificar si hay aprendices
-    if(result.rowCount===0){
-      response.status(404).json({ message: "No se encontraron registros" });
-      return;
+  try {
+
+    const result = await pool.query(`
+      SELECT
+        a.id_aprendiz,
+        a.nombre,
+        a.apellido,
+        a.documento,
+        f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
+        di.id_detallemaquina
+
+      FROM detalles_ingreso AS di
+
+      JOIN aprendiz AS a
+      ON a.id_aprendiz = di.id_aprendiz
+
+      JOIN formaciones AS f
+      ON f.id_formacion = a.id_formacion
+
+      LEFT JOIN detalles_maquinas AS dm
+      ON dm.id_detallemaquina = di.id_detallemaquina
+
+      WHERE di.hora_ingreso >= CURRENT_DATE
+      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+
+      ORDER BY di.id_ingreso DESC
+    `);
+
+    if (result.rowCount === 0) {
+      return response.status(404).json({
+        message: "No se encontraron registros hoy"
+      });
     }
-    // mandar resultados
-    response.status(200).json(result.rows);
+
+    return response.status(200).json(result.rows);
+
   } catch (error) {
+
     console.error(error);
-    response.status(500).json({message:"Hay un error", error: error});
+
+    return response.status(500).json({
+      message: "Hay un error en el servidor",
+      error
+    });
   }
-}
+};
 
 
 // Funcion para traer los datos del aprendiz
@@ -138,14 +187,19 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         a.apellido,
         a.documento,
         f.nombre AS formacion,
-        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
+        di.id_detallemaquina
       FROM detalles_ingreso AS di
       JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
       JOIN formaciones AS f ON f.id_formacion = a.id_formacion
       WHERE
-        a.documento ILIKE $1
-        OR a.nombre ILIKE $1
-        OR a.apellido ILIKE $1
+        (
+          a.documento ILIKE $1
+          OR a.nombre ILIKE $1
+          OR a.apellido ILIKE $1
+        )
+      AND di.hora_ingreso >= CURRENT_DATE
+      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
     `, [pattern]) // consulta SQL
 
     console.log("Busqueda:", text)
@@ -225,7 +279,7 @@ export const AddMachine = async (request: Request, response: Response) => {
     const checkExist = await client.query(
       "SELECT dm.id_detallemaquina FROM detalles_maquinas dm " +
       "JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina " +
-      "WHERE di.id_aprendiz = $1 AND (dm.id_computador = $2 OR dm.id_vehiculo = $3)",
+      "WHERE di.id_aprendiz = $1 AND di.hora_ingreso >= CURRENT_DATE AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day' AND (dm.id_computador = $2 OR dm.id_vehiculo = $3)",
       [id_aprendiz, tipoMaquina === 'pc' ? idMaquina : null, tipoMaquina === 'vh' ? idMaquina : null]
     );
 
@@ -282,7 +336,7 @@ export const UpdateMachine = async (request: Request, response: Response) => {
   const { id_aprendiz } = request.params
 
   const detalle = await pool.query(
-    "SELECT id_detallemaquina FROM detalles_ingreso WHERE id_aprendiz = $1",
+    "SELECT id_detallemaquina FROM detalles_ingreso WHERE id_aprendiz = $1 AND hora_ingreso >= CURRENT_DATE AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'",
     [id_aprendiz]
   )
 
@@ -331,6 +385,91 @@ export const UpdateMachine = async (request: Request, response: Response) => {
 
       return response.status(201).json(result.rows)
     }
+
+  }
+
+}
+
+
+// Funcion para consultar los datos de las maquinas del aprendiz
+
+export const SearchMachine = async (request: Request, response: Response) => {
+
+  const { id_aprendiz } = request.params
+
+  if (!id_aprendiz) {
+    return response.status(400).json({
+      message: "Debe enviar el id del aprendiz"
+    })
+  }
+
+  try {
+
+    const query = `
+      SELECT
+        c.modelo AS pc_modelo,
+        c.serial AS pc_serial,
+        c.firma_ingreso AS pc_firma,
+
+        v.tipo_vehiculo,
+        v.modelo AS vh_modelo,
+        v.placa AS vh_placa,
+        v.firma_ingreso AS vh_firma
+
+      FROM detalles_ingreso d
+
+      JOIN detalles_maquinas AS dm
+      ON dm.id_detallemaquina = d.id_detallemaquina
+
+      LEFT JOIN computadores c
+      ON dm.id_computador = c.id_computador
+
+      LEFT JOIN vehiculos v
+      ON dm.id_vehiculo = v.id_vehiculo
+
+      WHERE d.id_aprendiz = $1
+      AND d.hora_ingreso >= CURRENT_DATE
+      AND d.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+      LIMIT 1
+    `
+
+    const result = await pool.query(query, [id_aprendiz])
+
+    if (result.rows.length === 0) {
+      return response.status(404).json({
+        message: "No se encontraron máquinas registradas"
+      })
+    }
+
+    const data = result.rows[0]
+
+    const maquinas = {
+      pc: data.pc_modelo ? {
+        modelo: data.pc_modelo,
+        placa_serial: data.pc_serial,
+        firma: data.pc_firma
+      } : null,
+
+      vh: data.vh_modelo ? {
+        tipo_vehiculo: data.tipo_vehiculo,
+        modelo: data.vh_modelo,
+        placa_serial: data.vh_placa,
+        firma: data.vh_firma
+      } : null
+    }
+
+    return response.status(200).json({
+      result: maquinas
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    return response.status(500).json({
+      message: "Error al buscar las máquinas",
+      error: error
+    })
 
   }
 
