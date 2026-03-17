@@ -139,12 +139,12 @@
             </div>
 
             <!-- FIRMA -->
-            <div v-if="maquinaDetalle.pc?.firma || maquinaDetalle.vh?.firma">
+            <div v-if="maquinaDetalle.firma">
 
               <h3 class="font-semibold mb-2">Firma del aprendiz</h3>
 
               <img
-                :src="maquinaDetalle.pc?.firma || maquinaDetalle.vh?.firma"
+                :src="maquinaDetalle.firma"
                 class="border rounded-lg w-48"
               />
 
@@ -253,7 +253,18 @@ const formMachine = reactive({modeloMaquina : '', TipoMaquina: '', tipoVehiculo:
 
 
 // -- Interfaz para aprendices
-export interface Aprendiz {id_aprendiz: number, nombre: string, apellido: string, documento: string, formacion: string, hora_ingreso: string, id_detallemaquina : number}
+export interface Aprendiz {
+  id_aprendiz: number
+  nombre: string
+  apellido: string
+  documento: string
+  formacion: string
+
+  hora_ingreso?: string
+  hora_salida?: string
+
+  id_detallemaquina?: number
+}
 
 
 // Interfaz para computadores
@@ -276,6 +287,7 @@ interface Vehiculo {
 interface DetalleMaquinas {
   pc: Computador | null
   vh: Vehiculo | null
+  firma?: string
 }
 
 
@@ -799,7 +811,7 @@ watch(queryAprendices, async (nuevoTexto) => {
 
   if (!nuevoTexto.trim()) {await HistorialIngresos(); return} //si no hay texto
 
-  const data = await SearchAprendiz(nuevoTexto) // si hay texto
+  const data = await SearchAprendiz(nuevoTexto,'ingreso') // si hay texto
 
   aprendizData.value = data // Pasar el aprendiz encontrado en busqueda
 

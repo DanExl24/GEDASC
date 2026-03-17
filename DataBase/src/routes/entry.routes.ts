@@ -18,4 +18,6 @@ router.get('/buscar', SearchAprendiz)
 router.post('/ingresoMaquina/:id',AddMachine)
 router.post('/ingresoDobleMaquina/:id_aprendiz',UpdateMachine)
 router.get('/detalleMaquinas/:id_aprendiz',SearchMachine)
+router.get('/firmaIngreso/:id_aprendiz',SearchMachine)
+
 export default router

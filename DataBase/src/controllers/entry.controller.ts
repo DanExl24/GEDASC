@@ -220,7 +220,7 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
 
 // Funcion para ingresar la maquina del aprendiz
 export const AddMachine = async (request: Request, response: Response) => {
-  const client = await pool.connect(); // Conexión para transacción
+  const client = await pool.connect();
 
   try {
     const id_aprendiz = request.params.id;
@@ -230,101 +230,102 @@ export const AddMachine = async (request: Request, response: Response) => {
       return response.status(400).json({ message: "Aprendiz inválido" });
     }
 
-    // Validar campos obligatorios
     if (!tipoMaquina || !modelo || !placaSerial || !firma || (tipoMaquina === 'vh' && !tipoVehiculo)) {
       return response.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
-    await client.query('BEGIN'); // Iniciar transacción
+    await client.query('BEGIN');
 
     let idMaquina: number | null = null;
 
+    // ================= VEHICULO =================
     if (tipoMaquina === 'vh') {
-      // Verificar si el vehículo ya existe
       const vehiculo = await client.query(
         "SELECT id_vehiculo FROM vehiculos WHERE placa = $1",
         [placaSerial]
       );
 
-      if (vehiculo.rowCount && vehiculo.rowCount > 0) {
-        idMaquina = vehiculo.rows[0].id_vehiculo; // ya existe
+      if (vehiculo.rowCount! > 0) {
+        idMaquina = vehiculo.rows[0].id_vehiculo;
       } else {
-        // Insertar nuevo vehículo
         const result = await client.query(
-          "INSERT INTO vehiculos(tipo_vehiculo, placa, modelo, firma_ingreso) VALUES ($1,$2,$3,$4) RETURNING id_vehiculo",
-          [tipoVehiculo, placaSerial, modelo, firma]
+          "INSERT INTO vehiculos(tipo_vehiculo, placa, modelo) VALUES ($1,$2,$3) RETURNING id_vehiculo",
+          [tipoVehiculo, placaSerial, modelo]
         );
         idMaquina = result.rows[0].id_vehiculo;
       }
-    } else if (tipoMaquina === 'pc') {
-      // Verificar si la PC ya existe
+    }
+
+    // ================= COMPUTADOR =================
+    if (tipoMaquina === 'pc') {
       const pc = await client.query(
         "SELECT id_computador FROM computadores WHERE serial = $1",
         [placaSerial]
       );
 
-      if (pc.rowCount && pc.rowCount > 0) {
-        idMaquina = pc.rows[0].id_computador; // ya existe
+      if (pc.rowCount! > 0) {
+        idMaquina = pc.rows[0].id_computador;
       } else {
-        // Insertar nueva PC
         const result = await client.query(
-          "INSERT INTO computadores(serial, modelo, firma_ingreso) VALUES ($1,$2,$3) RETURNING id_computador",
-          [placaSerial, modelo, firma]
+          "INSERT INTO computadores(serial, modelo) VALUES ($1,$2) RETURNING id_computador",
+          [placaSerial, modelo]
         );
         idMaquina = result.rows[0].id_computador;
       }
     }
 
-      // Antes de insertar en detalles_maquinas
+    // 🚫 evitar duplicados
     const checkExist = await client.query(
-      "SELECT dm.id_detallemaquina FROM detalles_maquinas dm " +
-      "JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina " +
-      "WHERE di.id_aprendiz = $1 AND di.hora_ingreso >= CURRENT_DATE AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day' AND (dm.id_computador = $2 OR dm.id_vehiculo = $3)",
-      [id_aprendiz, tipoMaquina === 'pc' ? idMaquina : null, tipoMaquina === 'vh' ? idMaquina : null]
+      `SELECT dm.id_detallemaquina
+       FROM detalles_maquinas dm
+       JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina
+       WHERE di.id_aprendiz = $1
+       AND di.hora_ingreso >= CURRENT_DATE
+       AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+       AND (dm.id_computador = $2 OR dm.id_vehiculo = $3)`,
+      [
+        id_aprendiz,
+        tipoMaquina === 'pc' ? idMaquina : null,
+        tipoMaquina === 'vh' ? idMaquina : null
+      ]
     );
 
-    if (checkExist.rowCount && checkExist.rowCount > 0) {
+    if (checkExist.rowCount! > 0) {
       await client.query('ROLLBACK');
-      return response.status(409).json({ message: "Esta máquina ya está registrada para este aprendiz hoy" });
+      return response.status(409).json({ message: "Esta máquina ya está registrada hoy" });
     }
 
-    // Insertar en detalles_maquinas (colocando los IDs en la columna correcta)
+    // ✅ INSERT CON FIRMA EN DETALLES_MAQUINAS
     const resultDetallesMaquina = await client.query(
-      "INSERT INTO detalles_maquinas(id_computador, id_vehiculo) VALUES ($1, $2) RETURNING id_detallemaquina",
+      `INSERT INTO detalles_maquinas(id_computador, id_vehiculo, firma_ingreso)
+       VALUES ($1, $2, $3)
+       RETURNING id_detallemaquina`,
       [
-        tipoMaquina === 'pc' ? idMaquina : null,    // id_computador
-        tipoMaquina === 'vh' ? idMaquina : null     // id_vehiculo
+        tipoMaquina === 'pc' ? idMaquina : null,
+        tipoMaquina === 'vh' ? idMaquina : null,
+        firma
       ]
     );
 
     const idDetallesMaquina = resultDetallesMaquina.rows[0].id_detallemaquina;
 
-    // Actualizar detalles_ingreso con id_detalles_maquinas
     await client.query(
       "UPDATE detalles_ingreso SET id_detallemaquina = $1 WHERE id_aprendiz = $2",
       [idDetallesMaquina, id_aprendiz]
     );
 
-    await client.query('COMMIT'); // Confirmar transacción
+    await client.query('COMMIT');
 
     return response.status(201).json({
-      message: "Máquina registrada y vinculada correctamente",
+      message: "Máquina registrada correctamente",
       idDetallesMaquina
     });
 
-  } catch (error: unknown) {
-    await client.query('ROLLBACK'); // Deshacer si falla algo
-
-    if (error instanceof Error) {
-      console.error('Error completo:', error.message);
-      console.error(error.stack);
-      return response.status(500).json({ message: "Error en el ingreso de máquina", error: error.message });
-    } else {
-      console.error('Error inesperado:', error);
-      return response.status(500).json({ message: "Error en el ingreso de máquina", error: String(error) });
-    }
+  } catch (error) {
+    await client.query('ROLLBACK');
+    return response.status(500).json({ message: error });
   } finally {
-    client.release(); // Liberar conexión
+    client.release();
   }
 };
 
@@ -336,13 +337,17 @@ export const UpdateMachine = async (request: Request, response: Response) => {
   const { id_aprendiz } = request.params
 
   const detalle = await pool.query(
-    "SELECT id_detallemaquina FROM detalles_ingreso WHERE id_aprendiz = $1 AND hora_ingreso >= CURRENT_DATE AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'",
+    `SELECT id_detallemaquina
+     FROM detalles_ingreso
+     WHERE id_aprendiz = $1
+     AND hora_ingreso >= CURRENT_DATE
+     AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'`,
     [id_aprendiz]
   )
 
   if (detalle.rowCount === 0) {
     return response.status(404).json({
-      message: "No existe un detalle de ingreso para este aprendiz"
+      message: "No existe ingreso hoy"
     })
   }
 
@@ -351,43 +356,39 @@ export const UpdateMachine = async (request: Request, response: Response) => {
   if (tipoMaquina == 'pc') {
 
     const computador = await pool.query(
-      "INSERT INTO computadores(serial,modelo,firma_ingreso) VALUES($1,$2,$3) RETURNING id_computador",
-      [placaSerial, modelo, firma]
+      "INSERT INTO computadores(serial,modelo) VALUES($1,$2) RETURNING id_computador",
+      [placaSerial, modelo]
     )
 
     const id_computador = computador.rows[0].id_computador
 
-    if (computador.rowCount && computador.rowCount > 0) {
-
-      const result = await pool.query(
-        "UPDATE detalles_maquinas SET id_computador = $1 WHERE id_detallemaquina = $2",
-        [id_computador, id_detallemaquina]
-      )
-
-      return response.status(201).json(result.rows)
-    }
+    await pool.query(
+      `UPDATE detalles_maquinas
+       SET id_computador = $1, firma_ingreso = $2
+       WHERE id_detallemaquina = $3`,
+      [id_computador, firma, id_detallemaquina]
+    )
 
   } else if (tipoMaquina == 'vh') {
 
     const vehiculo = await pool.query(
-      "INSERT INTO vehiculos(tipo_vehiculo, placa, modelo, firma_ingreso) VALUES($1,$2,$3,$4) RETURNING id_vehiculo",
-      [tipoVehiculo, placaSerial, modelo, firma]
+      "INSERT INTO vehiculos(tipo_vehiculo, placa, modelo) VALUES($1,$2,$3) RETURNING id_vehiculo",
+      [tipoVehiculo, placaSerial, modelo]
     )
 
     const id_vehiculo = vehiculo.rows[0].id_vehiculo
 
-    if (vehiculo.rowCount && vehiculo.rowCount > 0) {
-
-      const result = await pool.query(
-        "UPDATE detalles_maquinas SET id_vehiculo = $1 WHERE id_detallemaquina = $2",
-        [id_vehiculo, id_detallemaquina]
-      )
-
-      return response.status(201).json(result.rows)
-    }
-
+    await pool.query(
+      `UPDATE detalles_maquinas
+       SET id_vehiculo = $1, firma_ingreso = $2
+       WHERE id_detallemaquina = $3`,
+      [id_vehiculo, firma, id_detallemaquina]
+    )
   }
 
+  return response.status(200).json({
+    message: "Máquina actualizada correctamente"
+  })
 }
 
 
@@ -409,16 +410,16 @@ export const SearchMachine = async (request: Request, response: Response) => {
       SELECT
         c.modelo AS pc_modelo,
         c.serial AS pc_serial,
-        c.firma_ingreso AS pc_firma,
 
         v.tipo_vehiculo,
         v.modelo AS vh_modelo,
         v.placa AS vh_placa,
-        v.firma_ingreso AS vh_firma
+
+        dm.firma_ingreso
 
       FROM detalles_ingreso d
 
-      JOIN detalles_maquinas AS dm
+      JOIN detalles_maquinas dm
       ON dm.id_detallemaquina = d.id_detallemaquina
 
       LEFT JOIN computadores c
@@ -447,15 +448,14 @@ export const SearchMachine = async (request: Request, response: Response) => {
       pc: data.pc_modelo ? {
         modelo: data.pc_modelo,
         placa_serial: data.pc_serial,
-        firma: data.pc_firma
       } : null,
 
       vh: data.vh_modelo ? {
         tipo_vehiculo: data.tipo_vehiculo,
         modelo: data.vh_modelo,
         placa_serial: data.vh_placa,
-        firma: data.vh_firma
-      } : null
+      } : null,
+      firma: data.firma_ingreso   // 🔥 NUEVO
     }
 
     return response.status(200).json({

@@ -18,6 +18,11 @@ const router = createRouter({
         }
       ]
     },
+    {
+      path : '/general-exit',
+      name : 'GeneralExitView',
+      component : () => import('../views/GeneralExitView.vue'),
+    },
   ],
 })
 
