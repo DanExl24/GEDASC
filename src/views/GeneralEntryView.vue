@@ -12,7 +12,7 @@
       <!-- Boton para salir -->
       <ExitButton to="/"/>
       <!-- Boton para abrir el modal -->
-      <BaseButtonOpen @click="open" :image="codebar" text="Escanear Aprendiz"/>
+      <BaseButtonOpen @click="open" :image="codebar" text="Escanear Aprendiz" class="text-white"/>
     </div>
 
     <!-- Escaneo de codigo de barras -->
@@ -27,7 +27,7 @@
         </div>
 
         <!--Boton de registro manual  -->
-        <BaseButtonOpen @click="openManual" :image="add" text="Ingreso Manual"/>
+        <BaseButtonOpen @click="openManual" :image="add" text="Ingreso Manual" class="text-white"/>
         <!--Modal de registro Manual  -->
         <BaseModal ref="modalManual" title="Registro Manual">
           <BaseForm method="POST" :submit="submit">
@@ -61,9 +61,9 @@
           <td>{{ aprendiz.formacion }}</td>
           <td>{{ aprendiz.hora_ingreso }}</td>
           <td>
-            <BaseButtonOpen v-if="index === 0 && aprendiz.id_detallemaquina ==null" @click="openMachine(aprendiz)" class-button="m-auto my-0 py-0 px-2 rounded-lg bg-blue-700 min-w-min text-center font-semibold" text="Ingresar Maquina"/>
+            <BaseButtonOpen v-if="index === 0 && aprendiz.id_detallemaquina ==null" @click="openMachine(aprendiz)" class-button="m-auto my-0 py-0 px-2 rounded-lg bg-blue-700 min-w-min text-center font-semibold text-white" text="Ingresar Maquina"/>
             <BaseText v-else-if="aprendiz.id_detallemaquina == null" text="No registrada" type="error" class="font-semibold"/>
-            <BaseButtonOpen v-else-if="aprendiz.id_detallemaquina != null" text="Ver máquinas" class-button="m-auto my-0 py-0 px-0 bg-white border-none text-center font-semibold text-green-700" @click="openDetalleMaquina(aprendiz.id_aprendiz)"/>
+            <BaseButtonOpen v-else-if="aprendiz.id_detallemaquina != null" text="Ver máquinas" class-button="m-auto my-0 py-0 px-0 bg-transparent border-none text-center font-semibold !text-senaColor" @click="openDetalleMaquina(aprendiz.id_aprendiz)"/>
             <BaseText v-else-if="firmaTemporal" text="Firma registrada" type="success" class="font-semibold"/>
           </td>
         </BaseColumn>
