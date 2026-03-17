@@ -99,7 +99,6 @@ export const DetectEntry = async (request: Request, response: Response) => {
 // Funcion para el historial de ingresos
 export const EntryRecord = async (request: Request, response: Response) => {
   try {
-
     const result = await pool.query(`
       SELECT
         a.id_aprendiz,
@@ -108,37 +107,31 @@ export const EntryRecord = async (request: Request, response: Response) => {
         a.documento,
         f.nombre AS formacion,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
+        TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
         di.id_detallemaquina
-
       FROM detalles_ingreso AS di
-
       JOIN aprendiz AS a
-      ON a.id_aprendiz = di.id_aprendiz
-
+        ON a.id_aprendiz = di.id_aprendiz
       JOIN formaciones AS f
-      ON f.id_formacion = a.id_formacion
-
+        ON f.id_formacion = a.id_formacion
+      LEFT JOIN detalles_salida AS ds
+        ON ds.id_ingreso = di.id_ingreso
       LEFT JOIN detalles_maquinas AS dm
-      ON dm.id_detallemaquina = di.id_detallemaquina
-
-      WHERE di.hora_ingreso >= CURRENT_DATE
-      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-
-      ORDER BY di.id_ingreso DESC
+        ON dm.id_detallemaquina = di.id_detallemaquina
+      WHERE di.id_ingreso IS NOT NULL
+      ORDER BY di.hora_ingreso DESC
     `);
 
     if (result.rowCount === 0) {
       return response.status(404).json({
-        message: "No se encontraron registros hoy"
+        message: "No se encontraron registros de ingresos"
       });
     }
 
     return response.status(200).json(result.rows);
 
   } catch (error) {
-
     console.error(error);
-
     return response.status(500).json({
       message: "Hay un error en el servidor",
       error

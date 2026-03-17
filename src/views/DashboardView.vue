@@ -7,7 +7,7 @@
         <!-- Tarjetas del dashboard -->
         <BaseCard -view-link="/general-entry" :-card-img="registerPerson"/>
         <BaseCard -view-link="/general-exit" :-card-img="ExitDoor" card-text="Consulte acerca de los aprendices que han salido del CTA"/>
-        <BaseCard :-card-img="RecordPaper" card-text="Registro historico sobre entradas y salidas en el CTA"/>
+        <BaseCard -view-link="/general-history" :-card-img="RecordPaper" card-text="Registro historico sobre entradas y salidas en el CTA"/>
 
         <BaseCard -card-bg="green" :-card-img="SendComputer" card-text="Equipos de Computo que han sido ingresados en el CTA"/>
         <BaseCard -card-bg="green" :-card-img="BikeGreen" card-text="Motocicletas que han sido ingresadas en el CTA"/>

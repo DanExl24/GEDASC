@@ -227,3 +227,107 @@ export const ExitRecord = async (request: Request, response: Response) => {
     });
   }
 };
+
+
+
+// 🔍 DETALLE DE SALIDA (MULTI-MAQUINA)
+export const ExitDetail = async (req: Request, res: Response) => {
+  try {
+
+    const { id_aprendiz } = req.params
+
+    if (!id_aprendiz) {
+      return res.status(400).json({
+        message: "ID de aprendiz requerido"
+      })
+    }
+
+    const result = await pool.query(`
+      SELECT
+        TO_CHAR(ds.hora_salida, 'YYYY-MM-DD') AS fecha,
+        TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora,
+
+        dm.tipo_maquina,
+        dm.tipo_vehiculo,
+        dm.modelo,
+        dm.placa_serial,
+        dm.firma
+
+      FROM detalles_salida ds
+
+      JOIN detalles_ingreso di
+        ON di.id_ingreso = ds.id_ingreso
+
+      LEFT JOIN detalles_maquinas dm
+        ON dm.id_detallemaquina = di.id_detallemaquina
+
+      WHERE di.id_aprendiz = $1
+
+      ORDER BY ds.hora_salida DESC
+    `, [id_aprendiz])
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: "No se encontró detalle de salida"
+      })
+    }
+
+    // 🧠 Tomamos la última salida
+    const ultimaFecha = result.rows[0].fecha
+    const ultimaHora = result.rows[0].hora
+
+    // 🔥 Filtrar solo registros de esa salida (por seguridad)
+    const rows = result.rows.filter(r => r.fecha === ultimaFecha && r.hora === ultimaHora)
+
+    const detalle = {
+      fecha: ultimaFecha,
+      hora: ultimaHora,
+      pc: null as {
+        modelo: string
+        placa_serial: string
+      } | null,
+      vh: null as {
+        tipo_vehiculo: string
+        modelo: string
+        placa_serial: string
+      } | null,
+      firma: null as string | null
+    }
+
+    // 🔁 recorrer TODAS las máquinas
+    for (const row of rows) {
+
+      if (row.tipo_maquina === 'pc') {
+        detalle.pc = {
+          modelo: row.modelo,
+          placa_serial: row.placa_serial
+        }
+      }
+
+      if (row.tipo_maquina === 'vh') {
+        detalle.vh = {
+          tipo_vehiculo: row.tipo_vehiculo,
+          modelo: row.modelo,
+          placa_serial: row.placa_serial
+        }
+      }
+
+      // Guardar firma (puede venir en cualquiera)
+      if (row.firma) {
+        detalle.firma = row.firma
+      }
+    }
+
+    return res.status(200).json({
+      result: detalle
+    })
+
+  } catch (error) {
+    console.error(error)
+
+    return res.status(500).json({
+      message: "Error al obtener detalle de salida",
+      error
+    })
+  }
+}

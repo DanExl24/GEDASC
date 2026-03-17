@@ -23,6 +23,11 @@ const router = createRouter({
       name : 'GeneralExitView',
       component : () => import('../views/GeneralExitView.vue'),
     },
+    {
+      path : '/general-history',
+      name : 'HistoryView',
+      component : () => import('../views/HistoryView.vue'),
+    },
   ],
 })
 
