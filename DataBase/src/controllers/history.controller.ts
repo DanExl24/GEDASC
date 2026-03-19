@@ -1,37 +1,7 @@
 // Controlador para consultar id del aprendiz
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-
-// Backend
-export const filtersMap = {
-  TODAY: `di.hora_ingreso >= CURRENT_DATE AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'`,
-
-  YESTERDAY: `
-    di.hora_ingreso >= CURRENT_DATE - INTERVAL '1 day'
-    AND di.hora_ingreso < CURRENT_DATE
-  `,
-
-  THIS_WEEK: `
-    di.hora_ingreso >= date_trunc('week', CURRENT_DATE)
-    AND di.hora_ingreso < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'
-  `,
-
-  LAST_WEEK: `
-    di.hora_ingreso >= date_trunc('week', CURRENT_DATE) - INTERVAL '1 week'
-    AND di.hora_ingreso < date_trunc('week', CURRENT_DATE)
-  `,
-
-  LAST_MONTH: `
-    di.hora_ingreso >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
-    AND di.hora_ingreso < date_trunc('month', CURRENT_DATE)
-  `,
-
-  THIS_QUARTER: `
-    di.hora_ingreso >= date_trunc('quarter', CURRENT_DATE)
-    AND di.hora_ingreso < date_trunc('quarter', CURRENT_DATE) + INTERVAL '3 months'
-  `
-} as const
-
+import { filtersMap } from '../composables/filtersMap';
 
 // Funcion para el ingreso de aprendiz
 export const HistoryRecord = async (request: Request, response: Response) => {
@@ -76,39 +46,61 @@ export const HistoryRecord = async (request: Request, response: Response) => {
   }
 };
 
-// Historial con filtro por di.hora_ingresos
+// Historial con filtro
 export const DateRecord = async (request: Request, response: Response) => {
   try {
-    const filter = request.query.filter as keyof typeof filtersMap
-    console.log("Filtro recibido:", filter)
-    let whereClause = ''
-
-    if (filter && filtersMap[filter]) {
-      whereClause = `WHERE ${filtersMap[filter]}`
+    const { date, program,search } = request.query as {
+      date?: keyof typeof filtersMap.date
+      program?: keyof typeof filtersMap.program
+      search? : string
     }
 
+    const conditions: string[] = []
+
+    if (date && filtersMap.date[date]) {
+      conditions.push(filtersMap.date[date])
+    }
+
+    if (program && filtersMap.program[program]) {
+      conditions.push(filtersMap.program[program])
+    }
+
+    const values: string[] = []
+
+    if (search) {
+      values.push(`%${search}%`)
+      conditions.push(`
+        (
+          a.nombre ILIKE $${values.length} OR
+          a.apellido ILIKE $${values.length} OR
+          a.documento ILIKE $${values.length}
+        )
+      `)
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(' AND ')}`
+      : ''
+
     const result = await pool.query(`
-    SELECT
-      a.id_aprendiz,
-      a.nombre,
-      a.apellido,
-      a.documento,
-      f.nombre AS formacion,
-      TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
-      TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida,
-      di.id_detallemaquina,
-      di.id_ingreso
-    FROM detalles_ingreso AS di
-    JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
-    LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
-    JOIN formaciones f ON f.id_formacion = a.id_formacion
-    ${whereClause}
-    ORDER BY di.hora_ingreso DESC
-    `)
-console.log(result.rows.map(r => ({
-  id_ingreso: r.id_ingreso,
-  id_detallemaquina: r.id_detallemaquina
-})))
+      SELECT
+        a.id_aprendiz,
+        a.nombre,
+        a.apellido,
+        a.documento,
+        f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
+        TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida,
+        di.id_detallemaquina,
+        di.id_ingreso
+      FROM detalles_ingreso AS di
+      JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
+      LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+      JOIN formaciones f ON f.id_formacion = a.id_formacion
+      ${whereClause}
+      ORDER BY di.hora_ingreso DESC
+    `,values)
+
     response.json(result.rows)
 
   } catch (error) {
