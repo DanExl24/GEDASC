@@ -5,6 +5,7 @@ import QueryId from './routes/QueryId.routes'
 import EntryRecord from './routes/entry.routes'
 import ExitRecord from './routes/exit.routes'
 import HistoryRecord from './routes/history.routes'
+import ComputerRecord from './routes/computer.routes'
 
 const app = express()
 const PORT = 3000
@@ -20,6 +21,7 @@ app.use('/api/aprendiz',QueryId)
 app.use('/api/registroIngresos',EntryRecord)
 app.use('/api/registroSalidas',ExitRecord)
 app.use('/api/historico',HistoryRecord)
+app.use('/api/HistorialComputadores',ComputerRecord)
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`)
