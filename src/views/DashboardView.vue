@@ -10,7 +10,7 @@
         <BaseCard -view-link="/general-history" :-card-img="RecordPaper" card-text="Registro historico sobre entradas y salidas en el CTA"/>
 
         <BaseCard -view-link="/computer-history" -card-bg="green" :-card-img="SendComputer" card-text="Equipos de Computo que han sido ingresados en el CTA"/>
-        <BaseCard -card-bg="green" :-card-img="BikeGreen" card-text="Motocicletas que han sido ingresadas en el CTA"/>
+        <BaseCard -view-link="/vehicle-history" -card-bg="green" :-card-img="BikeGreen" card-text="Motocicletas que han sido ingresadas en el CTA"/>
       </div>
   </section>
 </template>

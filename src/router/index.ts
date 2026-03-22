@@ -33,6 +33,11 @@ const router = createRouter({
       name : 'ComputerHistoryView',
       component : () => import('../views/ComputerEntryView.vue'),
     },
+    {
+      path : '/vehicle-history',
+      name : 'VehicleHistoryView',
+      component : () => import('../views/VehiclesEntryView.vue'),
+    },
   ],
 })
 
