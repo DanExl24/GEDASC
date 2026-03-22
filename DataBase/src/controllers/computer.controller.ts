@@ -11,7 +11,9 @@ export const getHistorialComputadores = async (req: Request, res: Response) => {
       type?: keyof typeof filtersComputadoresMap.type
       value?: string
     }
-
+    console.log(type)
+    console.log(value)
+    console.log(typeof value)
     const conditions: string[] = []
     const values: string[] = []
 
@@ -24,8 +26,8 @@ export const getHistorialComputadores = async (req: Request, res: Response) => {
     if (type && value && filtersComputadoresMap.type[type]) {
 
       if (type === 'APRENDIZ') {
-        values.push(value)
-        conditions.push(`a.id_aprendiz = $${values.length}`)
+        values.push(`%${value.trim()}%`)
+        conditions.push(`a.documento ILIKE $${values.length}`)
       }
 
       if (type === 'SERIAL') {
