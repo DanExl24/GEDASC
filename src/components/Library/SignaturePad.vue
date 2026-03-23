@@ -1,7 +1,7 @@
 <template>
   <div class="mt-10 flex flex-col w-full h-full gap-4">
-    <div class="flex-1 min-h-0">
-      <canvas ref="canvas" class="w-full h-full border border-black rounded"></canvas>
+    <div class="flex-1 lg:min-h-0">
+      <canvas ref="canvas" class="w-full lg:h-full min-h-[100px] landscape:w-[300px] landscape:h-[50px] border border-black rounded"></canvas>
     </div>
     <div class="flex gap-2 justify-center">
       <BaseButtonOpen class="!bg-red-600" text="Limpiar" @click="limpiar" />

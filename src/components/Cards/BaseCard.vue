@@ -1,14 +1,23 @@
 <template>
   <!-- Tarjeta -->
   <router-link :to="ViewLink">
-  <div :class="[CardBg,'w-auto flex bg-senaColor border rounded-lg items-center gap-5 m-12 p-5 shadow-md cursor-pointer transition-transform ease-in hover:scale-105 duration-800']">
+    <div :class="[
+      CardBg,
+      'w-auto flex bg-senaColor border rounded-lg items-center gap-5 mx-10 lg:m-12 py-10 px-5 lg:p-5 shadow-md cursor-pointer transition-transform ease-in hover:scale-105 duration-800',
+      !CardImg ? 'justify-center text-center' : ''
+    ]">
     <!-- Fondo de la imagen -->
 
-    <div :class="[ImgBg,'p-2 border rounded-lg w-2/4']">
-        <img :src="CardImg" alt="">
+    <div v-if="CardImg" :class="[ImgBg,'p-2 border rounded-lg lg:w-2/4']">
+      <img :src="CardImg" alt="">
     </div>
     <!-- Texto de la tarjeta -->
-    <p :class="[colorTextCard]" class="text-robotoSlab font-semibold text-lg">{{ cardText }}</p>
+    <p
+      :class="[colorTextCard, !CardImg ? 'w-full' : '']"
+      class="text-robotoSlab font-semibold text-md lg:text-lg"
+    >
+      {{ cardText }}
+    </p>
   </div>
   </router-link>
 </template>
@@ -16,7 +25,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import registerPerson from '@/assets/Icons/registerPerson.png'
 
 // Props del Componente y defaults
 const props = withDefaults(defineProps<{
@@ -28,7 +36,6 @@ const props = withDefaults(defineProps<{
   {
     cardText : "Consulte acerca de los aprendices ingresados al CTA",
     CardBg : 'white',
-    CardImg : registerPerson,
     ViewLink : '/'
   }
 )

@@ -107,11 +107,6 @@
 
           </div>
         </BaseModal>
-        <!--Modal de Firma del aprendiz  -->
-        <BaseModal class="flex items-center justify-center" @close="closeFirma" ref="modalFirma" :title="`Firma de ${aprendizMachine?.nombre}`">
-          <!-- Renderizar la firma-->
-           <SignaturePad @update:signature="guardarFirma" />
-        </BaseModal>
         <!-- Modal para ver los detalles de las maquinas-->
         <BaseModal ref="modalDetalleMaquina" title="Máquinas Registradas">
 
@@ -184,16 +179,15 @@ import { SearchAprendiz } from '@/Services/SearchAprendiz';
 import BaseSelect from '@/components/Forms/BaseSelect.vue';
 import { optionsMachine } from '@/constants/optionsMachine';
 import { optionsVehicle } from '@/constants/optionsVehicle';
-import SignaturePad from '@/components/Library/SignaturePad.vue';
 import { useRoute } from 'vue-router'
-
-
+import { connectSocket } from "@/socket";
+import { io } from "socket.io-client";
+const socket = io("http://192.168.1.7:3000");
 // ==========================================================================
 // ENTORNO
 // ==========================================================================
 
 const API = import.meta.env.VITE_API_URL
-
 
 
 
@@ -376,27 +370,28 @@ const HistorialIngresos = async () => {
 }
 
 
-// -- Guardar la firma del aprendiz
-const guardarFirma = (base64:string) => {
+socket.on('firmaRegistrada', ({ documento, firma }: { documento: string, firma: string }) => {
+  console.log('Firma recibida del móvil:' + documento + firma);
 
-  firmaTemporal.value = base64
+    firmaTemporal.value = firma
 
-  mensajeMachine.value = {
-    message: 'Firma registrada con éxito',
-    type: 'success'
-  } // Mensaje de ayuda
-
-  router.push('/general-entry') // Regresar al main
-
-  setTimeout(() => {
     mensajeMachine.value = {
-      message: '',
+      message: 'Firma registrada con éxito',
       type: 'success'
-    }
-  }, 1000) // Esperar 1 seg para quitar el mensaje
+    } // Mensaje de ayuda
 
-  submittedMachine.value = false // Evitar submit
-}
+    router.push('/general-entry') // Regresar al main
+
+    setTimeout(() => {
+      mensajeMachine.value = {
+        message: '',
+        type: 'success'
+      }
+    }, 1000) // Esperar 1 seg para quitar el mensaje
+
+    submittedMachine.value = false // Evitar submit
+});
+
 
 
 // -- Registrar otra maquina y bloquear selects
@@ -469,6 +464,7 @@ const openDetalleMaquina = async (id_aprendiz:number) => {
 // =======================================================
 
 onMounted(() => {
+  connectSocket();
   HistorialIngresos(); // esto trae el historial apenas se abre la vista
   // cerrar modal automáticamente si la ruta es de firma
   if (route.path.startsWith('/general-entry/firma/')) {
@@ -521,9 +517,10 @@ const openMachine = (aprendiz : Aprendiz) =>{
 const openFirma = () => {
   if (!aprendizMachine.value) return
 
-  modalFirma.value.openModal()
+  // modalFirma.value.openModal()
 
-  router.push(`/general-entry/firma/${aprendizMachine.value.documento}`)
+  // router.push(`/general-entry/firma/${aprendizMachine.value.documento}`)
+  socket.emit("abrirFirmaEnMovil", { documento: aprendizMachine.value.documento });
 }
 
 
@@ -531,11 +528,6 @@ const openFirma = () => {
 // =======================================================
 // FUNCIONES CLOSE Y SUS MODALES
 // ========================================================
-
-// -- Cerrar modal de firma
-const closeFirma = () =>{
-  router.push(`/general-entry`)
-}
 
 
 // -- Cerrar modal para finalizar el registro

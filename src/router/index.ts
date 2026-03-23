@@ -38,7 +38,23 @@ const router = createRouter({
       name : 'VehicleHistoryView',
       component : () => import('../views/VehiclesEntryView.vue'),
     },
+    {
+      path : '/mobile-view',
+      name : 'MobileView',
+      component : () => import('../mobile/mobile.vue'),
+    },
   ],
 })
+
+// 🔥 DETECTOR DE MÓVIL
+const isMobile = () => window.innerWidth <= 768;
+
+// 🔥 GUARD GLOBAL
+router.beforeEach((to, from, next) => {
+  if (isMobile() && to.path !== "/mobile-view") {
+    return next("/mobile-view");
+  }
+  next();
+});
 
 export default router

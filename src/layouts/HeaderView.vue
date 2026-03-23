@@ -4,7 +4,7 @@
 
     <img class="h-[50px] border rounded-lg" :src="senaLogo" alt="">
 
-  <h1 class="font-robotoSlab text-white text-center text-xl font-semibold">
+  <h1 class="font-robotoSlab text-white text-center lg:text-xl font-semibold">
     {{ HeaderTitle }}
   </h1>
 
