@@ -1,48 +1,77 @@
-# GEDACS
+# GEDASC - Manual para la ejecucion del Proyecto
 
-This template should help get you started developing with Vue 3 in Vite.
+*Aplicación web desarrollada para la gestión de entradas y salidas de los aprendices en el Centro Tecnologico de la Amazonia, incluyendo autenticacion de sus equipos por medio de firmas.*
 
-## Recommended IDE Setup
+*El proyecto está compuesto por un frontend y un backend conectados a una base de datos PostgreSQL.*
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## Recommended Browser Setup
+## Requisitos del proyecto
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+-  Node.js (v24.14.1)
+- PostgreSQL (v17 o superior)
 
-## Type Support for `.vue` Imports in TS
+## Estructura del proyecto
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```py
+GEDASC/
+│
+├── Database/   # Backend
+├── src/        # Frontend
+└── README.md
 ```
 
-### Compile and Hot-Reload for Development
+---
 
-```sh
+## Configuración de la base de datos
+
+Crear una base de datos en PostgreSQL con el nombre:
+
+**GEDASC**
+
+Luego, importar el archivo `.sql` incluido en el proyecto
+
+Configurar las credenciales en el archivo:
+
+>config/db.ts
+
+### Ejemplo:
+
+```ts
+user: 'postgres', 
+password: 'contraseña',
+host: 'localhost',
+port: 5432,
+database: 'GEDASC'
+```
+
+
+# Ejecutar el proyecto
+
+## Frontend
+
+Ubicado en la raíz del proyecto:
+
+```bash
+npm install
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Backend
 
-```sh
-npm run build
+Ubicado en la carpeta _Database_
+
+```bash
+npm install
+npx ts-node src/index.ts
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+```bash
+## Acceso a la aplicación
 
-```sh
-npm run lint
+Frontend:
+http://localhost:5173
+
+Backend:
+http://localhost:3000
+
 ```
