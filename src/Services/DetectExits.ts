@@ -1,26 +1,38 @@
-// Servicio para detectar entradas
 const API = import.meta.env.VITE_API_URL
 
-export const DetectExit = async (documento : string) =>{
-  // Evitar mandar codigo vacio
-  if(!documento) return;
-  // Realizar consulta
-  try{
+export const DetectExit = async (
+  documento: string
+): Promise<'ok' | 'ya_registrado' | 'no_existe' | 'error'> => {
+
+  if (!documento) return 'error'
+
+  try {
     const response = await fetch(`${API}/api/registroSalidas/verificarSalida/${documento}`)
+
+    // 🔴 IMPORTANTE: manejar 404 primero
+    if (response.status === 404) {
+      return 'no_existe'
+    }
+
+    if (!response.ok) {
+      return 'error'
+    }
+
     const data = await response.json()
-    if(response.ok){ // Si data.yaSalio da false, es porque no tiene un registro
-      if(!data.yaSalio){
-        return true //Retornar true para que pueda ingresar
-      }
-      else{
-        return false // Retornar false para que no pueda ingresar
-      }
+
+    // ⚠️ validación defensiva (por si backend devuelve vacío o null)
+    if (!data || typeof data.yaSalio === 'undefined') {
+      return 'error'
     }
-    else{
-      console.log(data)
+
+    if (!data.yaSalio) {
+      return 'ok'
     }
-    console.log(data)
+
+    return 'ya_registrado'
+
   } catch (error) {
     console.error(error)
+    return 'error'
   }
 }

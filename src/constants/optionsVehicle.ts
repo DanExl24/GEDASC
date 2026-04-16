@@ -1,5 +1,5 @@
 export const optionsVehicle = [
-  {label : 'MOTO' , value : 'MT'},
-  {label : 'CARRO' , value : 'CR'},
-  {label : 'BICICLETA', value : 'BC'}
+  {label : 'MOTO' , value : 'MOTO'},
+  {label : 'CARRO' , value : 'CARRO'},
+  {label : 'BICICLETA', value : 'BICICLETA'}
 ]

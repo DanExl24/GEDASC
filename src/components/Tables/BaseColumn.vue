@@ -1,17 +1,17 @@
 <template>
   <!--Columnas de la tabla -->
-  <tr class="border-collapse text-center border border-black">
+  <tr :class="rowClass">
     <slot></slot>
   </tr>
 </template>
 
 <script setup lang="ts">
-
+withDefaults(defineProps<{
+  rowClass?: string
+}>(), {
+  rowClass: 'text-center'
+})
 </script>
 
-<style>
-tr td{
-  border: solid black 1px;
-  padding: 0.5rem 0 0.5rem 0;
-}
+<style scoped>
 </style>

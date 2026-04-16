@@ -1,7 +1,8 @@
 <template>
   <select
     v-model="model"
-    :class="[struct,'border border-gray-400 rounded-lg p-2 focus:outline-none disabled:bg-gray-200 my-1']"
+    :class="[struct, selectClass]"
+    :disabled="disabled"
   >
     <!-- placeholder -->
     <option disabled value="">
@@ -33,11 +34,16 @@ interface Option<T> {
 const model = defineModel<T | ''>()
 
 // 🔹 props tipadas con el mismo T
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   options: Option<T>[]
   placeholder: string,
   struct? : string
-}>()
+  selectClass?: string
+  disabled?: boolean
+}>(), {
+  selectClass: 'my-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400',
+  disabled: false
+})
 
 const struct = computed(()=>{
   if(props.struct=='white') return 'bg-white text-black'

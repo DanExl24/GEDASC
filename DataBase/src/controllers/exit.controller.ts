@@ -138,6 +138,19 @@ export const DetectExit = async (request: Request, response: Response) => {
 
     const { documento } = request.params
 
+    // 1. VERIFICAR SI EXISTE EL APRENDIZ
+    const aprendizExiste = await pool.query(
+      `SELECT id_aprendiz FROM aprendiz WHERE documento = $1`,
+      [documento]
+    )
+
+    if (aprendizExiste.rowCount === 0) {
+      return response.status(404).json({
+        message: "El aprendiz no existe"
+      })
+    }
+
+    // 2. VERIFICAR SI YA REGISTRÓ SALIDA HOY
     const salidaVerificada = await pool.query(`
       SELECT ds.id_salida
       FROM detalles_salida ds

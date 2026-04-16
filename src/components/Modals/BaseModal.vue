@@ -1,13 +1,13 @@
 <template>
   <!-- Creacion del modal -->
-  <section v-if="active" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-hidden">
-    <div class="bg-white lg:min-h-[100px] rounded-xl shadow-xl lg:w-4/12 overflow">
+  <section v-if="active" :class="overlayClass">
+    <div :class="modalClass">
       <!-- Texto del modal y su imagen -->
-        <p class="text-white bg-senaColor text-center py-3 font-robotoSlab text-xl flex justify-center items-center relative">
+        <p :class="headerClass">
           {{ title }}
-          <img @click="handleClose" class="absolute mr-5 cursor-pointer h-[30px] right-0" :src="closeM" alt="">
+          <img @click="handleClose" :class="closeIconClass" :src="closeM" alt="">
         </p>
-      <div class="mx-5 my-5 relative">
+      <div :class="bodyClass">
         <!-- Slot para insertar lo que se desee -->
         <slot>
         </slot>
@@ -43,8 +43,28 @@ const closeModal = ()=>{
 // props del componente
 withDefaults(defineProps<{
   title : string
+  overlayClass?: string
+  modalClass?: string
+  headerClass?: string
+  bodyClass?: string
+  closeIconClass?: string
 }>(),{
   title : 'Titulo de Modal',
+  overlayClass: 'fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-[3px]',
+modalClass: `
+  w-full
+  max-w-2xl
+  max-h-[90vh]
+  sm:max-h-[85vh]
+  overflow-hidden
+  rounded-[28px]
+  border border-emerald-100
+  bg-white
+  shadow-[0_30px_80px_rgba(0,0,0,0.35)]
+`,
+  headerClass: 'relative flex items-center justify-center border-b border-emerald-100 bg-[linear-gradient(90deg,#ffffff_0%,#f3fbf5_40%,#e2f4e6_100%)] px-6 py-5 text-center font-robotoSlab text-xl font-bold text-slate-800',
+  bodyClass: 'relative max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto px-6 py-6',
+  closeIconClass: 'absolute right-5 h-[30px] cursor-pointer rounded-full bg-white/80 p-1 shadow-sm'
 })
 
 // funcion para que al emitir close, se cierre el modal

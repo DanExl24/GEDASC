@@ -1,6 +1,6 @@
 <template>
   <!-- Tabla de componente-->
-  <table class="p-2">
+  <table :class="tableClass">
     <slot>
 
     </slot>
@@ -8,14 +8,9 @@
 </template>
 
 <script setup lang="ts">
+withDefaults(defineProps<{
+  tableClass?: string
+}>(), {
+  tableClass: 'w-full border-separate border-spacing-0 font-quicksand'
+})
 </script>
-
-<style scoped>
-
-table{
-  border-collapse: collapse;
-  width: 100%;
-  font-family: "quicksand";
-}
-
-</style>

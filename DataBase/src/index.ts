@@ -12,6 +12,7 @@ import ExitRecord from './routes/exit.routes'
 import HistoryRecord from './routes/history.routes'
 import ComputerRecord from './routes/computer.routes'
 import VehicleRecord from './routes/vehicle.routes'
+import  StatsRecord  from './routes/stats.routes';
 
 // sockets
 import initSockets from "./sockets/index"
@@ -54,6 +55,17 @@ io.on("connection", (socket) => {
       }
     }
   });
+
+  socket.on("cerrarFirmaEnMovil", ({ documento }) => {
+    console.log("Evento cerrarFirmaEnMovil recibido para:", documento);
+
+    for (const [, s] of io.of("/").sockets) {
+      if (s.data.dispositivo === "movil") {
+        console.log("Enviando cerrarFirma a socket móvil:", s.id);
+        s.emit("cerrarFirma", { documento });
+      }
+    }
+  });
 });
 
 // 🔥 inicializar IO global
@@ -78,6 +90,7 @@ app.use('/api/registroSalidas', ExitRecord)
 app.use('/api/historico', HistoryRecord)
 app.use('/api/HistorialComputadores', ComputerRecord)
 app.use('/api/HistorialVehiculos', VehicleRecord)
+app.use('/api/estadisticas', StatsRecord)
 
 // 🚀 servidor
 const PORT = 3000

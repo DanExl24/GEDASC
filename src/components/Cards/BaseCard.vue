@@ -1,63 +1,55 @@
 <template>
-  <!-- Tarjeta -->
   <router-link :to="ViewLink">
-    <div :class="[
-      CardBg,
-      'w-auto flex bg-senaColor border rounded-lg items-center gap-5 mx-10 lg:m-12 py-10 px-5 lg:p-5 shadow-md cursor-pointer transition-transform ease-in hover:scale-105 duration-800',
-      !CardImg ? 'justify-center text-center' : ''
-    ]">
-    <!-- Fondo de la imagen -->
-
-    <div v-if="CardImg" :class="[ImgBg,'p-2 border rounded-lg lg:w-2/4']">
-      <img :src="CardImg" alt="">
-    </div>
-    <!-- Texto de la tarjeta -->
-    <p
-      :class="[colorTextCard, !CardImg ? 'w-full' : '']"
-      class="text-robotoSlab font-semibold text-md lg:text-lg"
+    <div
+      class="group min-h-[220px] rounded-[26px] border border-emerald-100
+             bg-[linear-gradient(145deg,#ffffff_0%,#f5fbf6_55%,#edf7ef_100%)]
+             p-5 transition duration-300 hover:-translate-y-1
+             hover:border-senaColor hover:shadow-[0_18px_40px_rgba(15,107,63,0.14)]"
     >
-      {{ cardText }}
-    </p>
-  </div>
+      <div class="flex h-full flex-col justify-between">
+
+        <!-- TOP -->
+        <div>
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex h-16 w-16 items-center justify-center rounded-[20px] shadow-sm"
+                 :class="accentClass">
+              <img v-if="CardImg" :src="CardImg" class="h-9 w-9 object-contain" />
+            </div>
+
+            <span class="rounded-full border border-emerald-100 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-senaColor">
+              {{ eyebrow }}
+            </span>
+          </div>
+
+          <h3 class="mt-6 font-robotoSlab text-[1.4rem] font-bold text-slate-900">
+            {{ title }}
+          </h3>
+
+          <p class="mt-3 text-sm text-slate-600">
+            {{ description }}
+          </p>
+        </div>
+
+        <!-- BOTTOM -->
+        <div class="mt-6 flex items-center justify-between">
+          <p class="text-sm font-semibold text-slate-500">Abrir modulo</p>
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white group-hover:bg-senaColor">
+            →
+          </div>
+        </div>
+
+      </div>
+    </div>
   </router-link>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-
-
-// Props del Componente y defaults
-const props = withDefaults(defineProps<{
-  cardText? : string,
-  CardBg? : 'white' | 'green',
-  CardImg? : string,
-  ViewLink? : string,
-}>(),
-  {
-    cardText : "Consulte acerca de los aprendices ingresados al CTA",
-    CardBg : 'white',
-    ViewLink : '/'
-  }
-)
-
-// Logica para el prop CardBg y su valor de retorno
-const CardBg = computed(()=>{
-  if(props.CardBg == 'white') return 'bg-white'
-  else return 'bg-senaColor'
-})
-
-// Logica para el prop ImgBg y su valor de retorno
-const ImgBg = computed(()=>{
-  if(props.CardBg == 'white') return 'bg-senaColor'
-  else return 'bg-white'
-})
-
-// Logica para el prop colorTextCard y su valor de retorno, cambiando el color del texto de la carta
-const colorTextCard = computed(()=>{
-  if(props.CardBg == 'white') return 'text-black'
-  else return 'text-white'
-})
-
+defineProps<{
+  title: string
+  description: string
+  eyebrow: string
+  CardImg?: string
+  ViewLink: string
+  accentClass?: string
+}>()
 </script>
-<style>
-</style>

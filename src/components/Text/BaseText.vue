@@ -1,5 +1,5 @@
 <template>
-  <p v-if="active = true" :class="[ClaseDinamica,'font-quicksand']">{{ text }}</p>
+  <p v-if="active" :class="[ClaseDinamica, textClass]">{{ text }}</p>
 </template>
 <script setup lang="ts">
 import { computed,ref } from 'vue';
@@ -7,8 +7,9 @@ import { computed,ref } from 'vue';
 const props = withDefaults(defineProps<{
   text : string
   type : 'error' | 'success'
+  textClass?: string
 }>(),{
-
+  textClass: 'font-quicksand'
 })
 
 // ref para manejar la activacion

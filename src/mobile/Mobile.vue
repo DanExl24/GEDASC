@@ -19,9 +19,10 @@ import { io } from 'socket.io-client';
 import BaseModal from '@/components/Modals/BaseModal.vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import SignaturePad from '@/components/Library/SignaturePad.vue';
+import { SOCKET_URL } from '@/config/network';
 
 // ------------------- SOCKET -------------------
-const socket = io("http://192.168.1.7:3000");
+const socket = io(SOCKET_URL);
 
 // ------------------- ROUTER -------------------
 const router = useRouter();
@@ -71,6 +72,13 @@ const guardarFirma = (base64: string) => {
   modalFirma.value?.closeModal()
   router.push('/mobile-view')
 }
+
+socket.on("cerrarFirma", ({ documento }) => {
+  console.log("Cerrar firma en móvil:", documento)
+
+  // cerrar modal
+  modalFirma.value?.closeModal()
+})
 
 </script>
 

@@ -29,19 +29,22 @@ const router = createRouter({
       component : () => import('../views/HistoryView.vue'),
     },
     {
+      path : '/assets-history',
+      name : 'AssetsHistoryView',
+      component : () => import('../views/AssetsHistoryView.vue'),
+    },
+    {
       path : '/computer-history',
-      name : 'ComputerHistoryView',
-      component : () => import('../views/ComputerEntryView.vue'),
+      redirect : { path: '/assets-history', query: { view: 'computers' } },
     },
     {
       path : '/vehicle-history',
-      name : 'VehicleHistoryView',
-      component : () => import('../views/VehiclesEntryView.vue'),
+      redirect : { path: '/assets-history', query: { view: 'vehicles' } },
     },
     {
       path : '/mobile-view',
       name : 'MobileView',
-      component : () => import('../mobile/mobile.vue'),
+      component : () => import('../mobile/Mobile.vue'),
     },
   ],
 })

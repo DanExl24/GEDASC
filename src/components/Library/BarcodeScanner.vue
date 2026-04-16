@@ -2,7 +2,7 @@
   <!-- Componente tipo modal que contendra el escaner -->
     <BaseModal @close="closeScanner" ref="modal" class="text-center" title="ESCANEAR APRENDICES" text="Empieza a escanear">
       <div class="overflow-hidden h-[400px] relative rounded-lg" ref="scannerContainer"></div>
-      <p class="my-10 absolute bottom-0 w-full font-quicksand font-semibold text-lg text-senaColor " ref="result">{{ resultText }}</p>
+      <p class="my-10 absolute bottom-0 w-full font-quicksand text-lg text-black font-bold " ref="result">{{ resultText }}</p>
     </BaseModal>
 </template>
 
@@ -111,10 +111,16 @@ withDefaults(defineProps<{
 
 })
 
+const setResultMessage = (message: string) => {
+  resultText.value = message
+}
+
+
 // Dejar expuesta la funcion para que el padre sepa de su existencia (DE LA FUNCION) y pueda manejarla a su gusto
 defineExpose({
   openScanner,
-  closeScanner
+  closeScanner,
+  setResultMessage // 👈 clave
 })
 
 </script>

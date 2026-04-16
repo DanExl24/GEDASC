@@ -3,6 +3,7 @@ export const optionsDates = [
   { label: 'Ayer', value: 'YESTERDAY' },
   { label: 'Esta semana', value: 'THIS_WEEK' },
   { label: 'Semana pasada', value: 'LAST_WEEK' },
+  { label: 'Este mes', value: 'THIS_MONTH'},
   { label: 'Mes pasado', value: 'LAST_MONTH' },
   { label: 'Este trimestre', value: 'THIS_QUARTER' }
 ];

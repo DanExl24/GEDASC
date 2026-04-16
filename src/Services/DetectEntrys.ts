@@ -1,26 +1,34 @@
-// Servicio para detectar entradas
 const API = import.meta.env.VITE_API_URL
 
-export const DetectEntry = async (documento : string) =>{
-  // Evitar mandar codigo vacio
-  if(!documento) return;
-  // Realizar consulta
-  try{
-    const response = await fetch(`${API}/api/registroIngresos/verificarEntrada/${documento}`)
-    const data = await response.json()
-    if(response.ok){ // Si data.yaIngresado da false, es porque no tiene un registro
-      if(!data.yaIngresado){
-        return true //Retornar true para que pueda ingresar
-      }
-      else{
-        return false // Retornar false para que no pueda ingresar
-      }
+export const DetectEntry = async (
+  documento: string
+): Promise<'ok' | 'ya_registrado' | 'no_existe' | 'error'> => {
+
+  if (!documento) return 'error';
+
+  try {
+    const response = await fetch(`${API}/api/registroIngresos/verificarEntrada/${documento}`);
+
+    // 🔴 PRIMERO validar status
+    if (response.status === 404) {
+      return 'no_existe';
     }
-    else{
-      console.log(data)
+
+    if (!response.ok) {
+      return 'error';
     }
-    console.log(data)
+
+    // 🟢 SOLO aquí parseas JSON
+    const data = await response.json();
+
+    if (!data.yaIngresado) {
+      return 'ok';
+    } else {
+      return 'ya_registrado';
+    }
+
   } catch (error) {
-    console.error(error)
+    console.error(error);
+    return 'error';
   }
 }
