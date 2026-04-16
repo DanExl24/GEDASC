@@ -42,6 +42,11 @@ const router = createRouter({
       redirect : { path: '/assets-history', query: { view: 'vehicles' } },
     },
     {
+      path : '/record-history',
+      name : 'RecordsView',
+      component : () => import('../views/RecordHistory.vue'),
+    },
+    {
       path : '/mobile-view',
       name : 'MobileView',
       component : () => import('../mobile/Mobile.vue'),

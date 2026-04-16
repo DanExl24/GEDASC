@@ -209,6 +209,14 @@ const dashboardActions: DashboardAction[] = [
     icon: SendComputer,
     accentClass: '!bg-senaColor',
   },
+  {
+    title: 'Reportes y Estadisticas',
+    eyebrow: 'Informes',
+    description: 'Consulta reportes y estadisticas de los aprendices.',
+    to: '/record-history',
+    icon: SendComputer,
+    accentClass: '!bg-senaColor',
+  },
 ]
 
 const formatTiempo = (min : number) => {

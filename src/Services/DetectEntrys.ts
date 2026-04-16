@@ -1,8 +1,10 @@
 const API = import.meta.env.VITE_API_URL
 
+import type { DetectRegisterStatus } from "@/types/register.types/register.types";
+
 export const DetectEntry = async (
   documento: string
-): Promise<'ok' | 'ya_registrado' | 'no_existe' | 'error'> => {
+): Promise<DetectRegisterStatus> => {
 
   if (!documento) return 'error';
 

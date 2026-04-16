@@ -1,12 +1,16 @@
 <template>
-    <input
-      :value="modelValue"
-      :placeholder="placeholder"
-      :readonly="readonly"
-      :type="type"
-      @input="handleInput"
-      :class="inputClass"
-    />
+  <article class="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
+          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Buscar aprendiz</p>
+          <input
+            :value="modelValue"
+            :placeholder="placeholder"
+            :readonly="readonly"
+            :type="type"
+            @input="handleInput"
+            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+          />
+  </article>
+
 </template>
 
 <script setup lang="ts">

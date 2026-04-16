@@ -27,13 +27,9 @@
           />
         </div>
 
-        <div class="rounded-[18px] border border-slate-200 bg-white p-3">
-          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Buscar aprendiz</p>
           <SearchBar
             v-model="queryAprendices"
-            input-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
           />
-        </div>
 
         <ExitButton
           to="/"

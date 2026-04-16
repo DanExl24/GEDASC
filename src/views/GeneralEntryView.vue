@@ -12,7 +12,7 @@
       alt="Vista previa de firma"
     />
 
-    <BarcodeScanner ref="scannerModal" @aprendiz-detectado="detectAprendiz" />
+    <BarcodeScanner ref="scannerModal" @aprendiz-detectado="handleScanner" />
 
     <main class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 lg:px-8">
       <section class="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
@@ -68,20 +68,15 @@
       </section>
 
       <section class="grid gap-4 lg:grid-cols-[auto_1fr_auto_auto] lg:items-center">
-        <div class="flex items-center">
-          <ExitButton
-            to="/"
-            button-class="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-white shadow-[0_10px_25px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:scale-105"
-          />
-        </div>
 
-        <article class="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Buscar aprendiz</p>
-          <SearchBar
-            v-model="queryAprendices"
-            input-class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-          />
-        </article>
+        <ExitButton
+          to="/"
+        />
+
+        <SearchBar
+          v-model="queryAprendices"
+        />
+
 
         <BaseButtonOpen
           @click="open"
@@ -166,51 +161,7 @@
         </div>
       </section>
 
-      <BaseModal ref="modalManual" title="Registro manual de ingreso">
-        <div class="rounded-2xl bg-slate-50 p-4">
-          <p class="mb-1 text-sm font-semibold text-slate-700">Complete el documento y valide la identidad antes de registrar el acceso.</p>
-          <p class="text-sm text-slate-500">Los datos del aprendiz se completan automáticamente cuando el documento existe en la base de datos.</p>
-        </div>
-
-        <BaseForm method="POST" :submit="submit">
-          <BaseField
-            :input-event="EventoManual"
-            v-model="formManual.documento"
-            label="Documento de identidad"
-            place-holder="Documento de identidad"
-            type="text"
-          />
-          <BaseField
-            v-model="formManual.nombre"
-            label="Nombre del aprendiz"
-            place-holder="Esperando documento..."
-            type="text"
-            readonly
-          />
-          <BaseField
-            v-model="formManual.apellido"
-            label="Apellido del aprendiz"
-            place-holder="Esperando documento..."
-            type="text"
-            readonly
-          />
-          <BaseField
-            v-model="formManual.formacion"
-            label="Programa de formación"
-            place-holder="Esperando documento..."
-            type="text"
-            readonly
-          />
-
-          <BaseText :text="alerta.message" :type="alerta.type" text-class="text-sm font-medium" />
-
-          <BaseButton
-            text="Añadir ingreso"
-            type="submit"
-            button-class="mt-2 rounded-2xl !bg-emerald-700 shadow-[0_14px_30px_rgba(15,107,63,0.18)]"
-          />
-        </BaseForm>
-      </BaseModal>
+      <ModalRegisterManual ref="modalManual" class="debug-border"/>
 
       <BaseModal
         ref="modalMachine"
@@ -374,6 +325,7 @@ import BaseField from '@/components/Forms/BaseField.vue'
 import BaseButton from '@/components/Buttons/BaseButton.vue'
 import BaseText from '@/components/Text/BaseText.vue'
 import BaseSelect from '@/components/Forms/BaseSelect.vue'
+import ModalRegisterManual from '@/components/AprendizUI/Modals/ModalRegisterManual.vue'
 
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
@@ -385,7 +337,6 @@ import { connectSocket } from '@/socket'
 import { optionsMachine } from '@/constants/optionsMachine'
 import { optionsVehicle } from '@/constants/optionsVehicle'
 import { normalizeVehicleType } from '@/utils/vehicleType'
-
 const socket = connectSocket()
 const API = API_URL
 
@@ -413,6 +364,8 @@ interface Vehiculo {
   firma: string
 }
 
+
+
 interface DetalleMaquinas {
   pc: Computador | null
   vh: Vehiculo | null
@@ -420,13 +373,12 @@ interface DetalleMaquinas {
 }
 
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
-const modalManual = ref()
 const modalMachine = ref()
 const modalFirma = ref()
 const machineConfirmModal = ref()
 const modalDetalleMaquina = ref()
 const machineOtroAprendiz = ref()
-
+const modalManual = ref()
 const route = useRoute()
 const aprendizData = ref<Aprendiz[]>([])
 const aprendizMachine = ref<Aprendiz>()
@@ -438,10 +390,10 @@ const submittedMachine = ref(false)
 const incosistenciaMaquina = ref()
 
 const maquinaRegistrada = reactive({ pc: false, vh: false })
-const formManual = reactive({ documento: '', nombre: '', apellido: '', formacion: '' })
+
 const formMachine = reactive({ modeloMaquina: '', TipoMaquina: '', tipoVehiculo: '', placaSerial: '' })
 
-const alerta = ref({ message: '', type: 'error' as 'error' | 'success' })
+
 const mensajeMachine = ref({ message: '', type: 'error' as 'error' | 'success' })
 const maquinaDetalle = ref<DetalleMaquinas>({ pc: null, vh: null })
 
@@ -456,46 +408,27 @@ const registeredMachineCount = computed(
 
 
 
-
-
-
-
-
-
-
-
-const detectAprendiz = async (code: string) => {
-  if (!code) return 'error'
+const handleScanner = async (code: string) => {
+  if (!code) return
 
   const estado = await DetectEntry(code)
 
-if (estado === 'no_existe') {
-  scannerModal.value?.setResultMessage('El aprendiz no existe')
-  scannerModal.value?.closeScanner()
-  return 'no_existe'
-}
-
-if (estado === 'ya_registrado') {
-  scannerModal.value?.setResultMessage('El aprendiz ya está registrado')
-  scannerModal.value?.closeScanner()
-  return 'ya_registrado'
-}
-
-  if (estado === 'error') {
-    scannerModal.value?.closeScanner()
-    return 'error'
+  const messages = {
+    no_existe: 'El aprendiz no existe',
+    ya_registrado: 'El aprendiz ya está registrado'
   }
 
-  const registrado = await addEntry(code)
+  try{
 
-  if (!registrado) {
+    if (estado === 'no_existe' || estado === 'ya_registrado') {
+      scannerModal.value?.setResultMessage(messages[estado])
+    }
+
+    await addEntry(code)
+
+  } finally {
     scannerModal.value?.closeScanner()
-    return 'error'
   }
-
-  scannerModal.value?.closeScanner()
-
-  return 'ok'
 }
 
 const addEntry = async (code: string) => {
@@ -577,12 +510,8 @@ const open = () => {
 }
 
 const openManual = () => {
-  modalManual.value.openModal()
-  alerta.value.message = ''
-  formManual.documento = ''
-  formManual.nombre = ''
-  formManual.apellido = ''
-  formManual.formacion = ''
+  console.log('modal ref:', modalManual.value)
+  modalManual.value?.open?.()
 }
 
 const openMachine = (aprendiz: Aprendiz) => {
@@ -651,68 +580,8 @@ const cerrarModalFirma = () => {
   })
 }
 
-const submit = async () => {
-  if (!formManual.documento) {
-    alerta.value.message = 'Ingrese un documento de identidad'
-    alerta.value.type = 'error'
-    return
-  }
 
-  if (formManual.documento.length !== 10) {
-    alerta.value.message = 'El DNI debe tener 10 digitos'
-    alerta.value.type = 'error'
-    return
-  }
 
-  if (!/^\d{10}$/.test(formManual.documento)) {
-    alerta.value.message = 'El DNI debe contener solo numeros'
-    alerta.value.type = 'error'
-    return
-  }
-
-  const estado = await detectAprendiz(formManual.documento)
-
-  if (estado === 'ok') {
-    alerta.value.message = 'Registro aceptado'
-    alerta.value.type = 'success'
-
-    setTimeout(() => {
-      modalManual.value.closeModal()
-    }, 1000)
-  } else if (estado === 'ya_registrado') {
-    alerta.value.message = 'El aprendiz ya tiene un registro'
-    alerta.value.type = 'error'
-  } else if (estado === 'no_existe') {
-    alerta.value.message = 'Este documento no existe en la base de datos'
-    alerta.value.type = 'error'
-  } else {
-    alerta.value.message = 'Error en el registro'
-    alerta.value.type = 'error'
-  }
-}
-
-const EventoManual = async (DocumentoManual: string) => {
-  if (!DocumentoManual) return
-
-  if (DocumentoManual.length !== 10) {
-    alerta.value.message = ''
-    formManual.nombre = ''
-    formManual.apellido = ''
-    formManual.formacion = ''
-    return
-  }
-
-  try {
-    const response = await fetch(`${API}/api/registroIngresos/ingresoManual/${DocumentoManual}`)
-    const data = await response.json()
-
-    formManual.nombre = data.result.nombre
-    formManual.apellido = data.result.apellido
-    formManual.formacion = data.result.formacion
-  } catch (error) {
-    console.error(error)
-  }
-}
 
 const buildMachinePayload = () => ({
   tipoMaquina: formMachine.TipoMaquina,
