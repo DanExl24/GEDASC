@@ -1,6 +1,6 @@
 const API = import.meta.env.VITE_API_URL
 
-import type { DetectRegisterStatus } from "@/types/register.types/register.types";
+import type { DetectRegisterStatus } from "@/types/register.types";
 
 export const DetectEntry = async (
   documento: string

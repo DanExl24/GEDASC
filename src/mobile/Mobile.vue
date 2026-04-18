@@ -6,79 +6,61 @@
 
     <!-- Modal de firma -->
     <BaseModal class="" ref="modalFirma" :title="`Firma de ${documentoAprendiz}`">
-        <SignaturePad class="" @update:signature="guardarFirma" />
+        <SignaturePad  @update:signature="guardarFirma" />
     </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { nextTick } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { io } from 'socket.io-client';
+import { ref, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import BaseModal from '@/components/Modals/BaseModal.vue';
 import HeaderView from '@/layouts/HeaderView.vue';
 import SignaturePad from '@/components/Library/SignaturePad.vue';
-import { SOCKET_URL } from '@/config/network';
+import { useMachineSocket } from '@/composables/sockets/useMachineSockets';
+import {documentoAprendiz} from '@/composables/sockets/InitSocketsEvent'
+import { connectSocket } from '@/socket'
 
+const socket = connectSocket()
+
+onMounted(() => {
+  socket.emit('registrar', { tipo: 'movil' })
+})
 // ------------------- SOCKET -------------------
-const socket = io(SOCKET_URL);
+const {emitirFirmaRegistrada} = useMachineSocket()
 
 // ------------------- ROUTER -------------------
 const router = useRouter();
-const route = useRoute();
 
 // ------------------- MODAL -------------------
 const modalFirma = ref<InstanceType<typeof BaseModal> | null>(null);
 
 // ------------------- DATOS -------------------
-const documentoAprendiz = ref(''); // Para mostrar en el título del modal
 
-// ------------------- SOCKET LISTEN -------------------
-socket.on('connect', () => {
-  console.log('Móvil conectado, id socket:', socket.id);
-  socket.emit('registrarMovil', { dispositivo: 'movil' });
-});
-
-// Recibir evento desde PC
-socket.on('abrirFirma',async ({ documento }) => {
-  documentoAprendiz.value = documento;
-  router.push(`/mobile-view/firma/${documento}`);
-
-  // esperar a que Vue renderice la ruta y las refs
-  await nextTick();
-
-  modalFirma.value?.openModal(); // ahora sí existe
-});
+watch(documentoAprendiz, (doc) => {
+  if (doc) {
+    modalFirma.value?.openModal()
+  }
+  else{
+    modalFirma.value?.openModal()
+  }
+}, { immediate: true })
 
 // ------------------- WATCH RUTA -------------------
-watch(
-  () => route.fullPath,
-  (path) => {
-    if (path.startsWith('/mobile-view/firma/')) {
-      modalFirma.value?.openModal();
-    } else {
-      modalFirma.value?.closeModal();
-    }
-  }
-);
+
+
 
 // ------------------- GUARDAR FIRMA -------------------
+
 const guardarFirma = (base64: string) => {
   console.log('Firma capturada: ' + base64)
-
-  socket.emit('firmaRegistrada', { documento: documentoAprendiz.value, firma: base64 })
+  emitirFirmaRegistrada(base64)
 
   modalFirma.value?.closeModal()
   router.push('/mobile-view')
 }
 
-socket.on("cerrarFirma", ({ documento }) => {
-  console.log("Cerrar firma en móvil:", documento)
 
-  // cerrar modal
-  modalFirma.value?.closeModal()
-})
 
 </script>
 

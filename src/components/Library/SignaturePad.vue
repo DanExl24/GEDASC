@@ -5,52 +5,36 @@
     </div>
     <div class="flex gap-2 justify-center">
       <BaseButtonOpen class="!bg-red-600" text="Limpiar" @click="limpiar" />
-      <BaseButtonOpen text="Guardar" @click="guardar" />
+      <BaseButtonOpen text="Guardar" @click="onGuardarFirma" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import SignaturePad from "signature_pad";
+import { ref } from "vue";
 import BaseButtonOpen from "../Buttons/BaseButtonOpen.vue";
-
-const canvas = ref<HTMLCanvasElement | null>(null);
-let signaturePad: SignaturePad;
-
+import { useAprendizFirma } from "@/composables/Library/useAprendizFirma";
+const canvas = ref<HTMLCanvasElement | null>(null)
 // Emitir evento
 const emit = defineEmits<{
   (e: "update:signature", value: string): void;
 }>();
 
-onMounted(() => {
-  if (!canvas.value) return;
-  const ratio = Math.max(window.devicePixelRatio || 1, 1);
-  canvas.value.width = canvas.value.offsetWidth * ratio;
-  canvas.value.height = canvas.value.offsetHeight * ratio;
-  const ctx = canvas.value.getContext("2d");
-  ctx?.scale(ratio, ratio);
+const { guardar, limpiar } = useAprendizFirma(canvas)
 
-  signaturePad = new SignaturePad(canvas.value, {
-    penColor: "black",
-    backgroundColor: "rgba(255,255,255,0)",
-  });
-});
-
-const limpiar = () => {
-  signaturePad.clear();
-};
-
-
-const guardar = () => {
-  if (signaturePad.isEmpty()) {
-    alert("La firma está vacía");
-    return;
+const onGuardarFirma = () => {
+  const firma = guardar()
+  if (firma) {
+    emit("update:signature", firma)
   }
-  // Obtener la imagen en base64 y emitirla
-  const dataUrl = canvas.value?.toDataURL("image/png");
-  if (dataUrl) {
-    emit("update:signature", dataUrl); // <- aquí enviamos la firma al padre
-  }
-};
+}
+
+
+
+
+
+
+
+
+
 </script>

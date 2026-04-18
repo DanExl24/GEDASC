@@ -28,7 +28,7 @@
       readonly
     />
 
-    <BaseText :text="alerta.message" :type="alerta.type" text-class="text-sm font-medium" />
+    <BaseText :text="message.message" :type="message.type" text-class="text-sm font-medium" />
 
     <BaseButton
       text="Añadir ingreso"
@@ -44,10 +44,11 @@ import BaseText from '@/components/Text/BaseText.vue';
 import BaseButton from '@/components/Buttons/BaseButton.vue';
 import { useManualForm } from '@/composables/useManualForm';
 import { DetectEntry } from '@/Services/DetectEntrys';
-import { API_URL } from '@/config/network'
-const API = API_URL
-
-const { formManual, alerta , setAlerta, validateForm, setManualForm } = useManualForm()
+import { useAprendiz } from '@/composables/useAprendiz';
+import { useMessage } from '@/composables/useMessage';
+const { AñadirIngresoAprendiz } = useAprendiz()
+const {message, setMessage} = useMessage()
+const { formManual, validateForm, setManualForm } = useManualForm()
 const emit = defineEmits(['cerrar-modal'])
 
 const submitManual = async () => {
@@ -60,33 +61,29 @@ const submitManual = async () => {
   const estado = await DetectEntry(documento)
 
   if (estado === 'ok') {
-    setAlerta("Registro aceptado", "success")
+    setMessage("Registro aceptado", "success")
     setTimeout(() => emit('cerrar-modal'), 1000)
 
   } else if (estado === 'ya_registrado') {
-    setAlerta("El aprendiz ya tiene un registro", "error")
+    setMessage("El aprendiz ya tiene un registro", "error")
 
   } else if (estado === 'no_existe') {
-    setAlerta("Este documento no existe", "error")
+    setMessage("Este documento no existe", "error")
 
   } else {
-    setAlerta("Error en el registro", "error")
+    setMessage("Error en el registro", "error")
   }
 
-    // 🔥 AQUÍ es donde realmente registras
-  const res = await fetch(`${API}/api/registroIngresos/addEntry/${documento}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
 
-  const data = await res.json()
+  const res = await AñadirIngresoAprendiz(documento)
 
-  if (!res.ok) {
-    setAlerta(data.message || "Error registrando ingreso", "error")
+
+  if (!res) {
+    setMessage("Error registrando ingreso", "error")
     return
   }
 
-  setAlerta("Registro aceptado", "success")
+  setMessage("Registro aceptado", "success")
 
   setTimeout(() => {
     emit('cerrar-modal')

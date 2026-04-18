@@ -38,10 +38,10 @@
               text="Ver detalle"
               variant="ghost"
               class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
-              @click="openDetalleMaquina(aprendiz.id_aprendiz)"
+              @click="handleMachineDetails(aprendiz)"
             />
             <BaseText
-              v-else-if="firmaTemporal"
+              v-else-if="aprendizMachine?.firma"
               text="Firma registrada"
               type="success"
               text-class="font-semibold"
@@ -50,15 +50,40 @@
         </td>
       </BaseColumn>
     </BaseTable>
+    <ModalRegisterMachine   v-if="aprendizMachine" ref="modalMachine" :aprendiz="aprendizMachine" />
+    <ModalMachineDetails ref="modalMachineDetails" v-if="aprendizMachine" :id_aprendiz="aprendizMachine.id_aprendiz"/>
   </div>
 </template>
 <script setup lang="ts">
+import { ref,nextTick } from 'vue';
 import BaseTable from '../Tables/BaseTable.vue';
 import BaseColumn from '../Tables/BaseColumn.vue';
 import BaseText from '../Text/BaseText.vue';
 import BaseButtonOpen from '../Buttons/BaseButton.vue';
 import BaseTableHead from '../Tables/BaseTableHead.vue';
-import type { Aprendiz } from '@/views/GeneralEntryView.vue';
+import type { Aprendiz } from '@/types/aprendiz.types';
+import ModalRegisterMachine from './Modals/ModalRegisterMachine.vue';
+import ModalMachineDetails from './Modals/ModalMachineDetails.vue';
+
+const aprendizMachine = ref<Aprendiz | null>(null)
+const modalMachine = ref()
+const modalMachineDetails = ref()
+
+const handleMachineDetails = async (aprendiz : Aprendiz) => {
+  aprendizMachine.value = aprendiz
+  await nextTick()
+  modalMachineDetails.value?.load(aprendizMachine.value.id_aprendiz)
+  modalMachineDetails.value?.open()
+}
+
+const openMachine = (aprendiz: Aprendiz) => {
+  aprendizMachine.value = aprendiz
+
+  // esperar a que Vue renderice el modal
+  nextTick(() => {
+    modalMachine.value.open()
+  })
+}
 
 defineProps<{
   aprendizData: Aprendiz[]

@@ -25,48 +25,56 @@ const io = new Server(server, {
   cors: { origin: "*" }
 })
 
-// servidor Node + Socket.IO
 io.on("connection", (socket) => {
-  console.log("Nuevo socket conectado:", socket.id);
+  console.log("Socket conectado:", socket.id)
 
-  socket.on("registrarMovil", ({ dispositivo }) => {
-    socket.data.dispositivo = dispositivo; // marcar como móvil
-    console.log("Socket registrado como móvil:", socket.id);
-  });
+  // =========================
+  // REGISTRO DE DISPOSITIVO
+  // =========================
+  socket.on("registrar", ({ tipo }) => {
+    socket.data.tipo = tipo
+    console.log(`Socket registrado como ${tipo}:`, socket.id)
+  })
 
+  // =========================
+  // PC -> pedir firma al móvil
+  // =========================
   socket.on("abrirFirmaEnMovil", ({ documento }) => {
-    console.log("Evento abrirFirmaEnMovil recibido para:", documento);
+    console.log("PC solicitó firma para:", documento)
+
     for (const [, s] of io.of("/").sockets) {
-      if (s.data.dispositivo === "movil") {
-        console.log("Enviando abrirFirma a socket móvil:", s.id);
-        s.emit("abrirFirma", { documento });
+      if (s.data.tipo === "movil") {
+        s.emit("abrirFirma", { documento })
       }
     }
-  });
-  // Escuchar cuando el móvil envíe la firma
+  })
+
+  // =========================
+  // MÓVIL -> envía firma
+  // =========================
   socket.on("firmaRegistrada", ({ documento, firma }) => {
-    console.log("Servidor recibió firma de móvil:", documento, firma);
+    console.log("Firma recibida del móvil:", documento)
 
-    // Enviar solo a la PC (los sockets que NO sean móviles)
     for (const [, s] of io.of("/").sockets) {
-      if (s.data.dispositivo !== "movil") {
-        console.log("Enviando firma a PC socket:", s.id);
-        s.emit("firmaRegistrada", { documento, firma });
+      if (s.data.tipo === "pc") {
+        s.emit("firmaRegistrada", { documento, firma })
       }
     }
-  });
+  })
 
+  // =========================
+  // PC -> cerrar modal móvil
+  // =========================
   socket.on("cerrarFirmaEnMovil", ({ documento }) => {
-    console.log("Evento cerrarFirmaEnMovil recibido para:", documento);
+    console.log("Cerrar firma:", documento)
 
     for (const [, s] of io.of("/").sockets) {
-      if (s.data.dispositivo === "movil") {
-        console.log("Enviando cerrarFirma a socket móvil:", s.id);
-        s.emit("cerrarFirma", { documento });
+      if (s.data.tipo === "movil") {
+        s.emit("cerrarFirma", { documento })
       }
     }
-  });
-});
+  })
+})
 
 // 🔥 inicializar IO global
 initIO(io)

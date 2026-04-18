@@ -1,5 +1,7 @@
 import { reactive, ref , watch } from "vue";
 import { API_URL } from '@/config/network'
+import { useMessage } from "./useMessage";
+const {setMessage} = useMessage()
 const API = API_URL
 
 export const useManualForm = () => {
@@ -14,17 +16,17 @@ export const useManualForm = () => {
   }
   const validateForm = () => {
     if (!formManual.documento) {
-      setAlerta('Ingrese un documento de identidad', 'error')
+      setMessage('Ingrese un documento de identidad', 'error')
       return false
     }
 
     if (formManual.documento.length !== 10) {
-      setAlerta('El DNI debe tener 10 dígitos', 'error')
+      setMessage('El DNI debe tener 10 dígitos', 'error')
       return false
     }
 
     if (!/^\d{10}$/.test(formManual.documento)) {
-      setAlerta('El DNI debe contener solo números', 'error')
+      setMessage('El DNI debe contener solo números', 'error')
       return false
     }
 
@@ -50,10 +52,6 @@ export const useManualForm = () => {
       console.error(error)
     }
   }
-  const setAlerta = (message : string, type : "error" | "success") => {
-    alerta.value.message = message
-    alerta.value.type = type
-  }
   watch(
     () => formManual.documento,
     async (doc) => {
@@ -68,7 +66,7 @@ export const useManualForm = () => {
       }
 
       if (!/^\d{10}$/.test(doc)) {
-        setAlerta('Solo números válidos', 'error')
+        setMessage('Solo números válidos', 'error')
         return
       }
 
@@ -77,7 +75,7 @@ export const useManualForm = () => {
         const data = await res.json()
 
         if (!res.ok) {
-          setAlerta('No existe en la base de datos', 'error')
+          setMessage('No existe en la base de datos', 'error')
           return
         }
 
@@ -85,11 +83,11 @@ export const useManualForm = () => {
         formManual.apellido = data.result.apellido
         formManual.formacion = data.result.formacion
 
-        setAlerta('Aprendiz encontrado', 'success')
+        setMessage('Aprendiz encontrado', 'success')
 
       } catch (e) {
         console.log(e)
-        setAlerta('Error consultando datos', 'error')
+        setMessage('Error consultando datos', 'error')
       }
     }
   )
@@ -97,7 +95,6 @@ export const useManualForm = () => {
     formManual,
     clearForm,
     validateForm,
-    setAlerta,
     alerta,
     setManualForm
   }

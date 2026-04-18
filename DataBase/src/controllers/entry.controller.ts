@@ -481,7 +481,7 @@ export const AddMachine = async (request: Request, response: Response) => {
 
         const result = await client.query(
           `WITH nuevo AS (
-            INSERT INTO computadores(serial, modelo)
+            INSERT INTO computadores(serial, marca)
             VALUES ($2,$3)
             RETURNING id_computador
           )
@@ -614,11 +614,11 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
     const query = `
       SELECT
-        c.marca AS pc_modelo,
+        c.marca AS pc_marca,
         c.serial AS pc_serial,
 
         v.tipo_vehiculo,
-        v.modelo AS vh_modelo,
+        v.modelo AS vh_marca,
         v.placa AS vh_placa,
 
         dm.firma_ingreso
@@ -651,15 +651,15 @@ export const SearchMachine = async (request: Request, response: Response) => {
     const data = result.rows[0]
 
     const maquinas = {
-      pc: data.pc_modelo ? {
-        modelo: data.pc_modelo,
-        placa_serial: data.pc_serial,
+      pc: data.pc_marca ? {
+        marca: data.pc_marca,
+        serial: data.pc_serial,
       } : null,
 
-      vh: data.vh_modelo ? {
+      vh: data.vh_marca ? {
         tipo_vehiculo: data.tipo_vehiculo,
-        modelo: data.vh_modelo,
-        placa_serial: data.vh_placa,
+        marca: data.vh_modelo,
+        placa: data.vh_placa,
       } : null,
       firma: data.firma_ingreso   // 🔥 NUEVO
     }
