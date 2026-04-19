@@ -44,7 +44,7 @@ export const getHistorialComputadores = async (req: Request, res: Response) => {
         SELECT
           dm.id_detallemaquina,
           dm.id_computador,
-          c.modelo AS marca,
+          c.marca AS marca,
           c.serial,
           a.documento,
           a.id_aprendiz,
@@ -97,6 +97,7 @@ export const getPropietario = async (req: Request, res: Response) => {
         a.nombre,
         a.apellido,
         f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         dm.firma_ingreso AS firma
 
       FROM detalles_maquinas dm

@@ -1,6 +1,7 @@
 export type TodayBorrowRow = {
   id_aprendiz: string
-
+  ownerId : string | null,
+  ownerName : string | null,
   id_computador: string | null
   prestadoSerial: string | null
   prestadoMarca: string | null
@@ -18,4 +19,5 @@ export type TodayBorrowRow = {
   principalPlaca: string | null
   principalTipo: string | null
   principalModelo: string | null
+  firma_ingreso : string | null
 }

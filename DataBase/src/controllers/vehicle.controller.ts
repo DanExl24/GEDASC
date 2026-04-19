@@ -95,6 +95,7 @@ export const getPropietario = async (req: Request, res: Response) => {
         a.nombre,
         a.apellido,
         f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         dm.firma_ingreso AS firma
 
       FROM detalles_maquinas dm

@@ -26,17 +26,16 @@ export const checkComputer = async (
 
     const computadorId = pc.rows[0].id_computador;
 
-    // 🔹 Verificar si es principal del mismo aprendiz
-    const principalMachine = await client.query(
-      `SELECT id_computador
+    // 🔹 Verificar si ya pertenece al mismo aprendiz, sea principal o no principal
+    const sameOwnerMachine = await client.query(
+      `SELECT id_computador, principal
        FROM aprendiz_computador
        WHERE id_computador = $1
-       AND id_aprendiz = $2
-       AND principal = TRUE`,
+       AND id_aprendiz = $2`,
       [computadorId, aprendizId]
     );
 
-    if (principalMachine.rowCount && principalMachine.rowCount > 0) {
+    if (sameOwnerMachine.rowCount && sameOwnerMachine.rowCount > 0) {
       idMaquina = computadorId;
     } else {
 
@@ -109,13 +108,6 @@ export const checkComputer = async (
       }
     }
 
-    await client.query(
-      `UPDATE aprendiz_computador
-      SET principal = FALSE
-      WHERE id_aprendiz = $1`,
-      [aprendizId]
-    );
-
     const result = await client.query(
       `WITH nuevo AS (
         INSERT INTO computadores(serial, marca)
@@ -123,9 +115,14 @@ export const checkComputer = async (
         RETURNING id_computador
       )
       INSERT INTO aprendiz_computador(id_aprendiz, id_computador, principal)
-      SELECT $1, id_computador, TRUE FROM nuevo
+      SELECT $1, id_computador, $4 FROM nuevo
       RETURNING id_computador`,
-      [aprendizId, serial, modelo]
+      [
+        aprendizId,
+        serial,
+        modelo,
+        principalRecord.rowCount === 0
+      ]
     );
 
     idMaquina = result.rows[0].id_computador;

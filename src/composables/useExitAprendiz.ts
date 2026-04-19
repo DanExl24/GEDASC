@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { API_URL } from '@/config/network'
 import type { Aprendiz } from '@/types/aprendiz.types'
 import { useJornadaStore } from '@/stores/jornada'
@@ -8,12 +8,12 @@ const API = API_URL
 const aprendizData = ref<Aprendiz[]>([])
 const latestAprendiz = computed(() => aprendizData.value[0] ?? null)
 
-export const useAprendiz = () => {
+export const useExitAprendiz = () => {
   const jornadaStore = useJornadaStore()
 
-  const HistorialIngresoAprendiz = async () => {
+  const HistorialSalidaAprendiz = async () => {
     try {
-      const response = await fetch(`${API}/api/registroIngresos/historial`)
+      const response = await fetch(`${API}/api/registroSalidas/historial`)
       const data = (await response.json()) as Aprendiz[]
 
       aprendizData.value = data
@@ -25,34 +25,38 @@ export const useAprendiz = () => {
     }
   }
 
-  const AnadirIngresoAprendiz = async (code: string) => {
-    if (!code) return
+  const AnadirSalidaAprendiz = async (documento: string) => {
+    if (!documento) return false
 
     try {
-      const response = await fetch(`${API}/api/registroIngresos/addEntry/${code}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      const response = await fetch(
+        `${API}/api/registroSalidas/addExit/${documento}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+
       const data = await response.json()
 
       if (!response.ok) {
-        if (response.status === 409) {
-          console.log('Info:', data.message)
+        if (response.status !== 409) {
+          console.error('Error:', data.message)
         }
-        return
+        return false
       }
 
-      console.log('Ingreso registrado:', data)
-      await HistorialIngresoAprendiz()
+      await HistorialSalidaAprendiz()
       return true
     } catch (error) {
-      console.error('ERROR REAL:', error)
+      console.error(error)
+      return false
     }
   }
 
   return {
-    HistorialIngresoAprendiz,
-    'AñadirIngresoAprendiz': AnadirIngresoAprendiz,
+    HistorialSalidaAprendiz,
+    'AñadirSalidaAprendiz': AnadirSalidaAprendiz,
     aprendizData,
     latestAprendiz,
   }

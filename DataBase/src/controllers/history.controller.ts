@@ -123,17 +123,26 @@ export const SearchMachine = async (request: Request, response: Response) => {
   }
 
   try {
-
     const query = `
       SELECT
-        c.modelo AS pc_modelo,
+        di.id_aprendiz,
+        c.marca AS pc_marca,
         c.serial AS pc_serial,
 
         v.tipo_vehiculo,
         v.modelo AS vh_modelo,
         v.placa AS vh_placa,
 
-        dm.firma_ingreso
+        dm.firma_ingreso,
+
+        ac2.id_aprendiz AS owner_pc_id,
+        aopc.nombre AS owner_pc_name,
+
+        av2.id_aprendiz AS owner_vh_id,
+        aov.nombre AS owner_vh_name,
+
+        ac_np.id_computador AS non_principal_pc,
+        av_np.id_vehiculo AS non_principal_vh
 
       FROM detalles_maquinas dm
 
@@ -144,6 +153,30 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
       LEFT JOIN vehiculos v
         ON dm.id_vehiculo = v.id_vehiculo
+
+      LEFT JOIN aprendiz_computador ac2
+        ON ac2.id_computador = dm.id_computador
+        AND ac2.principal = true
+
+      LEFT JOIN aprendiz aopc
+        ON aopc.id_aprendiz = ac2.id_aprendiz
+
+      LEFT JOIN aprendiz_vehiculo av2
+        ON av2.id_vehiculo = dm.id_vehiculo
+        AND av2.principal = true
+
+      LEFT JOIN aprendiz aov
+        ON aov.id_aprendiz = av2.id_aprendiz
+
+      LEFT JOIN aprendiz_computador ac_np
+        ON ac_np.id_aprendiz = di.id_aprendiz
+        AND ac_np.id_computador = dm.id_computador
+        AND ac_np.principal = false
+
+      LEFT JOIN aprendiz_vehiculo av_np
+        ON av_np.id_aprendiz = di.id_aprendiz
+        AND av_np.id_vehiculo = dm.id_vehiculo
+        AND av_np.principal = false
 
       WHERE dm.id_detallemaquina = $1
     `
@@ -158,22 +191,49 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
     const data = result.rows[0]
 
+    const ownerId = data.owner_pc_id ?? data.owner_vh_id ?? null
+    const ownerName = data.owner_pc_name ?? data.owner_vh_name ?? null
+
+    const isBorrowed =
+      ownerId != null && String(ownerId) !== String(data.id_aprendiz)
+
+    const isNonPrincipal =
+      !isBorrowed &&
+      (data.non_principal_pc != null || data.non_principal_vh != null)
+
+    const estado = isBorrowed
+      ? 'PRESTADA'
+      : isNonPrincipal
+        ? 'NO_PRINCIPAL'
+        : 'NORMAL'
+
     const maquinas = {
-      pc: data.pc_modelo ? {
-        modelo: data.pc_modelo,
-        placa_serial: data.pc_serial,
+      pc: data.pc_marca ? {
+        marca: data.pc_marca,
+        serial: data.pc_serial,
       } : null,
 
       vh: data.vh_modelo ? {
         tipo_vehiculo: data.tipo_vehiculo,
-        modelo: data.vh_modelo,
-        placa_serial: data.vh_placa,
+        marca: data.vh_modelo,
+        placa: data.vh_placa,
       } : null,
 
-      firma: data.firma_ingreso
+      firma: data.firma_ingreso,
+
+      aprendices: {
+        actual: {
+          id: data.id_aprendiz ?? null,
+        },
+        owner: {
+          id: ownerId,
+          name: ownerName,
+        },
+      },
     }
 
     return response.status(200).json({
+      estado,
       result: maquinas
     })
 

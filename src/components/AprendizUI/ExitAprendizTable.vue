@@ -6,13 +6,13 @@
         <BaseTableHead name="Apellido" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
         <BaseTableHead name="DNI" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
         <BaseTableHead name="Formacion" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-        <BaseTableHead name="Hora de ingreso" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
         <BaseTableHead name="Jornada" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-        <BaseTableHead name="Registro de maquina" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
+        <BaseTableHead name="Hora de salida" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
+        <BaseTableHead name="Salida de maquinas" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
       </BaseColumn>
 
       <BaseColumn
-        v-for="(aprendiz, index) in aprendizData"
+        v-for="aprendiz in aprendizData"
         :key="aprendiz.id_aprendiz"
         row-class="text-center align-middle transition odd:bg-white even:bg-slate-50/80 hover:bg-emerald-50/70 [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-4 [&>td]:py-4 [&>td]:text-sm [&>td]:text-slate-700"
       >
@@ -20,38 +20,26 @@
         <td>{{ aprendiz.apellido }}</td>
         <td>{{ aprendiz.documento }}</td>
         <td>{{ aprendiz.formacion }}</td>
-        <td>{{ aprendiz.hora_ingreso }}</td>
         <td>
           <JornadaBadge
             :aprendiz-id="aprendiz.id_aprendiz"
             :hour="aprendiz.hora_ingreso"
           />
         </td>
+        <td>{{ aprendiz.hora_salida }}</td>
         <td>
           <div class="flex items-center justify-center">
             <BaseButtonOpen
-              v-if="index === 0 && aprendiz.id_detallemaquina == null && !aprendiz.hora_salida"
-              @click="openMachine(aprendiz)"
-              text="Registrar maquina"
-              class-button="min-h-[40px] rounded-xl border-blue-700 bg-blue-700 px-3 py-2 text-sm font-semibold text-white shadow-none"
-            />
-            <BaseText
-              v-else-if="aprendiz.id_detallemaquina == null"
-              text="No registrada"
-              type="error"
-              text-class="font-semibold"
-            />
-            <BaseButtonOpen
-              v-else-if="aprendiz.id_detallemaquina != null"
+              v-if="aprendiz.id_detallemaquina"
               text="Ver detalle"
               variant="ghost"
               class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
               @click="handleMachineDetails(aprendiz)"
             />
             <BaseText
-              v-else-if="aprendizMachine?.firma"
-              text="Firma registrada"
-              type="success"
+              v-else
+              text="Sin registro"
+              type="error"
               text-class="font-semibold"
             />
           </div>
@@ -59,12 +47,6 @@
       </BaseColumn>
     </BaseTable>
 
-    <ModalRegisterMachine
-      v-if="aprendizMachine"
-      ref="modalMachine"
-      :aprendiz="aprendizMachine"
-      @close="closeMachineForm"
-    />
     <ModalMachineDetails
       v-if="aprendizMachine"
       ref="modalMachineDetails"
@@ -75,37 +57,23 @@
 
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
-import BaseTable from '../Tables/BaseTable.vue'
-import BaseColumn from '../Tables/BaseColumn.vue'
-import BaseText from '../Text/BaseText.vue'
-import BaseButtonOpen from '../Buttons/BaseButton.vue'
-import BaseTableHead from '../Tables/BaseTableHead.vue'
+import BaseTable from '@/components/Tables/BaseTable.vue'
+import BaseColumn from '@/components/Tables/BaseColumn.vue'
+import BaseText from '@/components/Text/BaseText.vue'
+import BaseButtonOpen from '@/components/Buttons/BaseButton.vue'
+import BaseTableHead from '@/components/Tables/BaseTableHead.vue'
+import ModalMachineDetails from '@/components/AprendizUI/Modals/ModalMachineDetails.vue'
 import JornadaBadge from '@/components/UI/JornadaBadge.vue'
 import type { Aprendiz } from '@/types/aprendiz.types'
-import ModalRegisterMachine from './Modals/ModalRegisterMachine.vue'
-import ModalMachineDetails from './Modals/ModalMachineDetails.vue'
 
 const aprendizMachine = ref<Aprendiz | null>(null)
-const modalMachine = ref()
 const modalMachineDetails = ref()
 
 const handleMachineDetails = async (aprendiz: Aprendiz) => {
   aprendizMachine.value = aprendiz
   await nextTick()
-  await modalMachineDetails.value?.load(aprendizMachine.value.id_aprendiz)
+  await modalMachineDetails.value?.load(aprendiz.id_aprendiz)
   modalMachineDetails.value?.open()
-}
-
-const openMachine = (aprendiz: Aprendiz) => {
-  aprendizMachine.value = aprendiz
-
-  nextTick(() => {
-    modalMachine.value.open()
-  })
-}
-
-const closeMachineForm = () => {
-  modalMachine.value.close()
 }
 
 defineProps<{

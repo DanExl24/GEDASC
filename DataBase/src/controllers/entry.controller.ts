@@ -6,6 +6,7 @@ import { checkVehicle } from './HandlersMachine/checkVehicle';
 import { checkComputer } from './HandlersMachine/checkComputer';
 import { checkMachineResult } from '../types/InconsistentMachine.types';
 import { getTodayBorrowed } from './HandlersMachine/checksBorroweds';
+import { getTodayNonPrincipal } from './HandlersMachine/checkNonPrincipal';
 // Funcion para el ingreso de aprendiz
 export const AddEntry = async (req: Request, res: Response) => {
   console.log("Documento recibido:", req.params.documento);
@@ -443,93 +444,115 @@ export const UpdateMachine = async (request: Request, response: Response) => {
 // Funcion para consultar los datos de las maquinas del aprendiz
 
 export const SearchMachine = async (request: Request, response: Response) => {
-
   const { id_aprendiz } = request.params
-  const id =
-  Array.isArray(id_aprendiz)
-    ? id_aprendiz[0]
-    : id_aprendiz;
-  if (!id_aprendiz) {
+
+  const id = Array.isArray(id_aprendiz) ? id_aprendiz[0] : id_aprendiz
+
+  if (!id) {
     return response.status(400).json({
       message: "Debe enviar el id del aprendiz"
     })
   }
-  const client = await pool.connect();
+
+  const client = await pool.connect()
+
   try {
-    const maquinaPrestada = await getTodayBorrowed(client,id)
-    if(maquinaPrestada.length > 0){
+    // 1. PRESTADA
+    const prestada = await getTodayBorrowed(client, id)
+
+    if (prestada.length > 0) {
       return response.status(200).json({
-        result:maquinaPrestada,
-        prestada:true
+        estado: 'PRESTADA',
+        result: prestada[0]
       })
     }
-    else{
-      const query = `
-        SELECT
-          c.marca AS pc_marca,
-          c.serial AS pc_serial,
 
-          v.tipo_vehiculo,
-          v.modelo AS vh_marca,
-          v.placa AS vh_placa,
+    // 2. NO PRINCIPAL
+    const noPrincipal = await getTodayNonPrincipal(client, id)
 
-          dm.firma_ingreso
+    if (noPrincipal.length > 0) {
+      return response.status(200).json({
+        estado: 'NO_PRINCIPAL',
+        result: noPrincipal[0]
+      })
+    }
 
-        FROM detalles_ingreso d
+    // 3. NORMAL (SIEMPRE MISMO SHAPE)
+    const query = `
+      SELECT
+        c.marca AS pc_marca,
+        c.serial AS pc_serial,
 
-        JOIN detalles_maquinas dm
+        v.tipo_vehiculo,
+        v.modelo AS vh_marca,
+        v.placa AS vh_placa,
+
+        dm.firma_ingreso,
+
+        d.id_aprendiz AS "aprendizActual",
+        d.id_aprendiz AS "ownerId",
+        'Propietario' AS "ownerName"
+
+      FROM detalles_ingreso d
+      JOIN detalles_maquinas dm
         ON dm.id_detallemaquina = d.id_detallemaquina
 
-        LEFT JOIN computadores c
+      LEFT JOIN computadores c
         ON dm.id_computador = c.id_computador
 
-        LEFT JOIN vehiculos v
+      LEFT JOIN vehiculos v
         ON dm.id_vehiculo = v.id_vehiculo
 
-        WHERE d.id_aprendiz = $1
+      WHERE d.id_aprendiz = $1
         AND d.hora_ingreso >= CURRENT_DATE
         AND d.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-        LIMIT 1
-      `
+      LIMIT 1
+    `
 
-      const result = await pool.query(query, [id])
+    const result = await client.query(query, [id])
 
-      if (result.rows.length === 0) {
-        return response.status(404).json({
-          message: "No se encontraron máquinas registradas"
-        })
-      }
-
-      const data = result.rows[0]
-
-      const maquinas = {
-        pc: data.pc_marca ? {
-          marca: data.pc_marca,
-          serial: data.pc_serial,
-        } : null,
-
-        vh: data.vh_marca ? {
-          tipo_vehiculo: data.tipo_vehiculo,
-          marca: data.vh_marca,
-          placa: data.vh_placa,
-        } : null,
-        firma: data.firma_ingreso
-      }
-
-      return response.status(200).json({
-        result: maquinas,
-        prestada:false
+    if (result.rows.length === 0) {
+      return response.status(404).json({
+        message: "No se encontraron máquinas registradas"
       })
     }
-  } catch (error) {
 
+    const data = result.rows[0]
+
+    const dto = {
+      pc: data.pc_marca
+        ? { marca: data.pc_marca, serial: data.pc_serial }
+        : null,
+
+      vh: data.vh_marca
+        ? {
+            tipo_vehiculo: data.tipo_vehiculo,
+            marca: data.vh_marca,
+            placa: data.vh_placa
+          }
+        : null,
+
+      firma: data.firma_ingreso ?? null,
+
+      aprendices: {
+        actual: { id: data.aprendizActual },
+        owner: { id: data.ownerId, name: data.ownerName }
+      }
+    }
+
+    return response.status(200).json({
+      estado: 'NORMAL',
+      result: dto
+    })
+
+  } catch (error) {
     console.error(error)
 
     return response.status(500).json({
       message: "Error al buscar las máquinas",
-      error: error
+      error
     })
-
+  } finally {
+    client.release()
   }
-
 }

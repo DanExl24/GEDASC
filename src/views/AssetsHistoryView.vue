@@ -55,6 +55,8 @@
             <SearchBar
               v-model="filters.searchValue"
               :placeholder="activeSearchPlaceholder"
+              :with-container="false"
+              :show-label="false"
               input-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
             />
           </template>
@@ -146,474 +148,63 @@
         </div>
 
         <div class="p-4 lg:px-6 lg:py-5">
-          <div class="overflow-x-auto rounded-[24px] border border-slate-100 bg-slate-50/70 p-2">
-            <BaseTable>
-              <BaseColumn row-class="bg-slate-900 text-center">
-                <template v-if="selectedView === 'computers'">
-                  <BaseTableHead name="Marca" head-class="rounded-l-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Serial" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="DNI" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Ingreso" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Salida" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Propietario" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                </template>
-
-                <template v-else>
-                  <BaseTableHead name="Tipo" head-class="rounded-l-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Placa" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Marca" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="DNI" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Ingreso" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Salida" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                  <BaseTableHead name="Propietario" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                </template>
-              </BaseColumn>
-
-              <template v-if="selectedView === 'computers'">
-                <BaseColumn
-                  v-for="computer in computerHistory"
-                  :key="computer.id_detallemaquina"
-                  row-class="text-center align-middle transition odd:bg-white even:bg-slate-50/80 hover:bg-emerald-50/70 [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-4 [&>td]:py-4 [&>td]:text-sm [&>td]:text-slate-700"
-                >
-                  <td>{{ computer.marca }}</td>
-                  <td>{{ computer.serial }}</td>
-                  <td>{{ computer.documento }}</td>
-                  <td>{{ computer.hora_ingreso || '-' }}</td>
-                  <td>{{ computer.hora_salida || '-' }}</td>
-                  <td>
-                    <div class="flex justify-center">
-                      <BaseButtonOpen
-                        text="Ver propietario"
-                        variant="ghost"
-                        class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
-                        @click="openPropietario(computer.id_detallemaquina)"
-                      />
-                    </div>
-                  </td>
-                </BaseColumn>
-              </template>
-
-              <template v-else>
-                <BaseColumn
-                  v-for="vehicle in vehicleHistory"
-                  :key="vehicle.id_detallemaquina"
-                  row-class="text-center align-middle transition odd:bg-white even:bg-slate-50/80 hover:bg-emerald-50/70 [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-4 [&>td]:py-4 [&>td]:text-sm [&>td]:text-slate-700"
-                >
-                  <td>{{ vehicle.tipo_vehiculo }}</td>
-                  <td>{{ vehicle.placa }}</td>
-                  <td>{{ vehicle.marca }}</td>
-                  <td>{{ vehicle.documento }}</td>
-                  <td>{{ vehicle.hora_ingreso || '-' }}</td>
-                  <td>{{ vehicle.hora_salida || '-' }}</td>
-                  <td>
-                    <div class="flex justify-center">
-                      <BaseButtonOpen
-                        text="Ver propietario"
-                        variant="ghost"
-                        class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
-                        @click="openPropietario(vehicle.id_detallemaquina)"
-                      />
-                    </div>
-                  </td>
-                </BaseColumn>
-              </template>
-            </BaseTable>
-
-            <div v-if="isLoading" class="px-4 py-10 text-center text-sm font-medium text-slate-500">
-              Cargando historial de {{ selectedViewLabel.toLowerCase() }}...
-            </div>
-
-            <div v-else-if="loadError" class="px-4 py-10 text-center text-sm font-medium text-red-600">
-              {{ loadError }}
-            </div>
-
-            <div v-else-if="activeVisibleCount === 0" class="px-4 py-10 text-center text-sm font-medium text-slate-500">
-              No hay registros para los filtros actuales.
-            </div>
-          </div>
+          <AssetsHistoryTable
+            :selected-view="selectedView"
+            :selected-view-label="selectedViewLabel"
+            :computer-history="computerHistory"
+            :vehicle-history="vehicleHistory"
+            :is-loading="isLoading"
+            :load-error="loadError"
+            :active-visible-count="activeVisibleCount"
+            @open-owner="handleOpenPropietario"
+          />
         </div>
       </section>
 
-      <BaseModal ref="modalPropietario" title="Detalle del propietario">
-        <div class="grid gap-3">
-          <div class="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Nombre</p>
-            <p class="mt-1 text-sm font-semibold text-slate-900">{{ propietario.nombre || 'Sin informacion' }}</p>
-          </div>
-
-          <div class="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Apellido</p>
-            <p class="mt-1 text-sm font-semibold text-slate-900">{{ propietario.apellido || 'Sin informacion' }}</p>
-          </div>
-
-          <div class="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Programa</p>
-            <p class="mt-1 text-sm font-semibold text-slate-900">{{ propietario.formacion || 'Sin informacion' }}</p>
-          </div>
-
-          <div v-if="propietario.firma" class="rounded-[18px] border border-dashed border-emerald-200 bg-emerald-50 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-senaColor">Firma registrada</p>
-            <div class="mt-3 flex justify-center rounded-[16px] border border-emerald-100 bg-white p-3">
-              <img :src="propietario.firma" class="max-h-40 w-auto rounded-lg" alt="Firma del propietario" />
-            </div>
-          </div>
-        </div>
-      </BaseModal>
+      <ModalAssetOwnerDetails ref="modalPropietario" :detail="propietario" />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import HeaderView from '@/layouts/HeaderView.vue'
-import BaseTable from '@/components/Tables/BaseTable.vue'
-import BaseColumn from '@/components/Tables/BaseColumn.vue'
-import BaseTableHead from '@/components/Tables/BaseTableHead.vue'
-import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
-import BaseModal from '@/components/Modals/BaseModal.vue'
+import AssetsHistoryTable from '@/components/AprendizUI/AssetsHistoryTable.vue'
+import ModalAssetOwnerDetails from '@/components/AprendizUI/Modals/ModalAssetOwnerDetails.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import BaseSelect from '@/components/Forms/BaseSelect.vue'
 
 import { optionsDates } from '@/constants/optionsDates'
-import { normalizeVehicleType } from '@/utils/vehicleType'
-
-const API = import.meta.env.VITE_API_URL
-
-type AssetView = 'computers' | 'vehicles'
-
-interface Propietario {
-  id_propietario: number
-  nombre: string
-  apellido: string
-  formacion: string
-  firma: string
-}
-
-interface BaseHistoryRow {
-  id_detallemaquina: number
-  marca: string
-  documento: string
-  hora_ingreso: string | null
-  hora_salida: string | null
-}
-
-interface ComputerHistory extends BaseHistoryRow {
-  serial: string
-  id_aprendiz: number
-}
-
-interface VehicleHistory extends BaseHistoryRow {
-  tipo_vehiculo: string
-  placa: string
-  id_aprendiz: number
-}
-
-interface HistoryFilters {
-  Date: string
-  filterType: string
-  searchValue: string
-}
-
-interface SummaryCard {
-  label: string
-  eyebrow: string
-  value: number
-  description: string
-  badge: string
-  cardClass: string
-  eyebrowClass: string
-  badgeClass: string
-  titleClass: string
-  valueClass: string
-  descriptionClass: string
-}
+import { useAssetsHistory } from '@/composables/History/useAssetsHistory'
 
 const route = useRoute()
 const router = useRouter()
-
 const modalPropietario = ref()
-const selectedView = ref<AssetView>(resolveView(route.query.view))
-const computerHistory = ref<ComputerHistory[]>([])
-const vehicleHistory = ref<VehicleHistory[]>([])
-const todayRecords = reactive({
-  computers: 0,
-  vehicles: 0,
-})
-const isLoading = ref(false)
-const loadError = ref('')
+const {
+  selectedView,
+  filters,
+  propietario,
+  computerHistory,
+  vehicleHistory,
+  summaryCards,
+  activeFilterOptions,
+  selectedViewLabel,
+  selectedViewTitle,
+  selectedViewDescription,
+  heroAccentClass,
+  activeSearchPlaceholder,
+  activeVisibleCount,
+  activeCompletedCount,
+  isLoading,
+  loadError,
+  openPropietario,
+} = useAssetsHistory(route, router)
 
-const propietario = ref<Propietario>({
-  id_propietario: 0,
-  nombre: '',
-  apellido: '',
-  formacion: '',
-  firma: '',
-})
-
-const filters = reactive<HistoryFilters>({
-  Date: 'TODAY',
-  filterType: '',
-  searchValue: '',
-})
-
-const computerFilterOptions = [
-  { label: 'ID Aprendiz', value: 'APRENDIZ' },
-  { label: 'Serial Computador', value: 'SERIAL' },
-]
-
-const vehicleFilterOptions = [
-  { label: 'Placa', value: 'PLACA' },
-  { label: 'ID Aprendiz', value: 'APRENDIZ' },
-]
-
-const activeFilterOptions = computed(() =>
-  selectedView.value === 'computers' ? computerFilterOptions : vehicleFilterOptions,
-)
-
-const selectedViewLabel = computed(() =>
-  selectedView.value === 'computers' ? 'Computadores' : 'Vehiculos',
-)
-
-const selectedViewTitle = computed(() =>
-  selectedView.value === 'computers'
-    ? 'Consulta consolidada de computadores registrados'
-    : 'Consulta consolidada de vehiculos registrados',
-)
-
-const selectedViewDescription = computed(() =>
-  selectedView.value === 'computers'
-    ? 'Filtra por serial o aprendiz, revisa horas de ingreso y salida, y consulta el propietario de cada equipo desde una sola vista.'
-    : 'Revisa placas, tipo de vehiculo y trazabilidad del registro sin salir del mismo panel operativo.'
-)
-
-const heroAccentClass = computed(() =>
-  selectedView.value === 'computers'
-    ? 'bg-[linear-gradient(135deg,#0d7a3b_0%,#1a8e52_60%,#166534_100%)]'
-    : 'bg-[linear-gradient(135deg,#0f172a_0%,#1f2937_55%,#0d7a3b_100%)]',
-)
-
-const activeSearchPlaceholder = computed(() =>
-  selectedView.value === 'computers'
-    ? filters.filterType === 'SERIAL'
-      ? 'Digite el serial del computador...'
-      : 'Digite el documento del aprendiz...'
-    : filters.filterType === 'PLACA'
-      ? 'Digite la placa del vehiculo...'
-      : 'Digite el documento del aprendiz...',
-)
-
-const activeRows = computed<BaseHistoryRow[]>(() =>
-  selectedView.value === 'computers' ? computerHistory.value : vehicleHistory.value,
-)
-
-const activeVisibleCount = computed(() => activeRows.value.length)
-
-const activeCompletedCount = computed(
-  () => activeRows.value.filter((row) => row.hora_salida != null).length,
-)
-
-const summaryCards = computed<SummaryCard[]>(() => [
-  {
-    label: 'Computadores hoy',
-    eyebrow: 'Registro diario',
-    value: todayRecords.computers,
-    description: 'Total de computadores registrados en la jornada actual.',
-    badge: 'PC',
-    cardClass: 'border-emerald-200 bg-white',
-    eyebrowClass: 'text-senaColor',
-    badgeClass: 'bg-senaColor text-white',
-    titleClass: 'text-slate-900',
-    valueClass: 'text-senaColor',
-    descriptionClass: 'text-slate-600',
-  },
-  {
-    label: 'Vehiculos hoy',
-    eyebrow: 'Registro diario',
-    value: todayRecords.vehicles,
-    description: 'Total de vehiculos vinculados durante el dia.',
-    badge: 'VH',
-    cardClass: 'border-slate-200 bg-white',
-    eyebrowClass: 'text-slate-500',
-    badgeClass: 'bg-slate-900 text-white',
-    titleClass: 'text-slate-900',
-    valueClass: 'text-slate-900',
-    descriptionClass: 'text-slate-600',
-  },
-  {
-    label: 'Vista activa',
-    eyebrow: 'Seleccion actual',
-    value: activeVisibleCount.value,
-    description: `Resultados visibles en ${selectedViewLabel.value.toLowerCase()}.`,
-    badge: 'ON',
-    cardClass: 'border-emerald-100 bg-emerald-50',
-    eyebrowClass: 'text-senaColor',
-    badgeClass: 'bg-white text-senaColor',
-    titleClass: 'text-slate-900',
-    valueClass: 'text-senaColor',
-    descriptionClass: 'text-slate-600',
-  },
-  {
-    label: 'Con salida',
-    eyebrow: 'Trazabilidad',
-    value: activeCompletedCount.value,
-    description: 'Registros de la vista actual con movimiento cerrado.',
-    badge: 'OUT',
-    cardClass: 'border-slate-900 bg-slate-900 text-white',
-    eyebrowClass: 'text-emerald-200',
-    badgeClass: 'bg-white text-slate-900',
-    titleClass: 'text-white',
-    valueClass: 'text-white',
-    descriptionClass: 'text-slate-300',
-  },
-])
-
-function resolveView(view: unknown): AssetView {
-  return view === 'vehicles' ? 'vehicles' : 'computers'
+const handleOpenPropietario = async (idDetalleMaquina: number) => {
+  await openPropietario(idDetalleMaquina)
+  modalPropietario.value?.open()
 }
-
-function buildQuery({ Date, filterType, searchValue }: HistoryFilters) {
-  const params = new URLSearchParams()
-
-  if (Date) {
-    params.append('date', Date)
-  }
-
-  if (filterType && searchValue.trim()) {
-    params.append('type', filterType)
-    params.append('value', searchValue.trim())
-  }
-
-  const query = params.toString()
-  return query ? `?${query}` : ''
-}
-
-async function fetchComputerHistoryData(currentFilters: HistoryFilters) {
-  const response = await fetch(`${API}/api/HistorialComputadores/historial${buildQuery(currentFilters)}`)
-
-  if (!response.ok) {
-    throw new Error('No fue posible cargar el historial de computadores.')
-  }
-
-  return await response.json() as ComputerHistory[]
-}
-
-async function fetchVehicleHistoryData(currentFilters: HistoryFilters) {
-  const response = await fetch(`${API}/api/HistorialVehiculos/historial${buildQuery(currentFilters)}`)
-
-  if (!response.ok) {
-    throw new Error('No fue posible cargar el historial de vehiculos.')
-  }
-
-  const data = await response.json() as VehicleHistory[]
-  return data.map((vehicle) => ({
-    ...vehicle,
-    tipo_vehiculo: normalizeVehicleType(vehicle.tipo_vehiculo),
-  }))
-}
-
-async function loadActiveHistory() {
-  isLoading.value = true
-  loadError.value = ''
-
-  try {
-    if (selectedView.value === 'computers') {
-      computerHistory.value = await fetchComputerHistoryData(filters)
-      return
-    }
-
-    vehicleHistory.value = await fetchVehicleHistoryData(filters)
-  } catch (error) {
-    console.error(error)
-    loadError.value = error instanceof Error ? error.message : 'No fue posible cargar la informacion.'
-
-    if (selectedView.value === 'computers') {
-      computerHistory.value = []
-    } else {
-      vehicleHistory.value = []
-    }
-  } finally {
-    isLoading.value = false
-  }
-}
-
-async function loadTodaySummary() {
-  try {
-    const [computers, vehicles] = await Promise.all([
-      fetchComputerHistoryData({ Date: 'TODAY', filterType: '', searchValue: '' }),
-      fetchVehicleHistoryData({ Date: 'TODAY', filterType: '', searchValue: '' }),
-    ])
-
-    todayRecords.computers = computers.length
-    todayRecords.vehicles = vehicles.length
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-async function openPropietario(idDetalleMaquina: number) {
-  const basePath = selectedView.value === 'computers' ? 'HistorialComputadores' : 'HistorialVehiculos'
-
-  try {
-    const response = await fetch(`${API}/api/${basePath}/propietario/${idDetalleMaquina}`)
-
-    if (!response.ok) {
-      throw new Error('No fue posible cargar el detalle del propietario.')
-    }
-
-    const data = await response.json()
-    propietario.value = data.result as Propietario
-    modalPropietario.value.openModal()
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-watch(
-  () => route.query.view,
-  (view) => {
-    const normalizedView = resolveView(view)
-
-    if (selectedView.value !== normalizedView) {
-      selectedView.value = normalizedView
-    }
-  },
-)
-
-watch(selectedView, (view) => {
-  filters.filterType = ''
-  filters.searchValue = ''
-
-  if (route.query.view !== view) {
-    router.replace({
-      query: {
-        ...route.query,
-        view,
-      },
-    })
-  }
-})
-
-watch(
-  () => [selectedView.value, filters.Date, filters.filterType, filters.searchValue],
-  () => {
-    loadActiveHistory()
-  },
-  { immediate: true },
-)
-
-onMounted(() => {
-  loadTodaySummary()
-
-  if (route.query.view !== selectedView.value) {
-    router.replace({
-      query: {
-        ...route.query,
-        view: selectedView.value,
-      },
-    })
-  }
-})
 </script>

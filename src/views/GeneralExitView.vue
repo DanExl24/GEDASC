@@ -5,11 +5,11 @@
       eyebrow="SENA | Control de salida"
     />
 
-    <BarcodeScanner ref="scannerModal" @aprendiz-detectado="detectAprendiz" />
+    <BarcodeScanner ref="scannerModal" @aprendiz-detectado="handleScanner" />
 
     <main class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 lg:px-8">
-      <section class="grid gap-4  lg:grid-cols-[1fr_1.5fr]">
-        <aside class=" rounded-[28px] border border-emerald-100 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <section class="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
+        <aside class="rounded-[28px] border border-emerald-100 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Resumen operativo</p>
           <div class="mt-4 grid gap-7">
             <div class="rounded-2xl bg-emerald-50 p-4">
@@ -21,7 +21,7 @@
                 {{ latestAprendiz?.hora_salida || 'Esperando el próximo registro' }}
               </p>
             </div>
-            <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
               <p class="text-sm text-slate-500">Sin detalle de máquina</p>
               <p class="mt-1 text-2xl font-bold text-slate-900">{{ noMachineCount }}</p>
               <p class="mt-1 text-sm text-slate-600">Movimientos sin equipo asociado en el detalle.</p>
@@ -38,12 +38,12 @@
               <h1 class="font-robotoSlab text-3xl font-bold leading-tight lg:text-4xl [text-shadow:0_2px_8px_rgba(0,0,0,0.4)]">
                 Registro de salida ordenado, visible y conectado con el detalle de máquinas.
               </h1>
-              <p class="mt-4 max-w-xl text-sm text-[#0f172a] leading-6 lg:text-base">
+              <p class="mt-4 max-w-xl text-sm leading-6 text-[#0f172a] lg:text-base">
                 Confirma salidas por escáner o de forma manual, consulta el historial inmediato y revisa los equipos asociados antes del cierre del movimiento.
               </p>
             </div>
 
-            <div class="flex justify-between w-full gap-3 text-sm text-emerald-950">
+            <div class="flex w-full justify-between gap-3 text-sm text-emerald-950">
               <div class="rounded-2xl bg-white/95 p-4 shadow-lg">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Salidas visibles</p>
                 <p class="mt-2 text-3xl font-bold">{{ aprendizData.length }}</p>
@@ -60,16 +60,9 @@
       </section>
 
       <section class="grid gap-4 lg:grid-cols-[auto_1fr_auto_auto] lg:items-center">
-        <div class="flex items-center">
-          <ExitButton
-            to="/"
-            button-class="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-white shadow-[0_10px_25px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:scale-105"
-          />
-        </div>
+        <ExitButton to="/" />
 
-          <SearchBar
-            v-model="queryAprendices"
-          />
+        <SearchBar v-model="queryAprendices" />
 
         <BaseButtonOpen
           @click="open"
@@ -99,284 +92,76 @@
           </p>
         </div>
 
-        <div class="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/70 p-2">
-          <BaseTable>
-            <BaseColumn row-class="bg-slate-900 text-center">
-              <BaseTableHead name="Nombre" head-class="rounded-l-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-              <BaseTableHead name="Apellido" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-              <BaseTableHead name="DNI" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-              <BaseTableHead name="Formación" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-              <BaseTableHead name="Hora de salida" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-              <BaseTableHead name="Salida de máquinas" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-            </BaseColumn>
-
-            <BaseColumn
-              v-for="aprendiz in aprendizData"
-              :key="aprendiz.id_aprendiz"
-              row-class="text-center align-middle transition odd:bg-white even:bg-slate-50/80 hover:bg-emerald-50/70 [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-4 [&>td]:py-4 [&>td]:text-sm [&>td]:text-slate-700"
-            >
-              <td>{{ aprendiz.nombre }}</td>
-              <td>{{ aprendiz.apellido }}</td>
-              <td>{{ aprendiz.documento }}</td>
-              <td>{{ aprendiz.formacion }}</td>
-              <td>{{ aprendiz.hora_salida }}</td>
-              <td>
-                <div class="flex items-center justify-center">
-                  <BaseButtonOpen
-                    v-if="aprendiz.id_detallemaquina"
-                    text="Ver detalle"
-                    variant="ghost"
-                    class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
-                    @click="openDetalleMaquina(aprendiz.id_aprendiz)"
-                  />
-                  <BaseText
-                    v-else
-                    text="Sin registro"
-                    type="error"
-                    text-class="font-semibold"
-                  />
-                </div>
-              </td>
-            </BaseColumn>
-          </BaseTable>
-        </div>
+        <ExitAprendizTable :aprendiz-data="aprendizData" />
       </section>
 
-      <BaseModal ref="modalManual" title="Registro manual de salida">
-        <div class="rounded-2xl bg-slate-50 p-4">
-          <p class="mb-1 text-sm font-semibold text-slate-700">Verifique el documento antes de confirmar la salida del aprendiz.</p>
-          <p class="text-sm text-slate-500">Los datos se completan automáticamente cuando el aprendiz existe en la base de datos.</p>
-        </div>
-
-        <BaseForm method="POST" :submit="submit">
-          <BaseField
-            :input-event="EventoManual"
-            v-model="formManual.documento"
-            label="Documento de identidad"
-            place-holder="Documento de identidad"
-            type="text"
-          />
-          <BaseField
-            v-model="formManual.nombre"
-            label="Nombre del aprendiz"
-            place-holder="Esperando documento..."
-            type="text"
-            readonly
-          />
-          <BaseField
-            v-model="formManual.apellido"
-            label="Apellido del aprendiz"
-            place-holder="Esperando documento..."
-            type="text"
-            readonly
-          />
-          <BaseField
-            v-model="formManual.formacion"
-            label="Programa de formación"
-            place-holder="Esperando documento..."
-            type="text"
-            readonly
-          />
-
-          <BaseText :text="alerta.message" :type="alerta.type" text-class="text-sm font-medium" />
-
-          <BaseButton
-            text="Añadir salida"
-            type="submit"
-            button-class="mt-2 rounded-2xl !bg-emerald-700 shadow-[0_14px_30px_rgba(15,107,63,0.18)]"
-          />
-        </BaseForm>
-      </BaseModal>
-
-      <BaseModal ref="modalDetalleMaquina" title="Máquinas registradas">
-        <div class="grid gap-4">
-          <div v-if="maquinaDetalle.pc" class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <h3 class="font-robotoSlab text-lg font-bold text-slate-900">Computador</h3>
-            <BaseText type="success" :text="`Marca: ${maquinaDetalle.pc.modelo}`" />
-            <BaseText type="success" :text="`Serial: ${maquinaDetalle.pc.placa_serial}`" />
-          </div>
-
-          <div v-if="maquinaDetalle.vh" class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <h3 class="font-robotoSlab text-lg font-bold text-slate-900">Vehículo</h3>
-            <BaseText type="success" :text="`Tipo: ${normalizeVehicleType(maquinaDetalle.vh.tipo_vehiculo)}`" />
-            <BaseText type="success" :text="`Marca: ${maquinaDetalle.vh.modelo}`" />
-            <BaseText type="success" :text="`Placa: ${maquinaDetalle.vh.placa_serial}`" />
-          </div>
-
-          <div v-if="maquinaDetalle.firma" class="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4">
-            <h3 class="mb-2 font-semibold text-slate-900">Firma del aprendiz</h3>
-            <img :src="maquinaDetalle.firma" class="w-48 rounded-xl border bg-white" alt="Firma del aprendiz" />
-          </div>
-        </div>
-      </BaseModal>
+      <ModalRegisterExitManual ref="modalManual" />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-
+import { computed, onMounted, ref, watch } from 'vue'
 import HeaderView from '@/layouts/HeaderView.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
-import BaseTable from '@/components/Tables/BaseTable.vue'
-import BaseColumn from '@/components/Tables/BaseColumn.vue'
-import BaseTableHead from '@/components/Tables/BaseTableHead.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 import BarcodeScanner from '@/components/Library/BarcodeScanner.vue'
-import BaseModal from '@/components/Modals/BaseModal.vue'
-import BaseForm from '@/components/Forms/BaseForm.vue'
-import BaseField from '@/components/Forms/BaseField.vue'
-import BaseButton from '@/components/Buttons/BaseButton.vue'
-import BaseText from '@/components/Text/BaseText.vue'
-
+import ExitAprendizTable from '@/components/AprendizUI/ExitAprendizTable.vue'
+import ModalRegisterExitManual from '@/components/AprendizUI/Modals/ModalRegisterExitManual.vue'
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
-
 import { DetectExit } from '@/Services/DetectExits'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
-import { normalizeVehicleType } from '@/utils/vehicleType'
+import { useExitAprendiz } from '@/composables/useExitAprendiz'
 
-const API = import.meta.env.VITE_API_URL
-
-export interface Aprendiz {
-  id_aprendiz: number
-  nombre: string
-  apellido: string
-  documento: string
-  formacion: string
-  hora_ingreso?: string
-  hora_salida?: string
-  id_detallemaquina?: number
-}
-
-interface Computador {
-  modelo: string
-  placa_serial: string
-  firma: string
-}
-
-interface Vehiculo {
-  tipo_vehiculo: string
-  modelo: string
-  placa_serial: string
-  firma: string
-}
-
-interface DetalleMaquinas {
-  pc: Computador | null
-  vh: Vehiculo | null
-  firma?: string
-}
+const {
+  HistorialSalidaAprendiz,
+  AñadirSalidaAprendiz,
+  aprendizData,
+  latestAprendiz,
+} = useExitAprendiz()
 
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
-const aprendizData = ref<Aprendiz[]>([])
 const modalManual = ref()
 const queryAprendices = ref('')
-const modalDetalleMaquina = ref()
-const maquinaDetalle = ref<DetalleMaquinas>({ pc: null, vh: null })
-const alerta = ref({ message: '', type: 'error' as 'error' | 'success' })
 
-const formManual = reactive({ documento: '', nombre: '', apellido: '', formacion: '' })
-
-const latestAprendiz = computed(() => aprendizData.value[0] ?? null)
 const machineLinkedCount = computed(
   () => aprendizData.value.filter((aprendiz) => aprendiz.id_detallemaquina != null).length,
 )
+
 const noMachineCount = computed(
   () => aprendizData.value.filter((aprendiz) => aprendiz.id_detallemaquina == null).length,
 )
 
-const detectAprendiz = async (code: string): Promise<'ok' | 'ya_registrado' | 'no_existe' | 'error'> => {
-  if (!code) return 'error'
+const handleScanner = async (code: string) => {
+  if (!code) return
 
   const estado = await DetectExit(code)
 
-  if (estado === 'no_existe') {
-    scannerModal.value?.setResultMessage('El aprendiz no existe')
-    scannerModal.value?.closeScanner()
-    return 'no_existe'
+  const messages = {
+    no_existe: 'El aprendiz no existe',
+    ya_registrado: 'El aprendiz no tiene ingreso o ya registró salida',
   }
-
-  if (estado === 'ya_registrado') {
-    scannerModal.value?.setResultMessage('El aprendiz no tiene ingreso o ya registró salida')
-    scannerModal.value?.closeScanner()
-    return 'ya_registrado'
-  }
-
-  if (estado === 'error') {
-    scannerModal.value?.closeScanner()
-    return 'error'
-  }
-
-  // estado === 'ok'
-  const registrado = await addExit(code)
-
-  if (!registrado) {
-    scannerModal.value?.setResultMessage('Error al registrar la salida')
-    scannerModal.value?.closeScanner()
-    return 'error'
-  }
-
-  scannerModal.value?.setResultMessage('Salida registrada correctamente')
-  scannerModal.value?.closeScanner()
-
-  return 'ok'
-}
-
-const addExit = async (code: string): Promise<boolean> => {
-  if (!code) return false
 
   try {
-    const response = await fetch(`${API}/api/registroSalidas/addExit/${code}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      if (response.status === 409) {
-        console.log('Info:', data.message)
-      } else {
-        console.error('Error:', data.message)
-      }
-      return false
-    }
-
-    console.log('Salida registrada:', data)
-    await HistorialSalidas()
-    return true
-  } catch (error) {
-    console.error(error)
-    return false
-  }
-}
-
-const HistorialSalidas = async () => {
-  try {
-    const response = await fetch(`${API}/api/registroSalidas/historial`)
-    const data = await response.json()
-    aprendizData.value = data as Aprendiz[]
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-const openDetalleMaquina = async (id_aprendiz: number) => {
-  try {
-    const response = await fetch(`${API}/api/registroIngresos/detalleMaquinas/${id_aprendiz}`)
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.error(data.message)
+    if (estado === 'no_existe' || estado === 'ya_registrado') {
+      scannerModal.value?.setResultMessage(messages[estado])
       return
     }
 
-    maquinaDetalle.value = data.result
-    modalDetalleMaquina.value.openModal()
-  } catch (error) {
-    console.error(error)
+    if (estado === 'error') {
+      scannerModal.value?.setResultMessage('Error al procesar la salida')
+      return
+    }
+
+    const registered = await AñadirSalidaAprendiz(code)
+
+    scannerModal.value?.setResultMessage(
+      registered ? 'Salida registrada correctamente' : 'Error al registrar la salida',
+    )
+  } finally {
+    scannerModal.value?.closeScanner()
   }
 }
 
@@ -385,97 +170,16 @@ const open = () => {
 }
 
 const openManual = () => {
-  modalManual.value.openModal()
-  alerta.value.message = ''
-  formManual.documento = ''
-  formManual.nombre = ''
-  formManual.apellido = ''
-  formManual.formacion = ''
-}
-
-const submit = async () => {
-  if (!formManual.documento) {
-    alerta.value.message = 'Ingrese un documento de identidad'
-    alerta.value.type = 'error'
-    return
-  }
-
-  if (formManual.documento.length !== 10) {
-    alerta.value.message = 'El DNI debe tener 10 digitos'
-    alerta.value.type = 'error'
-    return
-  }
-
-  if (!/^\d{10}$/.test(formManual.documento)) {
-    alerta.value.message = 'El DNI debe contener solo numeros'
-    alerta.value.type = 'error'
-    return
-  }
-
-  const estado = await detectAprendiz(formManual.documento)
-
-  if (estado === 'ok') {
-    alerta.value.message = 'Registro aceptado'
-    alerta.value.type = 'success'
-
-    setTimeout(() => {
-      modalManual.value.closeModal()
-    }, 1000)
-    return
-  }
-
-  if (estado === 'no_existe') {
-    alerta.value.message = 'El aprendiz no existe'
-    alerta.value.type = 'error'
-    return
-  }
-
-  if (estado === 'ya_registrado') {
-    alerta.value.message = 'El aprendiz no tiene ingreso o ya tiene salida'
-    alerta.value.type = 'error'
-    return
-  }
-
-  // error genérico
-  alerta.value.message = 'Ocurrió un error al procesar la solicitud'
-  alerta.value.type = 'error'
-}
-
-const EventoManual = async (DocumentoManual: string) => {
-  if (!DocumentoManual) return
-
-  if (DocumentoManual.length !== 10) {
-    alerta.value.message = ''
-    formManual.nombre = ''
-    formManual.apellido = ''
-    formManual.formacion = ''
-    return
-  }
-
-  try {
-    const response = await fetch(`${API}/api/registroIngresos/ingresoManual/${DocumentoManual}`)
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.log(data.message)
-      return
-    }
-
-    formManual.nombre = data.result.nombre
-    formManual.apellido = data.result.apellido
-    formManual.formacion = data.result.formacion
-  } catch (error) {
-    console.error(error)
-  }
+  modalManual.value?.open()
 }
 
 onMounted(() => {
-  HistorialSalidas()
+  HistorialSalidaAprendiz()
 })
 
 watch(queryAprendices, async (nuevoTexto) => {
   if (!nuevoTexto.trim()) {
-    await HistorialSalidas()
+    await HistorialSalidaAprendiz()
     return
   }
 

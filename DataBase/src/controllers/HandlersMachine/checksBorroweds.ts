@@ -2,7 +2,7 @@ import type { PoolClient } from 'pg'
 import type { PcRow } from '../../types/BorrowComputer.types'
 import type { VehicleRow } from '../../types/BorrowVehicle.types'
 import type { TodayBorrowRow } from '../../types/BorrowToday'
-
+import { MaquinaDetalleUI } from '../../types/machineDetails'
 /* =========================
    MAPPERS
 ========================= */
@@ -37,47 +37,49 @@ const mapVehicle = (row: VehicleRow) => ({
   }
 })
 
-const mapTodayBorrowed = (row: TodayBorrowRow) => ({
-  aprendiz: row.id_aprendiz,
-
-  computer: row.id_computador
+const mapToDTO = (row: TodayBorrowRow): MaquinaDetalleUI => {
+  const pc = row.id_computador
     ? {
-        principal: row.pc_principal
-          ? {
-              id: row.pc_principal,
-              serial: row.principalSerial,
-              marca: row.principalMarca
-            }
-          : null,
-
-        prestado: {
-          id: row.id_computador,
-          serial: row.prestadoSerial,
-          marca: row.prestadoMarca
-        }
+        serial: row.prestadoSerial,
+        marca: row.prestadoMarca
       }
-    : null,
+    : row.pc_principal
+      ? {
+          serial: row.principalSerial,
+          marca: row.principalMarca
+        }
+      : null
 
-  vehicle: row.id_vehiculo
+  const vh = row.id_vehiculo
     ? {
-        principal: row.vehiculo_principal
-          ? {
-              id: row.vehiculo_principal,
-              placa: row.principalPlaca,
-              tipo: row.principalTipo,
-              modelo: row.principalModelo
-            }
-          : null,
-
-        prestado: {
-          id: row.id_vehiculo,
-          placa: row.prestadoPlaca,
-          tipo: row.prestadoTipo,
-          modelo: row.prestadoModelo
-        }
+        tipo_vehiculo: row.prestadoTipo,
+        marca: row.prestadoModelo,
+        placa: row.prestadoPlaca
       }
-    : null
-})
+    : row.vehiculo_principal
+      ? {
+          tipo_vehiculo: row.principalTipo,
+          marca: row.principalModelo,
+          placa: row.principalPlaca
+        }
+      : null
+
+  return {
+    pc,
+    vh,
+    firma: row.firma_ingreso,
+    estado: row.id_computador || row.id_vehiculo ? 'PRESTADA' : 'NORMAL',
+    aprendices: {
+      actual: {
+        id: row.id_aprendiz
+      },
+      owner: {
+        id: row.ownerId,
+        name: row.ownerName
+      }
+    }
+  }
+}
 
 /* =========================
    QUERIES
@@ -92,7 +94,8 @@ export const getGlobalBorrowedComputers = async (client: PoolClient) => {
       c1.marca AS principalMarca,
       c2.serial AS prestadoSerial,
       c2.marca AS prestadoMarca,
-      dm.id_computador AS prestadoPC
+      dm.id_computador AS prestadoPC,
+      dm.firma_ingreso AS firma_ingreso
     FROM detalles_maquinas AS dm
     INNER JOIN computadores AS c2
       ON c2.id_computador = dm.id_computador
@@ -128,7 +131,7 @@ export const getGlobalBorrowedVehicles = async (client: PoolClient) => {
     INNER JOIN detalles_ingreso AS di
       ON di.id_ingreso = dm.id_ingreso
 
-    INNER JOIN aprendiz_vehiculos AS av
+    INNER JOIN aprendiz_vehiculo AS av
       ON av.id_aprendiz = di.id_aprendiz
       AND av.principal = true
 
@@ -168,28 +171,31 @@ export const getTodayBorrowed = async (
     `
     SELECT
       di.id_aprendiz,
+      COALESCE(aopc.id_aprendiz, aov.id_aprendiz) AS "ownerId",
+      COALESCE(aopc.nombre, aov.nombre) AS "ownerName",
+      dm.firma_ingreso AS "firma_ingreso",
 
       dm.id_computador,
-      c2.serial AS prestadoSerial,
-      c2.marca AS prestadoMarca,
+      c2.serial AS "prestadoSerial",
+      c2.marca AS "prestadoMarca",
 
-      ac.id_computador AS pc_principal,
-      c1.serial AS principalSerial,
-      c1.marca AS principalMarca,
+      ac.id_computador AS "pc_principal",
+      c1.serial AS "principalSerial",
+      c1.marca AS "principalMarca",
 
       dm.id_vehiculo,
-      v2.placa AS prestadoPlaca,
-      v2.tipo_vehiculo AS prestadoTipo,
-      v2.modelo AS prestadoModelo,
+      v2.placa AS "prestadoPlaca",
+      v2.tipo_vehiculo AS "prestadoTipo",
+      v2.modelo AS "prestadoModelo",
 
-      av.id_vehiculo AS vehiculo_principal,
-      v1.placa AS principalPlaca,
-      v1.tipo_vehiculo AS principalTipo,
-      v1.modelo AS principalModelo
+      av.id_vehiculo AS "vehiculo_principal",
+      v1.placa AS "principalPlaca",
+      v1.tipo_vehiculo AS "principalTipo",
+      v1.modelo AS "principalModelo"
 
     FROM detalles_maquinas dm
-    INNER JOIN detalles_ingreso di
-      ON di.id_ingreso = dm.id_ingreso
+    INNER JOIN detalles_ingreso AS di
+      ON di.id_detallemaquina = dm.id_detallemaquina
 
     LEFT JOIN aprendiz_computador ac
       ON ac.id_aprendiz = di.id_aprendiz
@@ -201,7 +207,7 @@ export const getTodayBorrowed = async (
     LEFT JOIN computadores c2
       ON c2.id_computador = dm.id_computador
 
-    LEFT JOIN aprendiz_vehiculos av
+    LEFT JOIN aprendiz_vehiculo av
       ON av.id_aprendiz = di.id_aprendiz
       AND av.principal = true
 
@@ -211,17 +217,38 @@ export const getTodayBorrowed = async (
     LEFT JOIN vehiculos v2
       ON v2.id_vehiculo = dm.id_vehiculo
 
+    LEFT JOIN aprendiz_computador ac2
+      ON ac2.id_computador = c2.id_computador
+      AND ac2.principal = true
+
+    LEFT JOIN aprendiz aopc
+      ON aopc.id_aprendiz = ac2.id_aprendiz
+
+    LEFT JOIN aprendiz_vehiculo av2
+      ON av2.id_vehiculo = v2.id_vehiculo
+      AND av2.principal = true
+
+    LEFT JOIN aprendiz aov
+      ON aov.id_aprendiz = av2.id_aprendiz
+
     WHERE ${where}
     AND (
-      (dm.id_computador IS NOT NULL AND dm.id_computador != ac.id_computador)
+      (
+        dm.id_computador IS NOT NULL
+        AND ac2.id_aprendiz IS NOT NULL
+        AND ac2.id_aprendiz != di.id_aprendiz
+      )
       OR
-      (dm.id_vehiculo IS NOT NULL AND dm.id_vehiculo != av.id_vehiculo)
+      (
+        dm.id_vehiculo IS NOT NULL
+        AND av2.id_aprendiz IS NOT NULL
+        AND av2.id_aprendiz != di.id_aprendiz
+      )
     )
     `,
     params
   )
-
-  return rows.map(mapTodayBorrowed)
+  return rows.map(mapToDTO)
 }
 
 /* =========================

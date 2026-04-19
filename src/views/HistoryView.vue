@@ -79,264 +79,44 @@
         </div>
 
         <div class="p-4 lg:px-6 lg:py-5">
-          <div class="overflow-x-auto rounded-[24px] border border-slate-100 bg-slate-50/70 p-2">
-            <BaseTable>
-              <BaseColumn row-class="bg-slate-900 text-center">
-                <BaseTableHead name="Nombre" head-class="rounded-l-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                <BaseTableHead name="Apellido" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                <BaseTableHead name="DNI" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                <BaseTableHead name="Formacion" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                <BaseTableHead name="Ingreso" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                <BaseTableHead name="Salida" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-                <BaseTableHead name="Maquina" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-              </BaseColumn>
-
-              <BaseColumn
-                v-for="aprendiz in historial"
-                :key="aprendiz.id_ingreso"
-                row-class="text-center align-middle transition odd:bg-white even:bg-slate-50/80 hover:bg-emerald-50/70 [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-4 [&>td]:py-4 [&>td]:text-sm [&>td]:text-slate-700"
-              >
-                <td>{{ aprendiz.nombre }}</td>
-                <td>{{ aprendiz.apellido }}</td>
-                <td>{{ aprendiz.documento }}</td>
-                <td>{{ aprendiz.formacion }}</td>
-                <td>{{ aprendiz.hora_ingreso || '-' }}</td>
-                <td>{{ aprendiz.hora_salida || '-' }}</td>
-                <td>
-                  <div class="flex items-center justify-center">
-                    <BaseText
-                      v-if="aprendiz.id_detallemaquina == null"
-                      text="Sin registro"
-                      type="error"
-                      text-class="font-semibold"
-                    />
-
-                    <BaseButtonOpen
-                      v-else
-                      text="Ver detalle"
-                      variant="ghost"
-                      class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
-                      @click="openDetalleMaquina(aprendiz.id_detallemaquina)"
-                    />
-                  </div>
-                </td>
-              </BaseColumn>
-            </BaseTable>
-          </div>
+          <HistoryAprendizTable
+            :historial="historial"
+            @open-machine-detail="handleOpenDetalleMaquina"
+          />
         </div>
       </section>
 
-      <BaseModal
+      <ModalHistoryMachineDetails
         ref="modalDetalleMaquina"
-        title="Detalle de maquinas registradas"
-        modal-class="my-6 w-full max-w-5xl overflow-hidden rounded-[24px] border border-emerald-100 bg-white shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
-        header-class="relative flex items-center justify-center border-b border-emerald-100 bg-[linear-gradient(90deg,#ffffff_0%,#f3fbf5_40%,#e2f4e6_100%)] px-5 py-4 text-center font-robotoSlab text-lg font-bold text-slate-800"
-        body-class="relative max-h-[calc(100vh-8rem)] space-y-3 overflow-y-auto px-4 py-4 lg:px-5"
-      >
-        <div class="grid gap-3 lg:grid-cols-3">
-          <article
-            v-if="maquinaDetalle.pc"
-            class="rounded-[18px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] p-3.5"
-          >
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-2.5">
-              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-senaColor text-[10px] font-bold uppercase tracking-[0.14em] text-white">
-                PC
-              </div>
-              <div>
-                <h3 class="font-robotoSlab text-base font-bold text-slate-900">Computador</h3>
-                <p class="text-xs text-slate-500">Equipo asociado al registro</p>
-              </div>
-            </div>
-
-            <div class="mt-3 grid gap-2">
-              <div class="rounded-xl bg-slate-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Marca</p>
-                <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ maquinaDetalle.pc.modelo }}</p>
-              </div>
-              <div class="rounded-xl bg-slate-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Serial</p>
-                <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ maquinaDetalle.pc.placa_serial }}</p>
-              </div>
-            </div>
-          </article>
-
-          <article
-            v-if="maquinaDetalle.vh"
-            class="rounded-[18px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] p-3.5"
-          >
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-2.5">
-              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
-                VH
-              </div>
-              <div>
-                <h3 class="font-robotoSlab text-base font-bold text-slate-900">Vehiculo</h3>
-                <p class="text-xs text-slate-500">Vehiculo registrado en el movimiento</p>
-              </div>
-            </div>
-
-            <div class="mt-3 grid gap-2">
-              <div class="rounded-xl bg-slate-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Tipo</p>
-                <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ normalizeVehicleType(maquinaDetalle.vh.tipo_vehiculo) }}</p>
-              </div>
-              <div class="rounded-xl bg-slate-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Marca</p>
-                <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ maquinaDetalle.vh.modelo }}</p>
-              </div>
-              <div class="rounded-xl bg-slate-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Placa</p>
-                <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ maquinaDetalle.vh.placa_serial }}</p>
-              </div>
-            </div>
-          </article>
-
-          <article
-            v-if="maquinaDetalle.firma"
-            class="rounded-[18px] border border-dashed border-emerald-200 bg-emerald-50 p-3.5"
-          >
-            <div class="flex items-center gap-3 border-b border-emerald-100 pb-2.5">
-              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[10px] font-bold uppercase tracking-[0.14em] text-senaColor">
-                FIR
-              </div>
-              <div>
-                <h3 class="font-robotoSlab text-base font-bold text-slate-900">Firma del aprendiz</h3>
-                <p class="text-xs text-slate-600">Evidencia asociada al registro consultado.</p>
-              </div>
-            </div>
-
-            <div class="mt-3 flex min-h-[180px] items-center justify-center rounded-[16px] border border-emerald-100 bg-white p-2">
-              <img :src="maquinaDetalle.firma" class="max-h-40 w-auto rounded-lg" alt="Firma del aprendiz" />
-            </div>
-          </article>
-
-          <div
-            v-if="!maquinaDetalle.pc && !maquinaDetalle.vh && !maquinaDetalle.firma"
-            class="rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 lg:col-span-3"
-          >
-            No hay detalles registrados para este movimiento.
-          </div>
-        </div>
-      </BaseModal>
+        :detail="maquinaDetalle"
+      />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { ref } from 'vue'
 
+import HistoryAprendizTable from '@/components/AprendizUI/HistoryAprendizTable.vue'
+import ModalHistoryMachineDetails from '@/components/AprendizUI/Modals/ModalHistoryMachineDetails.vue'
 import HeaderView from '@/layouts/HeaderView.vue'
-import BaseTable from '@/components/Tables/BaseTable.vue'
-import BaseColumn from '@/components/Tables/BaseColumn.vue'
-import BaseTableHead from '@/components/Tables/BaseTableHead.vue'
-import BaseText from '@/components/Text/BaseText.vue'
-import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
-import BaseModal from '@/components/Modals/BaseModal.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import BaseSelect from '@/components/Forms/BaseSelect.vue'
 
 import { optionsDates } from '@/constants/optionsDates'
 import { optionsProgram } from '@/constants/optionsProgram'
-import { normalizeVehicleType } from '@/utils/vehicleType'
+import { useHistoryFilters } from '@/composables/History/useHistoryFilters'
+import { useHistoryMachineDetail } from '@/composables/History/useHistoryMachineDetail'
 
-const API = import.meta.env.VITE_API_URL
-
-const historial = ref<HistorialAprendiz[]>([])
 const modalDetalleMaquina = ref()
-const queryAprendices = ref('')
-const maquinaDetalle = ref<DetalleMaquinas>({ pc: null, vh: null })
+const { historial, queryAprendices, filters, machineRegisteredCount } =
+  useHistoryFilters()
+const { maquinaDetalle, openDetalleMaquina } = useHistoryMachineDetail()
 
-const filters = reactive({
-  Date: 'TODAY',
-  Program: 'ADSO',
-})
-
-interface HistorialAprendiz {
-  id_ingreso: number
-  id_aprendiz: number
-  nombre: string
-  apellido: string
-  documento: string
-  formacion: string
-  hora_ingreso: string | null
-  hora_salida: string | null
-  id_detallemaquina: number | null
+const handleOpenDetalleMaquina = async (idDetalleMaquina: number) => {
+  await openDetalleMaquina(idDetalleMaquina, () => {
+    modalDetalleMaquina.value?.open()
+  })
 }
-
-interface Computador {
-  modelo: string
-  placa_serial: string
-}
-
-interface Vehiculo {
-  tipo_vehiculo: string
-  modelo: string
-  placa_serial: string
-}
-
-interface DetalleMaquinas {
-  pc: Computador | null
-  vh: Vehiculo | null
-  firma?: string
-}
-
-const machineRegisteredCount = computed(
-  () => historial.value.filter((item) => item.id_detallemaquina != null).length,
-)
-
-const getHistorial = async () => {
-  const res = await fetch(`${API}/api/historico/historial`)
-  const data: HistorialAprendiz[] = await res.json()
-  historial.value = data
-}
-
-const getHistorialByFilters = async () => {
-  try {
-    const params = new URLSearchParams()
-
-    if (filters.Date) params.append('date', filters.Date)
-    if (filters.Program) params.append('program', filters.Program)
-    if (queryAprendices.value) params.append('search', queryAprendices.value)
-
-    const query = params.toString() ? `?${params.toString()}` : ''
-    const res = await fetch(`${API}/api/historico/historialFechas${query}`)
-    const data: HistorialAprendiz[] = await res.json()
-
-    historial.value = data
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-const openDetalleMaquina = async (id_detallemaquina: number) => {
-  try {
-    const response = await fetch(`${API}/api/historico/historialMaquinas/${id_detallemaquina}`)
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.error(data.message)
-      return
-    }
-
-    maquinaDetalle.value = data.result
-    modalDetalleMaquina.value.openModal()
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-onMounted(() => {
-  getHistorialByFilters()
-})
-
-watch(
-  () => [filters.Date, filters.Program, queryAprendices.value],
-  () => {
-    if (filters.Date || filters.Program || queryAprendices.value) {
-      getHistorialByFilters()
-    } else {
-      getHistorial()
-    }
-  },
-)
 </script>

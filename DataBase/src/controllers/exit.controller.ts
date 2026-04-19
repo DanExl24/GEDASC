@@ -89,6 +89,7 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         a.apellido,
         a.documento,
         f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
         di.id_detallemaquina
 
@@ -197,6 +198,7 @@ export const ExitRecord = async (request: Request, response: Response) => {
         a.apellido,
         a.documento,
         f.nombre AS formacion,
+        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
         di.id_detallemaquina
 
