@@ -20,7 +20,7 @@ import SignaturePad from '@/components/Library/SignaturePad.vue';
 import { useMachineSocket } from '@/composables/sockets/useMachineSockets';
 import {documentoAprendiz} from '@/composables/sockets/InitSocketsEvent'
 import { connectSocket } from '@/socket'
-
+import { useRoute } from 'vue-router';
 const socket = connectSocket()
 
 onMounted(() => {
@@ -37,13 +37,10 @@ const modalFirma = ref<InstanceType<typeof BaseModal> | null>(null);
 
 // ------------------- DATOS -------------------
 
-watch(documentoAprendiz, (doc) => {
-  if (doc) {
-    modalFirma.value?.openModal()
-  }
-  else{
-    modalFirma.value?.openModal()
-  }
+const route = useRoute()
+
+watch(() => route.params.documento, (doc) => {
+  if (doc) modalFirma.value?.openModal()
 }, { immediate: true })
 
 // ------------------- WATCH RUTA -------------------

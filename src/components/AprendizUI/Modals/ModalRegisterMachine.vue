@@ -6,7 +6,7 @@
           Registre el equipo asociado al ingreso. Si ya existe una firma capturada desde móvil, se mostrará una confirmación antes de enviar el formulario.
         </div>
 
-        <RegisterMachineForm :aprendiz="props.aprendiz"/>
+        <RegisterMachineForm @close="close" :aprendiz="props.aprendiz"/>
       </BaseModal>
 </template>
 <script setup lang="ts">
@@ -15,7 +15,6 @@ import RegisterMachineForm from '../Forms/RegisterMachineForm.vue';
 import type { Aprendiz } from '@/types/aprendiz.types';
 import BaseModal from '@/components/Modals/BaseModal.vue';
 const modalRef = ref()
-
 
 const open = () => {
   modalRef.value?.openModal()

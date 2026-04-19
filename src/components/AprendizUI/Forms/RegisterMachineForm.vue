@@ -57,7 +57,7 @@
 
 
       <ModalConfirm
-        ref="ModalConfirmAnother"
+        ref="modalConfirmAnother"
         title="Registrar otra máquina"
         :subTitle="confirmMessage"
         ifYes="Sí, Registrar"
@@ -67,13 +67,23 @@
       />
 
       <ModalConfirm
-        ref="machineConfirmBorrow"
+        ref="modalBorrow"
         title="Registro de Maquina"
-        subTitle="Esta máquina ya tiene un dueño. ¿Desea prestar esta maquina?"
-        ifYes="Sí, quiero prestarla"
-        ifNo="No, no la quiero prestar"
+        subTitle="Esta máquina ya tiene un dueño. ¿El aprendiz decidio prestar esta maquina?"
+        ifYes="Sí, y quiero prestarla"
+        ifNo="No, no lo hizo"
         @confirm="handleBorrowedMachine"
         @cancel="handleNotBorrowedMachine"
+      />
+
+      <ModalConfirm
+        ref="modalConfirmExists"
+        title="Registro de Maquina"
+        subTitle="El aprendiz ya tiene maquina principal, ¿Seguro?"
+        ifYes="Sí, quiero registrar otra"
+        ifNo="No, fue un error"
+        @confirm="handleRegisterOther"
+        @cancel="handleNotRegisterOther"
       />
 
 </template>
@@ -94,28 +104,28 @@ import { optionsVehicle } from '@/constants/optionsVehicle'
 import type { Aprendiz } from '@/types/aprendiz.types'
 import ModalConfirm from '../Modals/ModalConfirm.vue'
 import { connectSocket } from '@/socket'
-
+const modalConfirmAnother = ref()
+const modalBorrow = ref()
+const modalConfirmExists = ref()
 const socket = connectSocket()
-
 onMounted(() => {
   socket.emit('registrar', { tipo: 'pc' })
 })
 
 const handleForm = ref(true)
-const ModalConfirmAnother = ref()
 const emit = defineEmits<{
   (e: "close"): void
 }>()
 
 onMounted(() => {
-  form.aprendizMachine.value = props.aprendiz
+  form.aprendizMachine.value = { ...props.aprendiz, firma: '' }
 })
 
 // 🔹 1. crear el form
 const form = useMachineForm()
 
 // 🔹 2. pasar el form al service
-const { submitMachine } = useMachineFormService(form)
+const {submitMachine,forzarExcepcion} = useMachineFormService(form)
 const {emitirAbrirFirma,recibirFirmaMovil} = useMachineSocket(form)
 // 🔹 3. mensajes
 const { message } = useMessage()
@@ -124,10 +134,11 @@ const { message } = useMessage()
 const {
   formMachine,
   maquinaRegistrada,
+  validateMachineForm,
   errorMachine,
   registerOtherMachine,
   endFlowMachine,
-  submittedMachine
+  resetMachineForm
 } = form
 
 
@@ -139,26 +150,83 @@ const confirmMessage = computed(() => {
 
 const handleSubmitMachine = async () => {
   const result = await submitMachine(form.aprendizMachine.value?.id_aprendiz)
+
   recibirFirmaMovil()
-  submittedMachine.value = true
-  if (result === 'registrarOtraMaquina') {
-    ModalConfirm.value.open()
-    return
+
+  if (result.status === 'inconsistencia') {
+    const aviso = result.data.aviso
+
+    switch (aviso) {
+      case 'diferenteAprendiz':
+        modalBorrow.value.open()
+        return
+
+      case 'maquinaPrincipalExistente':
+        modalConfirmExists.value.open()
+        return
+
+      case 'maquinaYaPrestadaHoy':
+      case 'maquinaSinDueño':
+        console.log('caso especial', result.data)
+        return
+    }
   }
 
-  emit('close')
+  switch (result.status) {
+    case 'registrarOtraMaquina':
+        setTimeout(() => {
+        modalConfirmAnother.value.open()
+      }, 600)
+      break
+
+    case 'ok':
+      forzarExcepcion.value = false
+      handleForm.value = false
+      resetMachineForm()
+      emit('close')
+      break
+
+    case 'error':
+    default:
+      validateMachineForm()
+  }
 }
 
 const handleConfirmAnother = () => {
-   registerOtherMachine()
-   ModalConfirmAnother.value.close()
-   handleForm.value = true
+  registerOtherMachine()
+  handleForm.value = true
 }
 
 const handleCancelAnother = () => {
   endFlowMachine()
-   ModalConfirmAnother.value.close()
-   handleForm.value = false
+  handleForm.value = false
+  emit('close')
+}
+
+const handleBorrowedMachine = async () => {
+  forzarExcepcion.value = true
+  modalBorrow.value.close()
+
+  setTimeout(async () => {
+    await handleSubmitMachine()
+  }, 300)
+}
+
+const handleNotBorrowedMachine = () => {
+  // no necesitas cerrar, el modal ya se cerró solo
+}
+
+const handleRegisterOther = () => {
+    forzarExcepcion.value = true
+  modalConfirmExists.value.close()
+
+  setTimeout(async () => {
+    await handleSubmitMachine()
+  }, 300)
+}
+
+const handleNotRegisterOther = () => {
+  // igual aquí
 }
 
 const props = defineProps<{
@@ -167,10 +235,9 @@ const props = defineProps<{
 
 watch(()=>props.aprendiz,(aprendiz)=>{
   if(aprendiz){
-    form.aprendizMachine.value = aprendiz
+    form.aprendizMachine.value = { ...aprendiz, firma: '' }
   }
 })
-
 
 
 

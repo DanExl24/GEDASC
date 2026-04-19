@@ -50,7 +50,7 @@
         </td>
       </BaseColumn>
     </BaseTable>
-    <ModalRegisterMachine   v-if="aprendizMachine" ref="modalMachine" :aprendiz="aprendizMachine" />
+    <ModalRegisterMachine @close="closeMachineForm"   v-if="aprendizMachine" ref="modalMachine" :aprendiz="aprendizMachine" />
     <ModalMachineDetails ref="modalMachineDetails" v-if="aprendizMachine" :id_aprendiz="aprendizMachine.id_aprendiz"/>
   </div>
 </template>
@@ -65,6 +65,7 @@ import type { Aprendiz } from '@/types/aprendiz.types';
 import ModalRegisterMachine from './Modals/ModalRegisterMachine.vue';
 import ModalMachineDetails from './Modals/ModalMachineDetails.vue';
 
+
 const aprendizMachine = ref<Aprendiz | null>(null)
 const modalMachine = ref()
 const modalMachineDetails = ref()
@@ -72,7 +73,7 @@ const modalMachineDetails = ref()
 const handleMachineDetails = async (aprendiz : Aprendiz) => {
   aprendizMachine.value = aprendiz
   await nextTick()
-  modalMachineDetails.value?.load(aprendizMachine.value.id_aprendiz)
+  await modalMachineDetails.value?.load(aprendizMachine.value.id_aprendiz)
   modalMachineDetails.value?.open()
 }
 
@@ -83,6 +84,10 @@ const openMachine = (aprendiz: Aprendiz) => {
   nextTick(() => {
     modalMachine.value.open()
   })
+}
+
+const closeMachineForm = () => {
+  modalMachine.value.close()
 }
 
 defineProps<{

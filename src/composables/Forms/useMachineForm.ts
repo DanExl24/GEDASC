@@ -4,7 +4,7 @@ import type { Aprendiz } from "@/types/aprendiz.types"
 
 export const useMachineForm = () => {
   const submittedMachine = ref(false)
-  const aprendizMachine = ref<Aprendiz>()
+  const aprendizMachine = ref<Aprendiz | null>()
   const {setMessage} = useMessage()
 
   const formMachine = reactive({ modeloMaquina: '', TipoMaquina: '', tipoVehiculo: '', placaSerial: '' })
@@ -30,7 +30,7 @@ export const useMachineForm = () => {
     formMachine.placaSerial = ''
 
     if (aprendizMachine.value) {
-      aprendizMachine.value.firma = ''
+      aprendizMachine.value = null
     }
 
     maquinaRegistrada.pc = false

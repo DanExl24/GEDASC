@@ -1,7 +1,11 @@
 // Controlador para consultar id del aprendiz
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-
+import { checkDuplicate } from './HandlersMachine/checkDuplicate';
+import { checkVehicle } from './HandlersMachine/checkVehicle';
+import { checkComputer } from './HandlersMachine/checkComputer';
+import { checkMachineResult } from '../types/InconsistentMachine.types';
+import { getTodayBorrowed } from './HandlersMachine/checksBorroweds';
 // Funcion para el ingreso de aprendiz
 export const AddEntry = async (req: Request, res: Response) => {
   console.log("Documento recibido:", req.params.documento);
@@ -235,11 +239,12 @@ export const AddMachine = async (request: Request, response: Response) => {
 
   try {
     const id_aprendiz = request.params.id;
+    console.log(id_aprendiz)
     const { tipoMaquina, tipoVehiculo, modelo, placaSerial, firma, forzarExcepcion } = request.body;
     console.log(forzarExcepcion)
     const placaNormalizada = placaSerial?.toUpperCase().trim();
     const modeloNormalizado = modelo?.toUpperCase().trim();
-
+    console.log(tipoMaquina, tipoVehiculo, modelo, placaSerial,forzarExcepcion)
     if (!id_aprendiz) {
       return response.status(400).json({ message: "Aprendiz inválido" });
     }
@@ -267,21 +272,9 @@ export const AddMachine = async (request: Request, response: Response) => {
 
     const id_ingreso = ingreso.rows[0].id_ingreso;
 
-    const checkExist = await client.query(
-      `SELECT 1
-       FROM detalles_maquinas dm
-       JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina
-       LEFT JOIN computadores c ON dm.id_computador = c.id_computador
-       LEFT JOIN vehiculos v ON dm.id_vehiculo = v.id_vehiculo
-       WHERE
-         ((c.serial = $1) OR (v.placa = $1))
-       AND di.hora_ingreso >= CURRENT_DATE
-       AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-       LIMIT 1`,
-      [placaNormalizada]
-    );
 
-    if (checkExist.rowCount && checkExist.rowCount > 0) {
+    const checkExist = await checkDuplicate(client,placaNormalizada)
+    if (checkExist) {
       await client.query('ROLLBACK');
       return response.status(409).json({
         message: "Esta máquina ya está registrada hoy"
@@ -290,210 +283,59 @@ export const AddMachine = async (request: Request, response: Response) => {
 
     let idMaquina: number | null = null;
 
-    // ================= VEHÍCULOS =================
-    if (tipoMaquina === 'vh') {
-      const vehiculo = await client.query(
-        "SELECT * FROM vehiculos WHERE placa = $1",
-        [placaNormalizada]
-      );
+    let vehicleMachine : checkMachineResult
+    console.log('ANTES DEL CHECK')
+    if (tipoMaquina === 'vh') {vehicleMachine = await checkVehicle(client,placaNormalizada,id_aprendiz,forzarExcepcion,tipoVehiculo,modeloNormalizado)}
+    else {vehicleMachine = await checkComputer(client,placaNormalizada,id_aprendiz,forzarExcepcion,modeloNormalizado)}
+    console.log('DESPUÉS DEL CHECK', vehicleMachine)
+    const tipoEquipo = tipoMaquina == 'vh' ? 'vehiculo' : 'computador'
 
-      if (vehiculo.rowCount && vehiculo.rowCount > 0) {
-
-        const principalMachine = await client.query(
-          `SELECT id_vehiculo
-           FROM aprendiz_vehiculo
-           WHERE id_vehiculo = $1
-           AND id_aprendiz = $2
-           AND principal = TRUE`,
-          [vehiculo.rows[0].id_vehiculo, id_aprendiz]
-        );
-
-        if (principalMachine.rowCount && principalMachine.rowCount > 0) {
-          idMaquina = principalMachine.rows[0].id_vehiculo;
-        } else {
-
-          const otroAprendiz = await client.query(
-            `SELECT id_vehiculo
-             FROM aprendiz_vehiculo
-             WHERE id_vehiculo = $1
-             AND principal = TRUE`,
-            [vehiculo.rows[0].id_vehiculo]
-          );
-
-          if (otroAprendiz.rowCount && otroAprendiz.rowCount > 0) {
-            if (!forzarExcepcion) {
-              return response.status(409).json({
-                aviso: "diferenteAprendiz",
-                tipoEquipo: "vehiculo",
-                excepcion: true
-              });
-            }
-            const yaPrestadoHoy = await client.query(`SELECT 1
-            FROM detalles_maquinas dm
-            JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina
-            WHERE dm.id_vehiculo = $1
-            AND di.hora_ingreso >= CURRENT_DATE
-            AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-            LIMIT 1`,vehiculo.rows[0].id_vehiculo)
-            if (yaPrestadoHoy && !forzarExcepcion) {
-              return response.status(409).json({
-                aviso: "maquinaYaPrestadaHoy",
-                excepcion: false
-              });
-            }
-            idMaquina = vehiculo.rows[0].id_vehiculo;
-          } else {
-            return response.status(409).json({
-              aviso: "maquinaSinDueño",
-              tipoEquipo: "vehiculo",
-              placa: vehiculo.rows[0].placa,
-              modelo: vehiculo.rows[0].modelo,
-              tipo_vehiculo: vehiculo.rows[0].tipo_vehiculo
-            });
-          }
-        }
-
-      } else {
-
-        const principalRecord = await client.query(
-          `SELECT v.placa
-           FROM aprendiz_vehiculo av
-           JOIN vehiculos v ON v.id_vehiculo = av.id_vehiculo
-           WHERE av.id_aprendiz = $1
-           AND av.principal = TRUE`,
-          [id_aprendiz]
-        );
-
-        if (
-          principalRecord.rowCount && principalRecord.rowCount > 0 &&
-          principalRecord.rows[0].placa !== placaNormalizada
-        ) {
-          if (!forzarExcepcion) {
-            return response.status(409).json({
-              aviso: "maquinaPrincipalExistente",
-              tipoEquipo: "vehiculo",
-              excepcion: true
-            });
-          }
-        }
-
-        const result = await client.query(
-          `WITH nuevo AS (
-            INSERT INTO vehiculos(tipo_vehiculo, placa, modelo)
-            VALUES ($2,$3,$4)
-            RETURNING id_vehiculo
-          )
-          INSERT INTO aprendiz_vehiculo(id_aprendiz, id_vehiculo, principal)
-          SELECT $1, id_vehiculo, TRUE FROM nuevo
-          RETURNING id_vehiculo`,
-          [id_aprendiz, tipoVehiculo, placaNormalizada, modeloNormalizado]
-        );
-
-        idMaquina = result.rows[0].id_vehiculo;
+    if(vehicleMachine.status === 'diferenteAprendiz'){
+      await client.query('ROLLBACK')
+        return response.status(409).json({
+          aviso: "diferenteAprendiz",
+          tipoEquipo:tipoEquipo,
+          excepcion: true,
+          inconsistencia : true,
+        });
       }
-    }
-
-    // ================= COMPUTADORES =================
-    if (tipoMaquina === 'pc') {
-      const pc = await client.query(
-        "SELECT * FROM computadores WHERE serial = $1",
-        [placaNormalizada]
-      );
-
-      if (pc.rowCount && pc.rowCount > 0) {
-
-        const principalMachine = await client.query(
-          `SELECT id_computador
-           FROM aprendiz_computador
-           WHERE id_computador = $1
-           AND id_aprendiz = $2
-           AND principal = TRUE`,
-          [pc.rows[0].id_computador, id_aprendiz]
-        );
-
-        if (principalMachine.rowCount && principalMachine.rowCount > 0) {
-          idMaquina = principalMachine.rows[0].id_computador;
-        } else {
-
-          const otroAprendiz = await client.query(
-            `SELECT id_computador
-             FROM aprendiz_computador
-             WHERE id_computador = $1
-             AND principal = TRUE`,
-            [pc.rows[0].id_computador]
-          );
-
-          if (otroAprendiz.rowCount && otroAprendiz.rowCount > 0) {
-            if (!forzarExcepcion) {
-              return response.status(409).json({
-                aviso: "diferenteAprendiz",
-                tipoEquipo: "computador",
-                excepcion: true
-              });
-            }
-            const yaPrestadoHoy = await client.query(`SELECT 1
-            FROM detalles_maquinas dm
-            JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina
-            WHERE dm.id_computador = $1
-            AND di.hora_ingreso >= CURRENT_DATE
-            AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-            LIMIT 1`,pc.rows[0].id_computador)
-            if (yaPrestadoHoy && !forzarExcepcion) {
-              return response.status(409).json({
-                aviso: "maquinaYaPrestadaHoy",
-                excepcion: false
-              });
-            }
-            idMaquina = pc.rows[0].id_computador;
-          } else {
-            return response.status(409).json({
-              aviso: "maquinaSinDueño",
-              tipoEquipo: "computador",
-              serial: pc.rows[0].serial,
-              modelo: pc.rows[0].modelo
-            });
-          }
-        }
-
-      } else {
-
-        const principalRecord = await client.query(
-          `SELECT c.serial
-           FROM aprendiz_computador ac
-           JOIN computadores c ON c.id_computador = ac.id_computador
-           WHERE ac.id_aprendiz = $1
-           AND ac.principal = TRUE`,
-          [id_aprendiz]
-        );
-
-        if (
-          principalRecord.rowCount && principalRecord.rowCount > 0 &&
-          principalRecord.rows[0].serial !== placaNormalizada
-        ) {
-          if (!forzarExcepcion) {
-            return response.status(409).json({
-              aviso: "maquinaPrincipalExistente",
-              tipoEquipo: "computador",
-              excepcion: true
-            });
-          }
-        }
-
-        const result = await client.query(
-          `WITH nuevo AS (
-            INSERT INTO computadores(serial, marca)
-            VALUES ($2,$3)
-            RETURNING id_computador
-          )
-          INSERT INTO aprendiz_computador(id_aprendiz,id_computador,principal)
-          SELECT $1, id_computador, TRUE FROM nuevo
-          RETURNING id_computador`,
-          [id_aprendiz, placaNormalizada, modeloNormalizado]
-        );
-
-        idMaquina = result.rows[0].id_computador;
+      else if(vehicleMachine.status == 'maquinaYaPrestadaHoy'){
+        await client.query('ROLLBACK')
+        return response.status(409).json({
+          aviso: "maquinaYaPrestadaHoy",
+          excepcion: false,
+          inconsistencia : true,
+        });
       }
-    }
+      else if(vehicleMachine.status == 'maquinaSinDueño'){
+        await client.query('ROLLBACK')
+        return response.status(409).json({
+          aviso: "maquinaSinDueño",
+          tipoEquipo: "vehiculo",
+          placaSerial: vehicleMachine.data.placa == null ? vehicleMachine.data.serial : vehicleMachine.data.placa,
+          modelo: vehicleMachine.data.modelo,
+          tipo_vehiculo: vehicleMachine.data.tipo,
+          inconsistencia : true,
+        });
+      }
+      else if(vehicleMachine.status == 'maquinaPrincipalExistente'){
+        await client.query('ROLLBACK')
+        return response.status(409).json({
+        aviso: "maquinaPrincipalExistente",
+        tipoEquipo: "vehiculo",
+        excepcion: true,
+        inconsistencia : true,
+      });
+      }
+      if (vehicleMachine.status !== 'ok') {
+        await client.query('ROLLBACK')
+        console.log('Estado inesperado:', vehicleMachine)
+        return response.status(500).json({
+          error: "Estado no manejado",
+        });
+      }
+      idMaquina = vehicleMachine.idMaquina
+
 
     const resultDetallesMaquina = await client.query(
       `INSERT INTO detalles_maquinas(id_computador, id_vehiculo, firma_ingreso)
@@ -522,14 +364,14 @@ export const AddMachine = async (request: Request, response: Response) => {
       idDetallesMaquina
     });
 
-  } catch (error) {
+    } catch (error: unknown) {
     await client.query('ROLLBACK');
-    console.error(error);
+    console.error('🔥 ERROR REAL:', error);
 
     return response.status(500).json({
-      message: "Error interno del servidor"
+      message: "Error interno del servidor",
+      error: error instanceof Error ? error.message : String(error)
     });
-
   } finally {
     client.release();
   }
@@ -603,71 +445,82 @@ export const UpdateMachine = async (request: Request, response: Response) => {
 export const SearchMachine = async (request: Request, response: Response) => {
 
   const { id_aprendiz } = request.params
-
+  const id =
+  Array.isArray(id_aprendiz)
+    ? id_aprendiz[0]
+    : id_aprendiz;
   if (!id_aprendiz) {
     return response.status(400).json({
       message: "Debe enviar el id del aprendiz"
     })
   }
-
+  const client = await pool.connect();
   try {
-
-    const query = `
-      SELECT
-        c.marca AS pc_marca,
-        c.serial AS pc_serial,
-
-        v.tipo_vehiculo,
-        v.modelo AS vh_marca,
-        v.placa AS vh_placa,
-
-        dm.firma_ingreso
-
-      FROM detalles_ingreso d
-
-      JOIN detalles_maquinas dm
-      ON dm.id_detallemaquina = d.id_detallemaquina
-
-      LEFT JOIN computadores c
-      ON dm.id_computador = c.id_computador
-
-      LEFT JOIN vehiculos v
-      ON dm.id_vehiculo = v.id_vehiculo
-
-      WHERE d.id_aprendiz = $1
-      AND d.hora_ingreso >= CURRENT_DATE
-      AND d.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-      LIMIT 1
-    `
-
-    const result = await pool.query(query, [id_aprendiz])
-
-    if (result.rows.length === 0) {
-      return response.status(404).json({
-        message: "No se encontraron máquinas registradas"
+    const maquinaPrestada = await getTodayBorrowed(client,id)
+    if(maquinaPrestada.length > 0){
+      return response.status(200).json({
+        result:maquinaPrestada,
+        prestada:true
       })
     }
+    else{
+      const query = `
+        SELECT
+          c.marca AS pc_marca,
+          c.serial AS pc_serial,
 
-    const data = result.rows[0]
+          v.tipo_vehiculo,
+          v.modelo AS vh_marca,
+          v.placa AS vh_placa,
 
-    const maquinas = {
-      pc: data.pc_marca ? {
-        marca: data.pc_marca,
-        serial: data.pc_serial,
-      } : null,
+          dm.firma_ingreso
 
-      vh: data.vh_marca ? {
-        tipo_vehiculo: data.tipo_vehiculo,
-        marca: data.vh_modelo,
-        placa: data.vh_placa,
-      } : null,
-      firma: data.firma_ingreso   // 🔥 NUEVO
+        FROM detalles_ingreso d
+
+        JOIN detalles_maquinas dm
+        ON dm.id_detallemaquina = d.id_detallemaquina
+
+        LEFT JOIN computadores c
+        ON dm.id_computador = c.id_computador
+
+        LEFT JOIN vehiculos v
+        ON dm.id_vehiculo = v.id_vehiculo
+
+        WHERE d.id_aprendiz = $1
+        AND d.hora_ingreso >= CURRENT_DATE
+        AND d.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+        LIMIT 1
+      `
+
+      const result = await pool.query(query, [id])
+
+      if (result.rows.length === 0) {
+        return response.status(404).json({
+          message: "No se encontraron máquinas registradas"
+        })
+      }
+
+      const data = result.rows[0]
+
+      const maquinas = {
+        pc: data.pc_marca ? {
+          marca: data.pc_marca,
+          serial: data.pc_serial,
+        } : null,
+
+        vh: data.vh_marca ? {
+          tipo_vehiculo: data.tipo_vehiculo,
+          marca: data.vh_marca,
+          placa: data.vh_placa,
+        } : null,
+        firma: data.firma_ingreso
+      }
+
+      return response.status(200).json({
+        result: maquinas,
+        prestada:false
+      })
     }
-
-    return response.status(200).json({
-      result: maquinas
-    })
-
   } catch (error) {
 
     console.error(error)

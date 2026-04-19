@@ -111,9 +111,6 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch, computed } from 'vue'
-import { useRoute } from 'vue-router'
-
-import router from '@/router'
 import HeaderView from '@/layouts/HeaderView.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
@@ -128,8 +125,6 @@ import { useAprendiz } from '@/composables/useAprendiz'
 import AprendizTable from '@/components/AprendizUI/AprendizTable.vue'
 const { HistorialIngresoAprendiz,AñadirIngresoAprendiz,aprendizData,latestAprendiz } = useAprendiz()
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
-const modalFirma = ref()
-const route = useRoute()
 const queryAprendices = ref('')
 const modalManual = ref()
 
@@ -139,7 +134,6 @@ const pendingMachineCount = computed(
 const registeredMachineCount = computed(
   () => aprendizData.value.filter((aprendiz) => aprendiz.id_detallemaquina != null).length,
 )
-
 
 const handleScanner = async (code: string) => {
   if (!code) return
@@ -167,8 +161,6 @@ const handleScanner = async (code: string) => {
 
 
 
-
-
 const open = () => {
   scannerModal.value?.openScanner()
 }
@@ -179,11 +171,6 @@ const openManual = () => {
 
 onMounted(() => {
   HistorialIngresoAprendiz()
-
-  if (route.path.startsWith('/general-entry/firma/')) {
-    modalFirma.value?.closeModal()
-    router.push('/general-entry')
-  }
 })
 
 watch(queryAprendices, async (nuevoTexto) => {
@@ -195,22 +182,6 @@ watch(queryAprendices, async (nuevoTexto) => {
   const data = await SearchAprendiz(nuevoTexto, 'ingreso')
   aprendizData.value = data
 })
-
-
-
-watch(
-  () => route.fullPath,
-  (newPath) => {
-    if (newPath.startsWith('/general-entry/firma/')) {
-      modalFirma.value?.openModal()
-    } else {
-      modalFirma.value?.closeModal()
-    }
-  },
-)
-
-
-
 
 
 

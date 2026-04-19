@@ -12,35 +12,60 @@
           :text="ifYes"
           variant="green"
           class-button="rounded-2xl px-4 py-3"
-          @click="emit('confirm')"
+          @click="handleConfirm"
         />
 
         <BaseButtonOpen
           :text="ifNo"
           variant="danger"
           class-button="rounded-2xl px-4 py-3"
-          @click="emit('cancel')"
+          @click="handleCancel"
         />
       </div>
     </div>
   </BaseModal>
 </template>
+
 <script setup lang="ts">
-import BaseModal from '@/components/Modals/BaseModal.vue';
-import BaseText from '@/components/Text/BaseText.vue';
-import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue';
+import { ref } from 'vue'
+import BaseModal from '@/components/Modals/BaseModal.vue'
+import BaseText from '@/components/Text/BaseText.vue'
+import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 
-withDefaults(defineProps<{
-  title : string,
-  subTitle : string,
-  ifYes : string,
-  ifNo : string,
-}>(),{
-
-})
+defineProps<{
+  title: string
+  subTitle: string
+  ifYes: string
+  ifNo: string
+}>()
 
 const emit = defineEmits<{
   (e: 'confirm'): void
   (e: 'cancel'): void
 }>()
+
+const modalRef = ref()
+
+const open = () => {
+  modalRef.value?.openModal()
+}
+
+const close = () => {
+  modalRef.value?.closeModal()
+}
+
+const handleConfirm = () => {
+  emit('confirm')
+  close()
+}
+
+const handleCancel = () => {
+  emit('cancel')
+  close()
+}
+
+defineExpose({
+  open,
+  close
+})
 </script>

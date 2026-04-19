@@ -1,9 +1,9 @@
 import { useMachineForm } from "../Forms/useMachineForm"
 import { API_URL } from '@/config/network'
 import { useMessage } from "../useMessage"
-import type { MachineResponse } from "@/types/machine.types"
+import type { SubmitMachineResult,MachineResponse,handleMachineType  } from "@/types/machine.types"
 import { useAprendiz } from "../useAprendiz"
-import type { handleMachineType } from "@/types/handleMachine.types"
+import { ref } from "vue"
 const API = API_URL
 
 
@@ -12,6 +12,7 @@ const API = API_URL
 export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) => {
   const {setMessage} = useMessage()
   const {HistorialIngresoAprendiz} = useAprendiz()
+  const forzarExcepcion = ref(false)
 
   const buildMachinePayload = () => ({
     tipoMaquina: form.formMachine.TipoMaquina,
@@ -19,16 +20,17 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
     modelo: form.formMachine.modeloMaquina.toUpperCase(),
     placaSerial: form.formMachine.placaSerial.toUpperCase(),
     firma: form.aprendizMachine.value?.firma,
+    forzarExcepcion: forzarExcepcion.value
   })
 
-  const submitMachine = async (id_aprendiz?: number) => {
+  const submitMachine = async (id_aprendiz?: number) : Promise<SubmitMachineResult> => {
 
-  if (!id_aprendiz || form.submittedMachine.value) return
+  if (!id_aprendiz) return {status:'error'}
 
   const errorMachine = form.validateMachineForm()
   if (errorMachine) {
     setMessage(errorMachine, 'error')
-    return
+    return {status:'error'}
   }
 
   form.submittedMachine.value = true
@@ -48,25 +50,31 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
     console.log(data)
 
 
+    if (data.inconsistencia) {
+      return { status: 'inconsistencia', data }
+    }
+
     if (!response.ok) {
       setMessage('Error al registrar la maquina','error')
-      form.submittedMachine.value = false // desbloquea pero no deja spam
-      return
+      return { status: 'error' }
     }
 
     console.log(data)
 
-    return  await handleMachineSuccess()
+    return {status : await handleMachineSuccess()}
 
   } catch (error) {
     console.error(error)
+    return {status : 'error'}
   } finally {
     form.submittedMachine.value = false
   }
   }
 
-  const handleMachineSuccess = async () : Promise<handleMachineType> =>  {
-    setMessage('Maquina ingresada con exito','success')
+
+  const handleMachineSuccess = async (): Promise<handleMachineType> => {
+    setMessage('Maquina ingresada con exito', 'success')
+
     await HistorialIngresoAprendiz()
 
     if (form.formMachine.TipoMaquina === 'pc') form.maquinaRegistrada.pc = true
@@ -74,15 +82,14 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
 
     if (!form.dobleMaquina.value && form.maquinaRegistrada.pc !== form.maquinaRegistrada.vh) {
       return 'registrarOtraMaquina'
-    } else {
-      form.resetMachineForm()
     }
+
+    form.resetMachineForm()
     return 'ok'
   }
 
-
-
   return {
-    submitMachine
+    submitMachine,
+    forzarExcepcion
   }
 }
