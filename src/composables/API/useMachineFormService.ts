@@ -4,6 +4,8 @@ import { useMessage } from "../useMessage"
 import type { SubmitMachineResult,MachineResponse,handleMachineType  } from "@/types/machine.types"
 import { useAprendiz } from "../useAprendiz"
 import { ref } from "vue"
+import { useNotifications } from '@/composables/useNotifications';
+const {addNotification} = useNotifications()
 const API = API_URL
 
 
@@ -55,7 +57,7 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
     }
 
     if (!response.ok) {
-      setMessage('Error al registrar la maquina','error')
+      addNotification('Error al registrar la maquina','error')
       return { status: 'error' }
     }
 
@@ -74,7 +76,7 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
 
   const handleMachineSuccess = async (): Promise<handleMachineType> => {
     setMessage('Maquina ingresada con exito', 'success')
-
+    addNotification('Maquina ingresada con exito', 'success')
     await HistorialIngresoAprendiz()
 
     if (form.formMachine.TipoMaquina === 'pc') form.maquinaRegistrada.pc = true

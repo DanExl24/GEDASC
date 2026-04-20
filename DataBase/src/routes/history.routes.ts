@@ -1,8 +1,10 @@
 import { Router } from 'express'
 const router = Router()
-import { HistoryRecord,DateRecord,SearchMachine } from '../controllers/history.controller'
+import { HistoryRecord,DateRecord,SearchMachine, DataMachine, DataRegister } from '../controllers/history.controller'
 // crear una ruta para ver ingresos de hoy
 router.get('/historial', HistoryRecord)
+router.post('/historialMaquinas', DataMachine)
+router.post('/historialGeneral', DataRegister)
 router.get('/historialFechas', DateRecord)
 router.get('/historialMaquinas/:id_detallemaquina', SearchMachine)
 export default router

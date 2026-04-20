@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import Notifications from './components/UI/Notifications.vue';
 import { InitSocketsEvent } from './composables/sockets/InitSocketsEvent';
+
 InitSocketsEvent()
 </script>
 
 <template>
-  <!--Renderizar rutas -->
   <router-view />
+  <Notifications />
 </template>
 
 <style scoped>

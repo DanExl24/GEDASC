@@ -7,7 +7,7 @@
 
     <main class="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 lg:px-8 lg:py-5">
       <section class="grid items-start gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <article class="overflow-hidden rounded-[28px] border border-emerald-200 bg-white shadow-[0_18px_45px_rgba(15,107,63,0.08)]">
+        <article class="overflow-hidden rounded-[28px] border border-emerald-200 bg-white shadow-[0_18px_45px_rgba(15,107,63,0.08)] min-h-[620px]">
           <div class="grid gap-4 bg-[linear-gradient(120deg,#0f7b3d_0%,#169051_55%,#ffffff_55%,#ffffff_100%)] px-5 py-5 lg:grid-cols-[1.25fr_0.95fr] lg:px-6">
             <div class="text-white">
               <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100">Resumen general</p>
@@ -132,13 +132,18 @@
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-senaColor">Modulos del sistema</p>
             <h2 class="mt-2 font-robotoSlab text-2xl font-bold text-slate-900">Accesos principales</h2>
           </div>
-          <p class="text-sm text-slate-500">Las 4 vistas operativas del sistema en acceso directo.</p>
+          <p class="text-sm text-slate-500">Las 5 vistas operativas del sistema en acceso directo.</p>
         </div>
 
         <div class="grid gap-4 p-4 md:grid-cols-2 lg:p-6">
         <BaseCard
-          v-for="action in dashboardActions"
+          v-for="(action, index) in dashboardActions"
           :key="action.title"
+          :class="[
+            index === dashboardActions.length - 1 && dashboardActions.length % 2 !== 0
+              ? 'md:col-span-2'
+              : ''
+          ]"
           :title="action.title"
           :description="action.description"
           :eyebrow="action.eyebrow"
@@ -162,6 +167,7 @@ import RecordPaper from '@/assets/Icons/RecordPaper.png'
 import SendComputer from '@/assets/Icons/SendComputer.png'
 import { getActivity, type DashboardActivityItem } from '@/constants/optionsActivity'
 import { getEstadisticas, type DashboardStatItem } from '@/constants/optionsStats'
+import book from '@/assets/Icons/book.png'
 import BaseCard from '@/components/Cards/BaseCard.vue'
 interface DashboardAction {
   title: string
@@ -214,8 +220,8 @@ const dashboardActions: DashboardAction[] = [
     eyebrow: 'Informes',
     description: 'Consulta reportes y estadisticas de los aprendices.',
     to: '/record-history',
-    icon: SendComputer,
-    accentClass: '!bg-senaColor',
+    icon: book,
+    accentClass: '!bg-[rgb(21,142,79)]',
   },
 ]
 

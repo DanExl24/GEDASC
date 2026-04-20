@@ -46,6 +46,8 @@ import { useManualForm } from '@/composables/useManualForm';
 import { DetectEntry } from '@/Services/DetectEntrys';
 import { useAprendiz } from '@/composables/useAprendiz';
 import { useMessage } from '@/composables/useMessage';
+import { useNotifications } from '@/composables/useNotifications';
+const {addNotification} = useNotifications()
 const { AñadirIngresoAprendiz } = useAprendiz()
 const {message, setMessage} = useMessage()
 const { formManual, validateForm, setManualForm } = useManualForm()
@@ -61,14 +63,14 @@ const submitManual = async () => {
   const estado = await DetectEntry(documento)
 
   if (estado === 'ok') {
-    setMessage("Registro aceptado", "success")
+    addNotification("Registro aceptado", "success")
     setTimeout(() => emit('cerrar-modal'), 1000)
 
   } else if (estado === 'ya_registrado') {
-    setMessage("El aprendiz ya tiene un registro", "error")
+    addNotification("El aprendiz ya tiene un registro", "warning")
 
   } else if (estado === 'no_existe') {
-    setMessage("Este documento no existe", "error")
+    addNotification("Este documento no existe", "error")
 
   } else {
     setMessage("Error en el registro", "error")

@@ -3,7 +3,12 @@
     <article
       v-for="field in fields"
       :key="field.key"
-      class="rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)]"
+      :class="[
+        'rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)]',
+        fields.length === 3 && field.type === 'search'
+          ? 'xl:col-span-2 md:col-span-2'
+          : ''
+      ]"
     >
       <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
         {{ field.label }}
@@ -47,6 +52,9 @@ defineProps<{
 }>()
 
 const updateField = (key: ReportFieldKey, value: string) => {
-  model.value[key] = value
+  model.value = {
+    ...model.value,
+    [key]: value
+  }
 }
 </script>

@@ -2,16 +2,6 @@ export type ReportType = 'entries' | 'exits' | 'history' | 'assets'
 
 export type ReportFieldType = 'select' | 'search'
 
-export type ReportFieldKey =
-  | 'date'
-  | 'program'
-  | 'document'
-  | 'entryStatus'
-  | 'historyMachine'
-  | 'assetView'
-  | 'assetFilterType'
-  | 'assetSearch'
-
 export interface ReportFieldOption {
   label: string
   value: string
@@ -38,10 +28,9 @@ export interface ReportCard {
 export interface RecordReportFilters {
   date: string
   program: string
-  document: string
+  searchRegister: string
   entryStatus: string
-  historyMachine: string
   assetView: string
-  assetFilterType: string
-  assetSearch: string
 }
+
+export type ReportFieldKey = keyof RecordReportFilters

@@ -116,7 +116,7 @@
               variant="danger"
               class-button="w-full"
               image-class="h-4 w-4 object-contain"
-              @click="noop"
+              @click="exportPDF"
             />
 
             <BaseButtonOpen
@@ -125,8 +125,8 @@
               variant="green"
               class-button="w-full"
               image-class="h-4 w-4 object-contain"
-              @click="noop"
-            />
+              @click="exportEXCEL"
+              />
           </div>
         </aside>
       </section>
@@ -156,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+
 import HeaderView from '@/layouts/HeaderView.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
@@ -163,7 +164,10 @@ import RecordReportFilterForm from '@/components/AprendizUI/Forms/RecordReportFi
 import { useRecordReport } from '@/composables/History/useRecordReport'
 import recordPaper from '@/assets/Icons/RecordPaper.png'
 import sendComputer from '@/assets/Icons/sendComputer.png'
-
+import { useExportPdf } from '@/Services/exports/usePdfExport'
+import { exportToExcel } from '@/Services/exports/useExcelExport'
+import { useNotifications } from '@/composables/useNotifications';
+const {addNotification} = useNotifications()
 const {
   reportCards,
   selectedReport,
@@ -174,5 +178,19 @@ const {
   resetCurrentReportFilters,
 } = useRecordReport()
 
-const noop = () => {}
+const { submitData, generatePDF } = useExportPdf(
+  () => filters.value,
+  selectedReport
+)
+
+const exportPDF = async () => {
+  const data = await submitData()
+  generatePDF(data)
+  addNotification('Reporte PDF generado correctamente','info')
+}
+const exportEXCEL = async() => {
+  const data = await submitData()
+  exportToExcel(data)
+  addNotification('Archivo Excel generado correctamente','info')
+}
 </script>

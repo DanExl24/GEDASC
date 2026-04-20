@@ -1,6 +1,7 @@
 import { computed, reactive, watch } from 'vue'
 import { optionsDates } from '@/constants/optionsDates'
 import { optionsProgram } from '@/constants/optionsProgram'
+import { ref } from 'vue'
 import type {
   RecordReportFilters,
   ReportCard,
@@ -62,38 +63,19 @@ const entryStatusOptions = [
   { label: 'Sin maquina registrada', value: 'WITHOUT_MACHINE' },
 ]
 
-const historyMachineOptions = [
-  { label: 'Todos los registros', value: '' },
-  { label: 'Con maquina asociada', value: 'WITH_MACHINE' },
-  { label: 'Sin maquina asociada', value: 'WITHOUT_MACHINE' },
-]
 
 const assetViewOptions = [
   { label: 'Computadores', value: 'computers' },
   { label: 'Vehiculos', value: 'vehicles' },
 ]
 
-const computerAssetFilterOptions = [
-  { label: 'Sin filtro', value: '' },
-  { label: 'ID Aprendiz', value: 'APRENDIZ' },
-  { label: 'Serial Computador', value: 'SERIAL' },
-]
-
-const vehicleAssetFilterOptions = [
-  { label: 'Sin filtro', value: '' },
-  { label: 'ID Aprendiz', value: 'APRENDIZ' },
-  { label: 'Placa', value: 'PLACA' },
-]
 
 const createInitialFilters = (): RecordReportFilters => ({
   date: 'TODAY',
   program: '',
-  document: '',
+  searchRegister: '',
   entryStatus: '',
-  historyMachine: '',
-  assetView: 'computers',
-  assetFilterType: '',
-  assetSearch: '',
+  assetView: 'computers'
 })
 
 const createSelectField = (
@@ -133,34 +115,19 @@ const createBaseProgramField = () =>
 
 const createBaseDocumentField = () =>
   createSearchField(
-    'document',
+    'searchRegister',
     'Busqueda',
     'Digite nombre, apellido o documento...',
   )
 
 export const useRecordReport = () => {
-  const filters = reactive<RecordReportFilters>(createInitialFilters())
+
+const filters = ref<RecordReportFilters>(createInitialFilters())
   const selectedReport = reactive<{ type: ReportType }>({
     type: 'entries',
   })
 
-  const assetFilterOptions = computed(() =>
-    filters.assetView === 'vehicles'
-      ? vehicleAssetFilterOptions
-      : computerAssetFilterOptions,
-  )
 
-  const assetSearchPlaceholder = computed(() => {
-    if (filters.assetView === 'vehicles') {
-      return filters.assetFilterType === 'PLACA'
-        ? 'Digite la placa del vehiculo...'
-        : 'Digite el documento del aprendiz...'
-    }
-
-    return filters.assetFilterType === 'SERIAL'
-      ? 'Digite el serial del computador...'
-      : 'Digite el documento del aprendiz...'
-  })
 
   const reportFieldBuilders: Record<ReportType, () => ReportFieldConfig[]> = {
     entries: () => [
@@ -179,10 +146,10 @@ export const useRecordReport = () => {
       createBaseProgramField(),
       createBaseDocumentField(),
       createSelectField(
-        'historyMachine',
+        'entryStatus',
         'Relacion con maquina',
         'Relacion con maquina',
-        historyMachineOptions,
+        entryStatusOptions,
       ),
     ],
     history: () => [
@@ -190,10 +157,10 @@ export const useRecordReport = () => {
       createBaseProgramField(),
       createBaseDocumentField(),
       createSelectField(
-        'historyMachine',
+        'entryStatus',
         'Relacion con maquina',
         'Relacion con maquina',
-        historyMachineOptions,
+        entryStatusOptions,
       ),
     ],
     assets: () => {
@@ -204,24 +171,16 @@ export const useRecordReport = () => {
           'Tipo de activo',
           assetViewOptions,
         ),
-        createBaseDateField(),
-        createSelectField(
-          'assetFilterType',
-          'Filtro',
-          'Filtrar por',
-          assetFilterOptions.value,
-        ),
+        createBaseDateField()
       ]
 
-      if (filters.assetFilterType) {
         fields.push(
           createSearchField(
-            'assetSearch',
+            'searchRegister',
             'Busqueda activa',
-            assetSearchPlaceholder.value,
+            'Busca por documento, nombre, serial o placa...',
           ),
         )
-      }
 
       return fields
     },
@@ -239,31 +198,30 @@ export const useRecordReport = () => {
     switch (selectedReport.type) {
       case 'entries':
         return [
-          `Fecha: ${filters.date || 'Sin fecha'}`,
-          `Programa: ${filters.program || 'Todos los programas'}`,
-          `Busqueda: ${filters.document || 'Sin texto'}`,
-          `Estado: ${filters.entryStatus || 'Todos'}`,
+          `Fecha: ${filters.value.date || 'Sin fecha'}`,
+          `Programa: ${filters.value.program || 'Todos los programas'}`,
+          `Busqueda: ${filters.value.searchRegister || 'Sin texto'}`,
+          `Estado: ${filters.value.entryStatus || 'Todos'}`,
         ]
       case 'exits':
         return [
-          `Fecha: ${filters.date || 'Sin fecha'}`,
-          `Programa: ${filters.program || 'Todos los programas'}`,
-          `Busqueda: ${filters.document || 'Sin texto'}`,
-          `Maquina: ${filters.historyMachine || 'Todos'}`,
+          `Fecha: ${filters.value.date || 'Sin fecha'}`,
+          `Programa: ${filters.value.program || 'Todos los programas'}`,
+          `Busqueda: ${filters.value.searchRegister || 'Sin texto'}`,
+          `Maquina: ${filters.value.entryStatus || 'Todos'}`,
         ]
       case 'history':
         return [
-          `Fecha: ${filters.date || 'Sin fecha'}`,
-          `Programa: ${filters.program || 'Todos los programas'}`,
-          `Busqueda: ${filters.document || 'Sin texto'}`,
-          `Maquina: ${filters.historyMachine || 'Todos'}`,
+          `Fecha: ${filters.value.date || 'Sin fecha'}`,
+          `Programa: ${filters.value.program || 'Todos los programas'}`,
+          `Busqueda: ${filters.value.searchRegister || 'Sin texto'}`,
+          `Maquina: ${filters.value.entryStatus || 'Todos'}`,
         ]
       case 'assets':
         return [
-          `Activo: ${filters.assetView === 'vehicles' ? 'Vehiculos' : 'Computadores'}`,
-          `Fecha: ${filters.date || 'Sin fecha'}`,
-          `Filtro: ${filters.assetFilterType || 'Sin filtro'}`,
-          `Busqueda: ${filters.assetSearch || 'Sin texto'}`,
+          `Activo: ${filters.value.assetView === 'vehicles' ? 'Vehiculos' : 'Computadores'}`,
+          `Fecha: ${filters.value.date || 'Sin fecha'}`,
+          `Busqueda: ${filters.value.searchRegister || 'Sin texto'}`,
         ]
       default:
         return []
@@ -271,32 +229,47 @@ export const useRecordReport = () => {
   })
 
   const resetCurrentReportFilters = () => {
-    filters.date = 'TODAY'
-    filters.program = ''
-    filters.document = ''
-    filters.entryStatus = ''
-    filters.historyMachine = ''
-    filters.assetView = 'computers'
-    filters.assetFilterType = ''
-    filters.assetSearch = ''
+    filters.value.date = 'TODAY'
+    filters.value.program = ''
+    filters.value.searchRegister = ''
+    filters.value.entryStatus = ''
+    filters.value.assetView = 'computers'
+    filters.value.searchRegister = ''
   }
 
   watch(
-    () => filters.assetView,
+    () => filters.value.assetView,
     () => {
-      filters.assetFilterType = ''
-      filters.assetSearch = ''
+      filters.value.searchRegister = ''
     },
   )
 
-  watch(
-    () => filters.assetFilterType,
-    (value) => {
-      if (!value) {
-        filters.assetSearch = ''
-      }
-    },
-  )
+watch(
+  () => ({
+    type: selectedReport.type,
+    filters: { ...filters.value },
+  }),
+  (newValue) => {
+    console.log('📊 Report state actualizado:')
+    console.log('➡️ Tipo:', newValue.type)
+    console.log('➡️ Filtros:', newValue.filters)
+  },
+  { deep: true }
+)
+
+
+watch(
+  () => selectedReport.type,
+  (newType) => {
+    console.log('🧠 CAMBIO DE REPORTE:', newType)
+
+    // 💣 reset SOLO lo que pertenece a assets
+    if (newType !== 'assets') {
+      filters.value.assetView = 'computers'
+      filters.value.searchRegister = ''
+    }
+  }
+)
 
   return {
     reportCards,

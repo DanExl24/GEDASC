@@ -3,7 +3,8 @@ import { DetectExit } from '@/Services/DetectExits'
 import { useExitManualForm } from '@/composables/Forms/useExitManualForm'
 import { useExitAprendiz } from '@/composables/useExitAprendiz'
 import type { ManualExitLookupResponse } from '@/types/manualExit.types'
-
+import { useNotifications } from '@/composables/useNotifications';
+const {addNotification} = useNotifications()
 const API = API_URL
 
 export const useExitManualService = (
@@ -59,6 +60,7 @@ export const useExitManualService = (
     }
 
     if (estado === 'ya_registrado') {
+      addNotification('El aprendiz no tiene ingreso o ya tiene salida', 'warning')
       form.setMessage('El aprendiz no tiene ingreso o ya tiene salida', 'error')
       return false
     }
@@ -76,6 +78,7 @@ export const useExitManualService = (
     }
 
     form.setMessage('Registro aceptado', 'success')
+    addNotification('Registro Aceptado','success')
     return true
   }
 

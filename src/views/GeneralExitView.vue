@@ -114,7 +114,8 @@ import add from '@/assets/Icons/add.png'
 import { DetectExit } from '@/Services/DetectExits'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
 import { useExitAprendiz } from '@/composables/useExitAprendiz'
-
+import { useNotifications } from '@/composables/useNotifications';
+const {addNotification} = useNotifications()
 const {
   HistorialSalidaAprendiz,
   AñadirSalidaAprendiz,
@@ -147,6 +148,7 @@ const handleScanner = async (code: string) => {
   try {
     if (estado === 'no_existe' || estado === 'ya_registrado') {
       scannerModal.value?.setResultMessage(messages[estado])
+      addNotification(messages[estado],'warning')
       return
     }
 

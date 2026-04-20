@@ -32,8 +32,8 @@
             <BaseButtonOpen
               v-if="index === 0 && aprendiz.id_detallemaquina == null && !aprendiz.hora_salida"
               @click="openMachine(aprendiz)"
-              text="Registrar maquina"
-              class-button="min-h-[40px] rounded-xl border-blue-700 bg-blue-700 px-3 py-2 text-sm font-semibold text-white shadow-none"
+              text="Registrar Maquina"
+              class-button="min-h-[40px] rounded-xl border-blue-700 bg-blue-700 px-2.5 py-2 text-[15px] font-semibold text-white shadow-none"
             />
             <BaseText
               v-else-if="aprendiz.id_detallemaquina == null"

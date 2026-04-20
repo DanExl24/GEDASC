@@ -123,6 +123,8 @@ import { DetectEntry } from '@/Services/DetectEntrys'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
 import { useAprendiz } from '@/composables/useAprendiz'
 import AprendizTable from '@/components/AprendizUI/AprendizTable.vue'
+import { useNotifications } from '@/composables/useNotifications';
+const {addNotification} = useNotifications()
 const { HistorialIngresoAprendiz,AñadirIngresoAprendiz,aprendizData,latestAprendiz } = useAprendiz()
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)
 const queryAprendices = ref('')
@@ -149,6 +151,7 @@ const handleScanner = async (code: string) => {
 
     if (estado === 'no_existe' || estado === 'ya_registrado') {
       scannerModal.value?.setResultMessage(messages[estado])
+      addNotification(messages[estado],'warning')
       return
     }
 

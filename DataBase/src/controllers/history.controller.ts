@@ -109,6 +109,305 @@ export const DateRecord = async (request: Request, response: Response) => {
   }
 }
 
+export const DataRegister = async (request: Request, response: Response) => {
+  try {
+    const { date, program, search, reportType, entryStatus } = request.body as {
+      date?: keyof typeof filtersMap.date
+      program?: keyof typeof filtersMap.program
+      search?: string
+      reportType?: 'entries' | 'exits' | 'history' | 'assets',
+      entryStatus? : 'WITH_MACHINE' | 'WITHOUT_MACHINE'
+    }
+    console.log("Tipo de vista", reportType)
+    const conditions: string[] = []
+    const values: string[] = []
+
+    // 📅 filtros
+    if (date && filtersMap.date[date]) {
+      conditions.push(filtersMap.date[date])
+    }
+
+    if (program && filtersMap.program[program]) {
+      conditions.push(filtersMap.program[program])
+    }
+
+    // 🔍 búsqueda
+    if (search) {
+      values.push(`%${search}%`)
+      const param = `$${values.length}`
+
+      conditions.push(`
+        (
+          a.nombre ILIKE ${param} OR
+          a.apellido ILIKE ${param} OR
+          a.documento ILIKE ${param}
+        )
+      `)
+    }
+
+
+    if (entryStatus === 'WITH_MACHINE') {
+      conditions.push(`di.id_detallemaquina IS NOT NULL`)
+    }
+
+    if (entryStatus === 'WITHOUT_MACHINE') {
+      conditions.push(`di.id_detallemaquina IS NULL`)
+    }
+
+
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(' AND ')}`
+      : ''
+
+    // 🧠 SELECT dinámico
+    let selectExtra = ''
+    let columns: { header: string; dataKey: string }[] = []
+    let title = ''
+
+    if (reportType === 'entries') {
+      title = 'Reporte de Ingresos'
+
+      selectExtra = `
+        TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
+        dm.id_detallemaquina,
+        dm.firma_ingreso
+      `
+
+      columns = [
+        { header: 'Documento', dataKey: 'documento' },
+        { header: 'Nombre', dataKey: 'nombre' },
+        { header: 'Apellido', dataKey: 'apellido' },
+        { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+        { header: 'Firma', dataKey: 'firma_ingreso' },
+      ]
+    }
+    let joinSalida = 'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
+    if (reportType === 'exits') {
+      joinSalida = 'JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
+      title = 'Reporte de Salidas'
+      selectExtra = `
+        TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida,
+        dm.id_detallemaquina,
+        dm.firma_ingreso
+      `
+
+      columns = [
+        { header: 'Documento', dataKey: 'documento' },
+        { header: 'Nombre', dataKey: 'nombre' },
+        { header: 'Apellido', dataKey: 'apellido' },
+        { header: 'Hora salida', dataKey: 'hora_salida' },
+        { header: 'Firma', dataKey: 'firma_ingreso' },
+      ]
+    }
+
+    // default → history
+    if (!reportType || reportType === 'history') {
+      title = 'Reporte Histórico'
+
+      selectExtra = `
+        TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
+        TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida,
+        dm.id_detallemaquina,
+        dm.firma_ingreso
+      `
+
+      columns = [
+        { header: 'Documento', dataKey: 'documento' },
+        { header: 'Nombre', dataKey: 'nombre' },
+        { header: 'Apellido', dataKey: 'apellido' },
+        { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+        { header: 'Hora salida', dataKey: 'hora_salida' },
+        { header: 'Firma', dataKey: 'firma_ingreso' },
+      ]
+    }
+    console.log('ENTRY STATUS:', entryStatus)
+    console.log('WHERE:', whereClause)
+    const query = `
+      SELECT
+        a.id_aprendiz,
+        a.nombre,
+        a.apellido,
+        a.documento,
+        ${selectExtra}
+      FROM detalles_ingreso di
+      ${joinSalida}
+      LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina
+      JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
+      ${whereClause}
+      ORDER BY di.hora_ingreso DESC
+    `
+
+
+
+    const result = await pool.query(query, values)
+    const rows = result.rows.map(row => ({
+      ...row,
+      firma_ingreso: row.id_detallemaquina
+        ? row.firma_ingreso
+        : 'Sin maquina',
+      hora_salida : row.hora_salida
+        ? row.hora_salida
+        : 'Sin registro'
+    }))
+    return response.json({
+      title,
+      columns,
+      rows,
+    })
+
+  } catch (error) {
+    console.error(error)
+    return response.status(500).json({
+      message: 'Error en el servidor',
+    })
+  }
+}
+
+// Query universal para  exportaciones
+
+export const DataMachine = async (request: Request, response: Response) => {
+  try {
+    const { date, program, search, tipoMaquina } = request.body as {
+      date?: keyof typeof filtersMap.date
+      program?: keyof typeof filtersMap.program
+      search?: string
+      tipoMaquina?: 'pc' | 'vh',
+    }
+    console.log(search)
+    if (!tipoMaquina) {
+      return response.status(400).json({ message: 'tipoMaquina es requerido' })
+    }
+
+    const conditions: string[] = []
+    const values: string[] = []
+
+    // filtros estáticos
+    if (date && filtersMap.date[date]) {
+      conditions.push(filtersMap.date[date])
+    }
+
+    if (program && filtersMap.program[program]) {
+      conditions.push(filtersMap.program[program])
+    }
+
+    // búsqueda
+    if (search) {
+      values.push(`%${search}%`)
+      const param = `$${values.length}`
+
+
+  if (tipoMaquina === 'pc') {
+    conditions.push(`
+      (
+        a.documento ILIKE ${param}
+        OR c.serial ILIKE ${param}
+      )
+    `)
+  }
+
+  if (tipoMaquina === 'vh') {
+    conditions.push(`
+      (
+        a.documento ILIKE ${param}
+        OR v.placa ILIKE ${param}
+      )
+    `)
+  }
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(' AND ')}`
+      : ''
+
+    let selectExtra = ''
+    let joinExtra = ''
+
+    if (tipoMaquina === 'pc') {
+      selectExtra = `
+        dm.id_computador,
+        c.marca AS marca,
+        c.serial,
+      `
+      joinExtra = `
+        JOIN computadores c
+          ON c.id_computador = dm.id_computador
+      `
+    }
+
+    if (tipoMaquina === 'vh') {
+      selectExtra = `
+        dm.id_vehiculo,
+        v.modelo AS marca,
+        v.placa,
+        v.tipo_vehiculo,
+      `
+      joinExtra = `
+        JOIN vehiculos v
+          ON v.id_vehiculo = dm.id_vehiculo
+      `
+    }
+
+    const query = `
+      SELECT
+        ${selectExtra}
+        dm.id_detallemaquina,
+        a.documento,
+        a.id_aprendiz,
+        dm.firma_ingreso,
+        TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
+        TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida
+      FROM detalles_maquinas dm
+      JOIN detalles_ingreso di
+        ON di.id_detallemaquina = dm.id_detallemaquina
+      LEFT JOIN detalles_salida ds
+        ON ds.id_ingreso = di.id_ingreso
+      JOIN aprendiz a
+        ON a.id_aprendiz = di.id_aprendiz
+      ${joinExtra}
+      ${whereClause}
+      ORDER BY di.hora_ingreso DESC
+    `
+
+    const result = await pool.query(query, values)
+        const rows = result.rows.map(row => ({
+      ...row,
+      hora_salida : row.hora_salida
+        ? row.hora_salida
+        : 'Sin registro'
+    }))
+const responseData = {
+  title: tipoMaquina === 'pc' ? 'Reporte de Computadores' : 'Reporte de Vehículos',
+
+  columns: tipoMaquina === 'pc'
+    ? [
+        { header: 'Documento', dataKey: 'documento' },
+        { header: 'Marca', dataKey: 'marca' },
+        { header: 'Serial', dataKey: 'serial' },
+        { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+        { header: 'Hora salida', dataKey: 'hora_salida' },
+        { header: 'Firma', dataKey: 'firma_ingreso' },
+      ]
+    : [
+        { header: 'Documento', dataKey: 'documento' },
+        { header: 'Marca', dataKey: 'marca' },
+        { header: 'Placa', dataKey: 'placa' },
+        { header: 'Tipo vehículo', dataKey: 'tipo_vehiculo' },
+        { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+        { header: 'Hora salida', dataKey: 'hora_salida' },
+        { header: 'Firma', dataKey: 'firma_ingreso' },
+      ],
+
+  rows
+}
+
+return response.json(responseData)
+  } catch (error) {
+    console.error(error)
+    return response.status(500).json({ message: 'Error en el servidor' })
+  }
+}
+
 
 // Funcion para consultar los datos de las maquinas del aprendiz
 
