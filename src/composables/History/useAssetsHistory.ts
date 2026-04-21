@@ -11,17 +11,7 @@ import type {
   VehicleHistoryRow,
 } from '@/types/assetsHistory.types'
 
-const computerFilterOptions = [
-  { label: 'Sin filtro', value: '' },
-  { label: 'ID Aprendiz', value: 'APRENDIZ' },
-  { label: 'Serial Computador', value: 'SERIAL' },
-]
 
-const vehicleFilterOptions = [
-  { label: 'Sin filtro', value: '' },
-  { label: 'Placa', value: 'PLACA' },
-  { label: 'ID Aprendiz', value: 'APRENDIZ' },
-]
 
 const resolveView = (view: unknown): AssetView =>
   view === 'vehicles' ? 'vehicles' : 'computers'
@@ -34,6 +24,11 @@ const createEmptyOwner = (): AssetOwnerDetail => ({
   hora_ingreso: null,
   firma: null,
 })
+
+const matchesSearch = (value: string | number | null | undefined, search: string) =>
+  String(value ?? '')
+    .toLowerCase()
+    .includes(search)
 
 export const useAssetsHistory = (
   route: RouteLocationNormalizedLoaded,
@@ -57,11 +52,7 @@ export const useAssetsHistory = (
   const isLoading = ref(false)
   const loadError = ref('')
 
-  const activeFilterOptions = computed(() =>
-    selectedView.value === 'computers'
-      ? computerFilterOptions
-      : vehicleFilterOptions,
-  )
+
 
   const selectedViewLabel = computed(() =>
     selectedView.value === 'computers' ? 'Computadores' : 'Vehiculos',
@@ -85,26 +76,56 @@ export const useAssetsHistory = (
       : 'bg-[linear-gradient(135deg,#0f172a_0%,#1f2937_55%,#0d7a3b_100%)]',
   )
 
-  const activeSearchPlaceholder = computed(() =>
+
+  const searchTerm = computed(() => filters.searchValue.trim().toLowerCase())
+
+  const filteredComputerHistory = computed<ComputerHistoryRow[]>(() => {
+    if (!searchTerm.value) {
+      return computerHistory.value
+    }
+
+    return computerHistory.value.filter((row) =>
+      [
+        row.serial,
+        row.documento,
+        row.marca,
+        row.id_aprendiz,
+      ].some((value) => matchesSearch(value, searchTerm.value)),
+    )
+  })
+
+  const filteredVehicleHistory = computed<VehicleHistoryRow[]>(() => {
+    if (!searchTerm.value) {
+      return vehicleHistory.value
+    }
+
+    return vehicleHistory.value.filter((row) =>
+      [
+        row.placa,
+        row.documento,
+        row.marca,
+        row.tipo_vehiculo,
+        row.id_aprendiz,
+      ].some((value) => matchesSearch(value, searchTerm.value)),
+    )
+  })
+
+  const filteredRows = computed<AssetHistoryBaseRow[]>(() =>
     selectedView.value === 'computers'
-      ? filters.filterType === 'SERIAL'
-        ? 'Digite el serial del computador...'
-        : 'Digite el documento del aprendiz...'
-      : filters.filterType === 'PLACA'
-        ? 'Digite la placa del vehiculo...'
-        : 'Digite el documento del aprendiz...',
+      ? filteredComputerHistory.value
+      : filteredVehicleHistory.value,
   )
 
-  const activeRows = computed<AssetHistoryBaseRow[]>(() =>
-    selectedView.value === 'computers'
-      ? computerHistory.value
-      : vehicleHistory.value,
-  )
-
-  const activeVisibleCount = computed(() => activeRows.value.length)
+  const activeVisibleCount = computed(() => filteredRows.value.length)
 
   const activeCompletedCount = computed(
-    () => activeRows.value.filter((row) => row.hora_salida != null).length,
+    () => filteredRows.value.filter((row) => row.hora_salida != null).length,
+  )
+
+  const activeSearchPlaceholder = computed(() =>
+    selectedView.value === 'computers'
+      ? 'Busca por serial, documento, marca o id del aprendiz...'
+      : 'Busca por placa, documento, tipo, marca o id del aprendiz...',
   )
 
   const summaryCards = computed<AssetSummaryCard[]>(() => [
@@ -231,7 +252,6 @@ export const useAssetsHistory = (
   )
 
   watch(selectedView, (view) => {
-    filters.filterType = ''
     filters.searchValue = ''
 
     if (route.query.view !== view) {
@@ -245,16 +265,7 @@ export const useAssetsHistory = (
   })
 
   watch(
-    () => filters.filterType,
-    (filterType) => {
-      if (!filterType) {
-        filters.searchValue = ''
-      }
-    },
-  )
-
-  watch(
-    () => [selectedView.value, filters.Date, filters.filterType, filters.searchValue],
+    () => [selectedView.value, filters.Date],
     () => {
       loadActiveHistory()
     },
@@ -280,8 +291,10 @@ export const useAssetsHistory = (
     propietario,
     computerHistory,
     vehicleHistory,
+    filteredComputerHistory,
+    filteredVehicleHistory,
+    filteredRows,
     summaryCards,
-    activeFilterOptions,
     selectedViewLabel,
     selectedViewTitle,
     selectedViewDescription,

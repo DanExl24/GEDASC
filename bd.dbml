@@ -1,0 +1,100 @@
+Table formaciones {
+  id_formacion int [pk]
+  nombre varchar(100) [not null, unique]
+  nivel varchar(15) [not null]
+}
+
+Table aprendiz {
+  id_aprendiz int [pk]
+  documento varchar(10) [not null, unique]
+  nombre varchar(100) [not null]
+  apellido varchar(100) [not null]
+  id_formacion int [not null]
+  fecha_registro timestamp [default: `now()`]
+  estado boolean [default: true]
+}
+
+Table computadores {
+  id_computador int [pk]
+  serial varchar(50) [not null, unique]
+  marca varchar(50) [not null]
+  activo boolean [default: true]
+}
+
+Table vehiculos {
+  id_vehiculo int [pk]
+  tipo_vehiculo varchar(255)
+  placa varchar(10) [not null]
+  modelo varchar(50) [not null]
+}
+
+Table aprendiz_computador {
+  id int [pk]
+  id_aprendiz int
+  id_computador int
+  principal boolean [default: false]
+  fecha_asignacion timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table aprendiz_vehiculo {
+  id int [pk]
+  id_aprendiz int
+  id_vehiculo int
+  principal boolean [default: false]
+  fecha_asignacion timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table detalles_maquinas {
+  id_detallemaquina int [pk]
+  id_computador int
+  id_vehiculo int
+  firma_ingreso text [not null]
+}
+
+Table detalles_ingreso {
+  id_ingreso int [pk]
+  id_aprendiz int [not null]
+  id_detallemaquina int
+  hora_ingreso timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table detalles_salida {
+  id_salida int [pk]
+  id_ingreso int [not null]
+  hora_salida timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table roles {
+  id_rol int [pk]
+  nombre varchar(50) [not null, unique]
+}
+
+Table usuarios {
+  id_usuario int [pk]
+  nombre varchar(100) [not null]
+  email varchar(120) [not null, unique]
+  password text [not null]
+  id_rol int [not null]
+  activo boolean [default: true]
+  creado_en timestamp [default: `now()`]
+  ultimo_login timestamp
+}
+
+
+Ref: aprendiz.id_formacion > formaciones.id_formacion
+
+Ref: aprendiz_computador.id_aprendiz > aprendiz.id_aprendiz
+Ref: aprendiz_computador.id_computador > computadores.id_computador
+
+Ref: aprendiz_vehiculo.id_aprendiz > aprendiz.id_aprendiz
+Ref: aprendiz_vehiculo.id_vehiculo > vehiculos.id_vehiculo
+
+Ref: detalles_ingreso.id_aprendiz > aprendiz.id_aprendiz
+Ref: detalles_ingreso.id_detallemaquina > detalles_maquinas.id_detallemaquina
+
+Ref: detalles_salida.id_ingreso > detalles_ingreso.id_ingreso
+
+Ref: detalles_maquinas.id_computador > computadores.id_computador
+Ref: detalles_maquinas.id_vehiculo > vehiculos.id_vehiculo
+
+Ref: usuarios.id_rol > roles.id_rol

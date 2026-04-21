@@ -18,12 +18,13 @@ export default defineConfig({
   },
 
   server: {
-    host: '192.168.1.11',
+
+    host: true,
     port: 5173,
 
     hmr: {
       protocol: 'wss',
-      host: '192.168.1.11'
+      host: ''
     }
   }
 })

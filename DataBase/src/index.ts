@@ -3,7 +3,8 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from 'cors'
 import { initIO } from "./sockets/io";
-
+import dotenv from 'dotenv'
+dotenv.config()
 // rutas
 import testRoutes from './routes/test.routes'
 import QueryId from './routes/QueryId.routes'
@@ -13,7 +14,8 @@ import HistoryRecord from './routes/history.routes'
 import ComputerRecord from './routes/computer.routes'
 import VehicleRecord from './routes/vehicle.routes'
 import  StatsRecord  from './routes/stats.routes';
-
+import adminFunction from './routes/admin.routes'
+import auth from './routes/auth.routes'
 // sockets
 import initSockets from "./sockets/index"
 
@@ -99,7 +101,8 @@ app.use('/api/historico', HistoryRecord)
 app.use('/api/HistorialComputadores', ComputerRecord)
 app.use('/api/HistorialVehiculos', VehicleRecord)
 app.use('/api/estadisticas', StatsRecord)
-
+app.use('/api/admin',adminFunction)
+app.use('/api/auth',auth)
 // 🚀 servidor
 const PORT = 3000
 server.listen(PORT, '0.0.0.0', () => {

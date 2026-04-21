@@ -12,7 +12,7 @@ export type MaquinaDetalleUI = {
 
   firma: string | null
 
-  estado: 'PRESTADA' | 'NO_PRINCIPAL' | 'NORMAL'
+  estado?: 'PRESTADA' | 'NO_PRINCIPAL' | 'NORMAL'
 
   aprendices: {
     actual: { id: string | null }

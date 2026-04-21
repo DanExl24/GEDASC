@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import { useAuthStore } from '@/stores/auth';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -47,6 +47,30 @@ const router = createRouter({
       component : () => import('../views/RecordHistory.vue'),
     },
     {
+      path : '/admin-record-control',
+      name : 'AdminRecordControlView',
+      component : () => import('../views/AdminRecordControlView.vue'),
+      meta: { role: 'ADMIN' }
+    },
+    {
+      path : '/admin-borrowed-assets',
+      name : 'AdminBorrowedAssetsView',
+      component : () => import('../views/AdminBorrowedAssetsView.vue'),
+      meta: { role: 'ADMIN' }
+    },
+    {
+      path : '/admin-aprendices',
+      name : 'AdminAprendicesView',
+      component : () => import('../views/AdminAprendicesView.vue'),
+      meta: { role: 'ADMIN' }
+    },
+    {
+      path : '/admin-alerts',
+      name : 'AdminAlertsView',
+      component : () => import('../views/AdminAlertsView.vue'),
+      meta: { role: 'ADMIN' }
+    },
+    {
       path : '/mobile-view',
       name : 'MobileView',
       component : () => import('../mobile/Mobile.vue'),
@@ -58,6 +82,11 @@ const router = createRouter({
         }
       ]
     },
+    {
+      path : '/login-view',
+      name : 'login',
+      component : () => import('../views/LoginView.vue')
+    }
   ],
 })
 
@@ -71,5 +100,19 @@ router.beforeEach((to, from, next) => {
   }
   next();
 });
+
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore()
+
+  if (to.meta.requiresAuth && !auth.token) {
+    return next('/login')
+  }
+
+  if (to.meta.role && auth.user?.rol !== to.meta.role) {
+    return next('/403')
+  }
+
+  next()
+})
 
 export default router

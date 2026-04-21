@@ -5,8 +5,11 @@ import { checkDuplicate } from './HandlersMachine/checkDuplicate';
 import { checkVehicle } from './HandlersMachine/checkVehicle';
 import { checkComputer } from './HandlersMachine/checkComputer';
 import { checkMachineResult } from '../types/InconsistentMachine.types';
-import { getTodayBorrowed } from './HandlersMachine/checksBorroweds';
-import { getTodayNonPrincipal } from './HandlersMachine/checkNonPrincipal';
+import { getTheBorrowedMachine } from './HandlersMachine/checksBorroweds';
+import { getNonPrincipalMachine } from './HandlersMachine/checkNonPrincipal';
+import { QueryBuilder } from '../shared/baseQuery';
+import { searchGlobal } from '../query/search.query';
+import { buildQuery } from '../shared/baseQuery';
 // Funcion para el ingreso de aprendiz
 export const AddEntry = async (req: Request, res: Response) => {
   console.log("Documento recibido:", req.params.documento);
@@ -116,32 +119,32 @@ export const DetectEntry = async (request: Request, response: Response) => {
 export const EntryRecord = async (request: Request, response: Response) => {
   try {
 
-    const result = await pool.query(`
-      SELECT
-        a.id_aprendiz,
-        a.nombre,
-        a.apellido,
-        a.documento,
-        f.nombre AS formacion,
-        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
-        di.id_detallemaquina
+    const queryConfig: QueryBuilder = {
+      select: [
+        'a.id_aprendiz',
+        'a.nombre',
+        'a.apellido',
+        'a.documento',
+        'f.nombre AS formacion',
+        `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
+        'di.id_detallemaquina'
+      ],
+      from: 'detalles_ingreso di',
+      joins: [
+        'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
+        'JOIN formaciones f ON f.id_formacion = a.id_formacion',
+        'LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina'
+      ],
+      where: [
+        `di.hora_ingreso >= CURRENT_DATE`,
+        `di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'`
+      ],
+      orderBy: 'di.id_ingreso DESC'
+    }
 
-      FROM detalles_ingreso AS di
+    const { text, values } = buildQuery(queryConfig)
 
-      JOIN aprendiz AS a
-      ON a.id_aprendiz = di.id_aprendiz
-
-      JOIN formaciones AS f
-      ON f.id_formacion = a.id_formacion
-
-      LEFT JOIN detalles_maquinas AS dm
-      ON dm.id_detallemaquina = di.id_detallemaquina
-
-      WHERE di.hora_ingreso >= CURRENT_DATE
-      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-
-      ORDER BY di.id_ingreso DESC
-    `);
+    const result = await pool.query(text, values)
 
     if (result.rowCount === 0) {
       return response.status(404).json({
@@ -152,7 +155,6 @@ export const EntryRecord = async (request: Request, response: Response) => {
     return response.status(200).json(result.rows);
 
   } catch (error) {
-
     console.error(error);
 
     return response.status(500).json({
@@ -166,18 +168,14 @@ export const EntryRecord = async (request: Request, response: Response) => {
 // Funcion para traer los datos del aprendiz
 export const EntryManual = async (request: Request, response : Response) =>{
   const {documento} = request.params
-
     // Obtener el aprendiz por documento
     const aprendizRecord = await pool.query(
       'SELECT a.nombre,a.apellido,f.nombre AS formacion FROM aprendiz AS a  JOIN formaciones AS f ON f.id_formacion = a.id_formacion WHERE documento = $1',[documento]);
-
     // verificar si el aprendiz si esta en la base de datos
     if (aprendizRecord.rowCount == 0) {
       return response.status(404).json({ message: "Aprendiz no encontrado" });
     }
-
     const result = aprendizRecord.rows[0]
-
     response.status(200).json({result})
 }
 
@@ -185,51 +183,52 @@ export const EntryManual = async (request: Request, response : Response) =>{
 // Funcion para la busqueda de un aprendiz
 export const SearchAprendiz = async (request: Request, response: Response) => {
   try {
-
-    const text = (request.query.q as string)?.trim() //traer el texto de busqueda
+    const text = (request.query.q as string)?.trim()
 
     if (!text) {
       return response.status(400).json({
-        message: "Debe escribir algo" // si no escribe algo
+        message: "Debe escribir algo"
       })
     }
 
-    const pattern = `%${text}%` //patron para la busqueda
+    const queryConfig: QueryBuilder = {
+      select: [
+        'a.id_aprendiz',
+        'a.nombre',
+        'a.apellido',
+        'a.documento',
+        'f.nombre AS formacion',
+        `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
+        'di.id_detallemaquina'
+      ],
+      from: 'detalles_ingreso di',
+      joins: [
+        'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
+        'JOIN formaciones f ON f.id_formacion = a.id_formacion'
+      ],
+      where: [
+        `di.hora_ingreso >= CURRENT_DATE`,
+        `di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'`
+      ]
+    }
 
-    const result = await pool.query(`
-      SELECT
-        a.id_aprendiz,
-        a.nombre,
-        a.apellido,
-        a.documento,
-        f.nombre AS formacion,
-        TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
-        di.id_detallemaquina
-      FROM detalles_ingreso AS di
-      JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
-      JOIN formaciones AS f ON f.id_formacion = a.id_formacion
-      WHERE
-        (
-          a.documento ILIKE $1
-          OR a.nombre ILIKE $1
-          OR a.apellido ILIKE $1
-        )
-      AND di.hora_ingreso >= CURRENT_DATE
-      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-    `, [pattern]) // consulta SQL
+    const rows = await searchGlobal(
+      pool,
+      queryConfig,
+      text,
+      ['a.documento', 'a.nombre', 'a.apellido']
+    )
 
     console.log("Busqueda:", text)
 
-    response.status(200).json(result.rows) // mandar el array
+    response.status(200).json(rows)
 
   } catch (error) {
-
     console.error(error)
 
     response.status(500).json({
       message: "Error en la busqueda"
     })
-
   }
 }
 
@@ -240,22 +239,38 @@ export const AddMachine = async (request: Request, response: Response) => {
 
   try {
     const id_aprendiz = request.params.id;
-    console.log(id_aprendiz)
-    const { tipoMaquina, tipoVehiculo, modelo, placaSerial, firma, forzarExcepcion } = request.body;
-    console.log(forzarExcepcion)
+
+    const {
+      tipoMaquina,
+      tipoVehiculo,
+      modelo,
+      placaSerial,
+      firma,
+      forzarExcepcion
+    } = request.body;
+
+    // 🔤 normalización
     const placaNormalizada = placaSerial?.toUpperCase().trim();
     const modeloNormalizado = modelo?.toUpperCase().trim();
-    console.log(tipoMaquina, tipoVehiculo, modelo, placaSerial,forzarExcepcion)
+
+    //  validaciones básicas
     if (!id_aprendiz) {
       return response.status(400).json({ message: "Aprendiz inválido" });
     }
 
-    if (!tipoMaquina || !modeloNormalizado || !placaNormalizada || !firma || (tipoMaquina === 'vh' && !tipoVehiculo)) {
+    if (
+      !tipoMaquina ||
+      !modeloNormalizado ||
+      !placaNormalizada ||
+      !firma ||
+      (tipoMaquina === 'vh' && !tipoVehiculo)
+    ) {
       return response.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
     await client.query('BEGIN');
 
+    //  verificar ingreso del día
     const ingreso = await client.query(
       `SELECT id_ingreso
        FROM detalles_ingreso
@@ -273,8 +288,8 @@ export const AddMachine = async (request: Request, response: Response) => {
 
     const id_ingreso = ingreso.rows[0].id_ingreso;
 
-
-    const checkExist = await checkDuplicate(client,placaNormalizada)
+    //  duplicados
+    const checkExist = await checkDuplicate(client, placaNormalizada);
     if (checkExist) {
       await client.query('ROLLBACK');
       return response.status(409).json({
@@ -282,62 +297,83 @@ export const AddMachine = async (request: Request, response: Response) => {
       });
     }
 
-    let idMaquina: number | null = null;
+    //  lógica central
+    let machineResult: checkMachineResult;
 
-    let vehicleMachine : checkMachineResult
-    console.log('ANTES DEL CHECK')
-    if (tipoMaquina === 'vh') {vehicleMachine = await checkVehicle(client,placaNormalizada,id_aprendiz,forzarExcepcion,tipoVehiculo,modeloNormalizado)}
-    else {vehicleMachine = await checkComputer(client,placaNormalizada,id_aprendiz,forzarExcepcion,modeloNormalizado)}
-    console.log('DESPUÉS DEL CHECK', vehicleMachine)
-    const tipoEquipo = tipoMaquina == 'vh' ? 'vehiculo' : 'computador'
+    if (tipoMaquina === 'vh') {
+      machineResult = await checkVehicle(
+        client,
+        placaNormalizada,
+        id_aprendiz,
+        forzarExcepcion,
+        tipoVehiculo,
+        modeloNormalizado
+      );
+    } else {
+      machineResult = await checkComputer(
+        client,
+        placaNormalizada,
+        id_aprendiz,
+        forzarExcepcion,
+        modeloNormalizado
+      );
+    }
 
-    if(vehicleMachine.status === 'diferenteAprendiz'){
-      await client.query('ROLLBACK')
+    const tipoEquipo = tipoMaquina === 'vh' ? 'vehiculo' : 'computador';
+
+    //  manejo de estados
+    switch (machineResult.status) {
+      case 'diferenteAprendiz':
+        await client.query('ROLLBACK');
         return response.status(409).json({
           aviso: "diferenteAprendiz",
-          tipoEquipo:tipoEquipo,
+          tipoEquipo,
           excepcion: true,
-          inconsistencia : true,
+          inconsistencia: true
         });
-      }
-      else if(vehicleMachine.status == 'maquinaYaPrestadaHoy'){
-        await client.query('ROLLBACK')
+
+      case 'maquinaYaPrestadaHoy':
+        await client.query('ROLLBACK');
         return response.status(409).json({
           aviso: "maquinaYaPrestadaHoy",
           excepcion: false,
-          inconsistencia : true,
+          inconsistencia: true
         });
-      }
-      else if(vehicleMachine.status == 'maquinaSinDueño'){
-        await client.query('ROLLBACK')
+
+      case 'maquinaSinDueño':
+        await client.query('ROLLBACK');
         return response.status(409).json({
           aviso: "maquinaSinDueño",
           tipoEquipo: "vehiculo",
-          placaSerial: vehicleMachine.data.placa == null ? vehicleMachine.data.serial : vehicleMachine.data.placa,
-          modelo: vehicleMachine.data.modelo,
-          tipo_vehiculo: vehicleMachine.data.tipo,
-          inconsistencia : true,
+          placaSerial: machineResult.data.placa ?? machineResult.data.serial,
+          modelo: machineResult.data.modelo,
+          tipo_vehiculo: machineResult.data.tipo,
+          inconsistencia: true
         });
-      }
-      else if(vehicleMachine.status == 'maquinaPrincipalExistente'){
-        await client.query('ROLLBACK')
+
+      case 'maquinaPrincipalExistente':
+        await client.query('ROLLBACK');
         return response.status(409).json({
-        aviso: "maquinaPrincipalExistente",
-        tipoEquipo: "vehiculo",
-        excepcion: true,
-        inconsistencia : true,
-      });
-      }
-      if (vehicleMachine.status !== 'ok') {
-        await client.query('ROLLBACK')
-        console.log('Estado inesperado:', vehicleMachine)
-        return response.status(500).json({
-          error: "Estado no manejado",
+          aviso: "maquinaPrincipalExistente",
+          tipoEquipo: "vehiculo",
+          excepcion: true,
+          inconsistencia: true
         });
-      }
-      idMaquina = vehicleMachine.idMaquina
 
+      case 'ok':
+        break;
 
+      default:
+        await client.query('ROLLBACK');
+        console.error('Estado inesperado:', machineResult);
+        return response.status(500).json({
+          error: "Estado no manejado"
+        });
+    }
+
+    const idMaquina = machineResult.idMaquina;
+
+    //  insertar detalle máquina
     const resultDetallesMaquina = await client.query(
       `INSERT INTO detalles_maquinas(id_computador, id_vehiculo, firma_ingreso)
        VALUES ($1, $2, $3)
@@ -351,6 +387,7 @@ export const AddMachine = async (request: Request, response: Response) => {
 
     const idDetallesMaquina = resultDetallesMaquina.rows[0].id_detallemaquina;
 
+    // 🔗 vincular con ingreso
     await client.query(
       `UPDATE detalles_ingreso
        SET id_detallemaquina = $1
@@ -365,7 +402,7 @@ export const AddMachine = async (request: Request, response: Response) => {
       idDetallesMaquina
     });
 
-    } catch (error: unknown) {
+  } catch (error: unknown) {
     await client.query('ROLLBACK');
     console.error('🔥 ERROR REAL:', error);
 
@@ -458,7 +495,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
   try {
     // 1. PRESTADA
-    const prestada = await getTodayBorrowed(client, id)
+    const prestada = await getTheBorrowedMachine(client, id)
 
     if (prestada.length > 0) {
       return response.status(200).json({
@@ -468,7 +505,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
     }
 
     // 2. NO PRINCIPAL
-    const noPrincipal = await getTodayNonPrincipal(client, id)
+    const noPrincipal = await getNonPrincipalMachine(client, id)
 
     if (noPrincipal.length > 0) {
       return response.status(200).json({
@@ -477,7 +514,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
       })
     }
 
-    // 3. NORMAL (SIEMPRE MISMO SHAPE)
+    // 3. NORMAL
     const query = `
       SELECT
         c.marca AS pc_marca,

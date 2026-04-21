@@ -1,79 +1,49 @@
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-import { filtersComputadoresMap } from '../composables/filterComputer'
-import { filtersMap } from '../composables/filtersMap'
-
+import { filtersMap } from '../shared/filtersMap'
+import { QueryBuilder } from '../shared/baseQuery'
+import { searchGlobal } from '../query/search.query'
 // 🔥 Historial computadores con filtros dinámicos
 export const getHistorialComputadores = async (req: Request, res: Response) => {
   try {
-    const { date, type, value } = req.query as {
+    const { date } = req.query as {
       date?: keyof typeof filtersMap.date
-      type?: keyof typeof filtersComputadoresMap.type
-      value?: string
     }
-    console.log(type)
-    console.log(value)
-    console.log(typeof value)
-    const conditions: string[] = []
-    const values: string[] = []
 
-    // 📅 Filtro por fecha
+    const queryConfig: QueryBuilder = {
+      select: [
+        'dm.id_detallemaquina',
+        'dm.id_computador',
+        'c.marca AS marca',
+        'c.serial',
+        'a.documento',
+        'a.id_aprendiz',
+        'dm.firma_ingreso',
+        `TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso`,
+        `TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida`
+      ],
+      from: 'detalles_maquinas dm',
+      joins: [
+        'JOIN detalles_ingreso di ON di.id_detallemaquina = dm.id_detallemaquina',
+        'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso',
+        'JOIN computadores c ON c.id_computador = dm.id_computador',
+        'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz'
+      ],
+      where: [],
+      orderBy: 'di.hora_ingreso DESC'
+    }
+
+    // 📅 filtro por fecha
     if (date && filtersMap.date[date]) {
-      conditions.push(filtersMap.date[date])
+      queryConfig.where?.push(filtersMap.date[date])
     }
 
-    // 🔍 Filtro dinámico (ID o SERIAL)
-    if (type && value && filtersComputadoresMap.type[type]) {
+    const rows = await searchGlobal(
+      pool,
+      queryConfig
+    )
 
-      if (type === 'APRENDIZ') {
-        values.push(`%${value.trim()}%`)
-        conditions.push(`a.documento ILIKE $${values.length}`)
-      }
-
-      if (type === 'SERIAL') {
-        values.push(`%${value}%`)
-        conditions.push(`c.serial ILIKE $${values.length}`)
-      }
-    }
-
-    const whereClause = conditions.length
-      ? `WHERE ${conditions.join(' AND ')}`
-      : ''
-
-      const query = `
-        SELECT
-          dm.id_detallemaquina,
-          dm.id_computador,
-          c.marca AS marca,
-          c.serial,
-          a.documento,
-          a.id_aprendiz,
-          dm.firma_ingreso,
-          TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
-          TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida
-
-        FROM detalles_maquinas AS dm
-
-        JOIN detalles_ingreso AS di
-          ON di.id_detallemaquina = dm.id_detallemaquina
-
-        LEFT JOIN detalles_salida AS ds
-          ON ds.id_ingreso = di.id_ingreso
-
-        JOIN computadores c
-          ON c.id_computador = dm.id_computador
-
-        JOIN aprendiz a
-          ON a.id_aprendiz = di.id_aprendiz
-
-        ${whereClause}
-
-        ORDER BY di.hora_ingreso DESC
-      `
-
-    const result = await pool.query(query, values)
-
-    res.json(result.rows)
+    res.json(rows)
 
   } catch (error) {
     console.error(error)

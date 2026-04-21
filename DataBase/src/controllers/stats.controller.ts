@@ -1,7 +1,7 @@
 // Controlador para consultar id del aprendiz
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-import { filtersMap } from '../composables/filtersMap';
+import { filtersMap } from '../shared/filtersMap';
 
 // Funcion para el historial de ingresos
 export const StatsRecord = async (request: Request, response: Response) => {

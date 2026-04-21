@@ -30,16 +30,6 @@
         </article>
 
         <article class="rounded-[18px] border border-slate-200 bg-white p-3">
-          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Filtro</p>
-          <BaseSelect
-            v-model:model-value="filters.filterType"
-            :options="activeFilterOptions"
-            placeholder="Filtrar por"
-            select-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-          />
-        </article>
-
-        <article class="rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Fecha</p>
           <BaseSelect
             v-model:model-value="filters.Date"
@@ -50,23 +40,14 @@
         </article>
 
         <article class="rounded-[18px] border border-slate-200 bg-white p-3">
-          <template v-if="filters.filterType">
-            <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Busqueda activa</p>
-            <SearchBar
-              v-model="filters.searchValue"
-              :placeholder="activeSearchPlaceholder"
-              :with-container="false"
-              :show-label="false"
-              input-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-            />
-          </template>
-
-          <template v-else>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Busqueda activa</p>
-            <p class="mt-2 text-sm leading-5 text-slate-500">
-              Selecciona primero el filtro de {{ selectedViewLabel.toLowerCase() }} para habilitar la busqueda.
-            </p>
-          </template>
+          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Busqueda activa</p>
+          <SearchBar
+            v-model="filters.searchValue"
+            :placeholder="activeSearchPlaceholder"
+            :with-container="false"
+            :show-label="false"
+            input-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+          />
         </article>
 
         <ExitButton
@@ -143,7 +124,7 @@
             </h2>
           </div>
           <p class="text-sm text-slate-500">
-            {{ filters.filterType ? 'Consulta refinada con filtros dinamicos.' : 'Consulta general del historial seleccionado.' }}
+            {{ filters.searchValue.trim() ? 'Consulta refinada por texto sobre el historial cargado.' : 'Consulta general del historial seleccionado.' }}
           </p>
         </div>
 
@@ -151,8 +132,8 @@
           <AssetsHistoryTable
             :selected-view="selectedView"
             :selected-view-label="selectedViewLabel"
-            :computer-history="computerHistory"
-            :vehicle-history="vehicleHistory"
+            :computer-history="filteredComputerHistory"
+            :vehicle-history="filteredVehicleHistory"
             :is-loading="isLoading"
             :load-error="loadError"
             :active-visible-count="activeVisibleCount"
@@ -187,10 +168,9 @@ const {
   selectedView,
   filters,
   propietario,
-  computerHistory,
-  vehicleHistory,
+  filteredComputerHistory,
+  filteredVehicleHistory,
   summaryCards,
-  activeFilterOptions,
   selectedViewLabel,
   selectedViewTitle,
   selectedViewDescription,
