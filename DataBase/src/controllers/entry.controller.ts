@@ -127,13 +127,15 @@ export const EntryRecord = async (request: Request, response: Response) => {
         'a.documento',
         'f.nombre AS formacion',
         `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
-        'di.id_detallemaquina'
+        'di.id_detallemaquina',
+        'ds.hora_salida'
       ],
       from: 'detalles_ingreso di',
       joins: [
         'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
         'JOIN formaciones f ON f.id_formacion = a.id_formacion',
-        'LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina'
+        'LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina',
+        'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
       ],
       where: [
         `di.hora_ingreso >= CURRENT_DATE`,
@@ -199,12 +201,14 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         'a.documento',
         'f.nombre AS formacion',
         `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
-        'di.id_detallemaquina'
+        'di.id_detallemaquina',
+        'ds.hora_salida'
       ],
       from: 'detalles_ingreso di',
       joins: [
         'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
-        'JOIN formaciones f ON f.id_formacion = a.id_formacion'
+        'JOIN formaciones f ON f.id_formacion = a.id_formacion',
+        'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
       ],
       where: [
         `di.hora_ingreso >= CURRENT_DATE`,
@@ -228,6 +232,83 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
 
     response.status(500).json({
       message: "Error en la busqueda"
+    })
+  }
+}
+
+export const SearchPrincipalMachine = async (request: Request, response: Response) => {
+  const { id_aprendiz } = request.params
+
+  if (!id_aprendiz) {
+    return response.status(400).json({
+      message: "Debe enviar el id del aprendiz"
+    })
+  }
+
+  try {
+    console.log('[PrincipalMachine][API] Consultando maquina principal para aprendiz:', id_aprendiz)
+    const [computerResult, vehicleResult] = await Promise.all([
+      pool.query(
+        `
+        SELECT
+          c.marca,
+          c.serial
+        FROM aprendiz_computador ac
+        INNER JOIN computadores c
+          ON c.id_computador = ac.id_computador
+        WHERE ac.id_aprendiz = $1
+          AND ac.principal = true
+        ORDER BY ac.fecha_asignacion DESC
+        LIMIT 1
+        `,
+        [id_aprendiz]
+      ),
+      pool.query(
+        `
+        SELECT
+          v.tipo_vehiculo,
+          v.modelo AS marca,
+          v.placa
+        FROM aprendiz_vehiculo av
+        INNER JOIN vehiculos v
+          ON v.id_vehiculo = av.id_vehiculo
+        WHERE av.id_aprendiz = $1
+          AND av.principal = true
+        ORDER BY av.fecha_asignacion DESC
+        LIMIT 1
+        `,
+        [id_aprendiz]
+      )
+    ])
+
+    const result = {
+      pc: computerResult.rows[0]
+        ? {
+            marca: computerResult.rows[0].marca ?? null,
+            serial: computerResult.rows[0].serial ?? null
+          }
+        : null,
+      vh: vehicleResult.rows[0]
+        ? {
+            tipo_vehiculo: vehicleResult.rows[0].tipo_vehiculo ?? null,
+            marca: vehicleResult.rows[0].marca ?? null,
+            placa: vehicleResult.rows[0].placa ?? null
+          }
+        : null
+    }
+
+    console.log('[PrincipalMachine][API] Resultado encontrado:', {
+      id_aprendiz,
+      result
+    })
+
+    return response.status(200).json(result)
+  } catch (error) {
+    console.error(error)
+
+    return response.status(500).json({
+      message: "Error al consultar la maquina principal",
+      error
     })
   }
 }

@@ -6,7 +6,7 @@
     />
 
     <section class="sticky top-[89px] z-20 border-b border-emerald-100 bg-white/95 backdrop-blur-sm shadow-[0_12px_30px_rgba(15,107,63,0.06)]">
-      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1.2fr_1.2fr_auto] lg:items-end lg:px-8">
+      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1.1fr_0.95fr_1.25fr_auto] lg:items-end lg:px-8">
         <article class="rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Vista activa</p>
           <div class="grid grid-cols-2 gap-2 rounded-[16px] bg-slate-100 p-1.5">
@@ -30,6 +30,16 @@
         </article>
 
         <article class="rounded-[18px] border border-slate-200 bg-white p-3">
+          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Fecha del prestamo</p>
+          <BaseSelect
+            v-model:model-value="selectedDateFilter"
+            :options="optionsDates"
+            placeholder="Fecha"
+            select-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+          />
+        </article>
+
+        <article class="min-w-0 rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Busqueda activa</p>
           <SearchBar
             v-model="search"
@@ -114,7 +124,7 @@
             </h2>
           </div>
           <p class="text-sm text-slate-500">
-            {{ search.trim() ? 'Consulta refinada por propietario, receptor o identificador del activo.' : 'Vista general de maquinas prestadas registradas por el admin.' }}
+            {{ search.trim() ? 'Consulta refinada por propietario, receptor o identificador del activo.' : `Vista general de maquinas prestadas para ${selectedDateFilterLabel}.` }}
           </p>
         </div>
 
@@ -137,7 +147,7 @@
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Presta</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Recibe</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Documento</th>
-                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Firma</th>
+                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Tiempo</th>
                   </template>
 
                   <template v-else>
@@ -147,7 +157,7 @@
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Presta</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Recibe</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Documento</th>
-                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Firma</th>
+                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Tiempo</th>
                   </template>
                 </tr>
               </thead>
@@ -163,7 +173,7 @@
                   <td :title="computer.ownerDocument" class="cursor-help font-semibold text-slate-900">{{ computer.ownerName }}</td>
                   <td class="font-semibold text-slate-900">{{ computer.borrowerName }}</td>
                   <td :title="computer.borrowerName" class="cursor-help">{{ computer.borrowerDocument }}</td>
-                  <td>{{ computer.firmaIngreso ? 'Registrada' : 'Sin firma' }}</td>
+                  <td>{{ formatBorrowedTime(computer.horaIngreso) }}</td>
                 </tr>
               </tbody>
 
@@ -179,13 +189,13 @@
                   <td :title="vehicle.ownerDocument" class="cursor-help font-semibold text-slate-900">{{ vehicle.ownerName }}</td>
                   <td class="font-semibold text-slate-900">{{ vehicle.borrowerName }}</td>
                   <td :title="vehicle.borrowerName" class="cursor-help">{{ vehicle.borrowerDocument }}</td>
-                  <td>{{ vehicle.firmaIngreso ? 'Registrada' : 'Sin firma' }}</td>
+                  <td>{{ formatBorrowedTime(vehicle.horaIngreso) }}</td>
                 </tr>
               </tbody>
             </table>
 
             <div v-if="activeVisibleCount === 0" class="px-4 py-10 text-center text-sm font-medium text-slate-500">
-              No hay maquinas prestadas para la vista actual.
+              No hay maquinas prestadas para el filtro seleccionado.
             </div>
           </div>
         </div>
@@ -195,11 +205,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
+import BaseSelect from '@/components/Forms/BaseSelect.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import HeaderView from '@/layouts/HeaderView.vue'
+import { optionsDates } from '@/constants/optionsDates'
 import { useAuthStore } from '@/stores/auth'
 import {
   getAdminBorrowedAssets,
@@ -208,6 +220,7 @@ import {
 } from '@/Services/adminBorrowedAssets'
 
 type BorrowedView = 'computers' | 'vehicles'
+type DateOption = typeof optionsDates[number]['value']
 
 type SummaryCard = {
   label: string
@@ -226,6 +239,7 @@ type SummaryCard = {
 const auth = useAuthStore()
 const selectedView = ref<BorrowedView>('computers')
 const search = ref('')
+const selectedDateFilter = ref<DateOption>('TODAY')
 const computers = ref<BorrowedComputerRow[]>([])
 const vehicles = ref<BorrowedVehicleRow[]>([])
 const isLoading = ref(false)
@@ -294,6 +308,32 @@ const activeSearchPlaceholder = computed(() =>
     ? 'Busca por serial, propietario, receptor o documento...'
     : 'Busca por placa, tipo, propietario, receptor o documento...'
 )
+
+const selectedDateFilterLabel = computed(() =>
+  optionsDates.find((option) => option.value === selectedDateFilter.value)?.label ?? 'Hoy'
+)
+
+const formatBorrowedTime = (value: string | null) => {
+  if (!value) return 'Sin fecha'
+
+  const currentDate = new Date()
+  const borrowedDate = new Date(value)
+  const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate())
+  const borrowedDay = new Date(borrowedDate.getFullYear(), borrowedDate.getMonth(), borrowedDate.getDate())
+  const diffDays = Math.max(
+    Math.floor((currentDay.getTime() - borrowedDay.getTime()) / (1000 * 60 * 60 * 24)),
+    0
+  )
+
+  if (diffDays === 0) return 'Hoy'
+  if (diffDays === 1) return 'Hace 1 dia'
+  if (diffDays <= 6) return `Hace ${diffDays} dias`
+
+  return new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    month: 'long'
+  }).format(borrowedDate)
+}
 
 const activeVisibleCount = computed(() =>
   selectedView.value === 'computers' ? filteredComputers.value.length : filteredVehicles.value.length
@@ -372,7 +412,7 @@ const loadBorrowedAssets = async () => {
   loadError.value = ''
 
   try {
-    const data = await getAdminBorrowedAssets(auth.token)
+    const data = await getAdminBorrowedAssets(auth.token, selectedDateFilter.value)
     computers.value = data.computers
     vehicles.value = data.vehicles
   } catch (error) {
@@ -386,4 +426,5 @@ const loadBorrowedAssets = async () => {
 }
 
 onMounted(loadBorrowedAssets)
+watch(selectedDateFilter, loadBorrowedAssets)
 </script>

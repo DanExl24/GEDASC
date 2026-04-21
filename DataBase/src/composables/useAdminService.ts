@@ -328,19 +328,21 @@ const getAllVehicles = async (filters: AdminFilters = {}) => {
   return rows
 }
 
-const getBorrowedComputers = async () => {
+const getBorrowedComputers = async (filters: AdminFilters = {}) => {
   const client = await pool.connect()
   try {
-    return await getGlobalBorrowedComputers(client)
+    const selectedDates = normalizeDateFilters(filters.dates, ['TODAY'])
+    return await getGlobalBorrowedComputers(client, selectedDates)
   } finally {
     client.release()
   }
 }
 
-const getBorrowedVehicles = async () => {
+const getBorrowedVehicles = async (filters: AdminFilters = {}) => {
   const client = await pool.connect()
   try {
-    return await getGlobalBorrowedVehicles(client)
+    const selectedDates = normalizeDateFilters(filters.dates, ['TODAY'])
+    return await getGlobalBorrowedVehicles(client, selectedDates)
   } finally {
     client.release()
   }

@@ -84,7 +84,7 @@
 import formLogin from '@/components/AprendizUI/Forms/formLogin.vue'
 import router from '@/router';
 const handleSuccess = () => {
-router.push('/')
+router.push('/dashboard')
 }
 
 

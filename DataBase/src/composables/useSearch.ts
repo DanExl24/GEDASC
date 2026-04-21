@@ -1,9 +1,12 @@
-import { PoolClient } from 'pg'
+import type { Pool } from 'pg'
 import { searchGlobal } from '../query/search.query'
+import type { QueryBuilder } from '../shared/baseQuery'
 
 export const useSearch = async (
-  client: PoolClient,
-  search: string
+  client: Pool,
+  queryConfig: QueryBuilder,
+  search?: string,
+  fields: string[] = []
 ) => {
   if (!search) {
     return {
@@ -13,7 +16,7 @@ export const useSearch = async (
     }
   }
 
-  const data = await searchGlobal(client, search)
+  const data = await searchGlobal(client, queryConfig, search, fields)
 
   return {
     success: true,

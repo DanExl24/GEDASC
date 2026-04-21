@@ -22,7 +22,7 @@
       </section>
 
       <!-- DERECHA -->
-        <section class="flex items-center">
+        <section class="flex items-center gap-3">
           <div class="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2 shadow-sm">
 
             <!-- puntico decorativo -->
@@ -34,6 +34,15 @@
             </span>
 
           </div>
+
+          <button
+            v-if="auth.isAuthenticated"
+            type="button"
+            class="rounded-xl border border-red-100 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 shadow-sm transition-colors duration-200 hover:border-red-200 hover:bg-red-100"
+            @click="handleLogout"
+          >
+            Cerrar sesion
+          </button>
         </section>
     </div>
     </div>
@@ -44,6 +53,22 @@
 // dependencias
 import senaLogo from '@/assets/Logos/logo-del-sena-verde.jpg'
 import ThisTime from '@/components/UI/ThisTime.vue';
+import router from '@/router'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+
+const handleLogout = async () => {
+  auth.logout()
+
+  try {
+    await router.replace('/login')
+  } finally {
+    if (router.currentRoute.value.path !== '/login') {
+      window.location.href = '/login'
+    }
+  }
+}
 // props del componente
 withDefaults(
   defineProps<{

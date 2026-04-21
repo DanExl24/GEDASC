@@ -8,6 +8,9 @@ const formatDateLabel = (value: Date) =>
     timeStyle: 'short'
   }).format(value)
 
+const formatTimestampLabel = (value: string | null) =>
+  value ? formatDateLabel(new Date(value)) : formatDateLabel(new Date())
+
 const calculateInactiveDays = (lastVisit: string | null) => {
   if (!lastVisit) return Number.POSITIVE_INFINITY
 
@@ -39,7 +42,7 @@ export const getAdminAlerts = async (token: string) => {
       title: 'Prestamo de computador detectado',
       summary: `${item.borrowerName} registra un computador que pertenece a ${item.ownerName}.`,
       level: 'info' as const,
-      timestampLabel: nowLabel,
+      timestampLabel: formatTimestampLabel(item.horaIngreso),
       subjectName: item.borrowerName,
       subjectDocument: item.borrowerDocument,
       details: [
@@ -57,7 +60,7 @@ export const getAdminAlerts = async (token: string) => {
       title: 'Prestamo de vehiculo detectado',
       summary: `${item.borrowerName} registra un vehiculo que pertenece a ${item.ownerName}.`,
       level: 'info' as const,
-      timestampLabel: nowLabel,
+      timestampLabel: formatTimestampLabel(item.horaIngreso),
       subjectName: item.borrowerName,
       subjectDocument: item.borrowerDocument,
       details: [

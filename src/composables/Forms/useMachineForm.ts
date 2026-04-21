@@ -2,9 +2,22 @@ import { reactive,ref,computed,watch } from "vue"
 import { useMessage } from "../useMessage"
 import type { Aprendiz } from "@/types/aprendiz.types"
 
+type PrincipalMachine = {
+  pc: {
+    marca: string | null
+    serial: string | null
+  } | null
+  vh: {
+    tipo_vehiculo: string | null
+    marca: string | null
+    placa: string | null
+  } | null
+}
+
 export const useMachineForm = () => {
   const submittedMachine = ref(false)
   const aprendizMachine = ref<Aprendiz | null>()
+  const principalMachine = ref<PrincipalMachine | null>(null)
   const {setMessage} = useMessage()
 
   const formMachine = reactive({ modeloMaquina: '', TipoMaquina: '', tipoVehiculo: '', placaSerial: '' })
@@ -16,6 +29,7 @@ export const useMachineForm = () => {
     maquinaRegistrada.pc = false
     maquinaRegistrada.vh = false
     aprendizMachine.value = aprendiz
+    principalMachine.value = null
 
 
     for (const key in formMachine) {
@@ -32,6 +46,8 @@ export const useMachineForm = () => {
     if (aprendizMachine.value) {
       aprendizMachine.value = null
     }
+
+    principalMachine.value = null
 
     maquinaRegistrada.pc = false
     maquinaRegistrada.vh = false
@@ -110,6 +126,7 @@ export const useMachineForm = () => {
     maquinaRegistrada,
     submittedMachine,
     aprendizMachine,
+    principalMachine,
     registerOtherMachine,
     endFlowMachine
   }

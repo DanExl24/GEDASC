@@ -3,14 +3,21 @@ import { useAuthStore } from '@/stores/auth';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {path:'/',
-    name:'DashboardView',
-    component: () => import('../views/DashboardView.vue')
+    {
+      path: '/',
+      redirect: '/login'
+    },
+    {
+      path:'/dashboard',
+      name:'DashboardView',
+      component: () => import('../views/DashboardView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/general-entry',
       name: 'GeneralEntryView',
       component: () => import('../views/GeneralEntryView.vue'),
+      meta: { requiresAuth: true },
       children: [
         {
           path: "firma/:documento",
@@ -22,16 +29,19 @@ const router = createRouter({
       path : '/general-exit',
       name : 'GeneralExitView',
       component : () => import('../views/GeneralExitView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path : '/general-history',
       name : 'HistoryView',
       component : () => import('../views/HistoryView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path : '/assets-history',
       name : 'AssetsHistoryView',
       component : () => import('../views/AssetsHistoryView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path : '/computer-history',
@@ -45,35 +55,37 @@ const router = createRouter({
       path : '/record-history',
       name : 'RecordsView',
       component : () => import('../views/RecordHistory.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path : '/admin-record-control',
       name : 'AdminRecordControlView',
       component : () => import('../views/AdminRecordControlView.vue'),
-      meta: { role: 'ADMIN' }
+      meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
       path : '/admin-borrowed-assets',
       name : 'AdminBorrowedAssetsView',
       component : () => import('../views/AdminBorrowedAssetsView.vue'),
-      meta: { role: 'ADMIN' }
+      meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
       path : '/admin-aprendices',
       name : 'AdminAprendicesView',
       component : () => import('../views/AdminAprendicesView.vue'),
-      meta: { role: 'ADMIN' }
+      meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
       path : '/admin-alerts',
       name : 'AdminAlertsView',
       component : () => import('../views/AdminAlertsView.vue'),
-      meta: { role: 'ADMIN' }
+      meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
       path : '/mobile-view',
       name : 'MobileView',
       component : () => import('../mobile/Mobile.vue'),
+      meta: { requiresAuth: true },
             children: [
         {
           path: "firma/:documento",
@@ -83,9 +95,14 @@ const router = createRouter({
       ]
     },
     {
-      path : '/login-view',
+      path : '/login',
       name : 'login',
-      component : () => import('../views/LoginView.vue')
+      component : () => import('../views/LoginView.vue'),
+      meta: { guestOnly: true }
+    },
+    {
+      path: '/login-view',
+      redirect: '/login'
     }
   ],
 })
@@ -95,7 +112,9 @@ const isMobile = () => window.innerWidth <= 768;
 
 
 router.beforeEach((to, from, next) => {
-  if (isMobile() && !to.path.startsWith("/mobile-view")) {
+  const auth = useAuthStore()
+
+  if (isMobile() && auth.token && !to.path.startsWith("/mobile-view") && !to.meta.guestOnly) {
     return next("/mobile-view");
   }
   next();
@@ -104,12 +123,16 @@ router.beforeEach((to, from, next) => {
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore()
 
+  if (to.meta.guestOnly && auth.token) {
+    return next('/dashboard')
+  }
+
   if (to.meta.requiresAuth && !auth.token) {
     return next('/login')
   }
 
   if (to.meta.role && auth.user?.rol !== to.meta.role) {
-    return next('/403')
+    return next('/dashboard')
   }
 
   next()

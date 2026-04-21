@@ -6,7 +6,7 @@
     />
 
     <section class="sticky top-[89px] z-20 border-b border-emerald-100 bg-white/95 backdrop-blur-sm shadow-[0_12px_30px_rgba(15,107,63,0.06)]">
-      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1.35fr_0.95fr_0.9fr_1.55fr_auto] lg:items-end lg:px-8">
+      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1.2fr_0.95fr_1.45fr_auto] lg:items-end lg:px-8">
         <article class="rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Vista activa</p>
           <div class="grid grid-cols-2 gap-2 rounded-[16px] bg-slate-100 p-1.5">
@@ -39,13 +39,14 @@
           />
         </article>
 
-        <article class="rounded-[18px] border border-slate-200 bg-white p-3">
+        <article class="min-w-0 rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Busqueda activa</p>
           <SearchBar
             v-model="filters.searchValue"
             :placeholder="activeSearchPlaceholder"
             :with-container="false"
             :show-label="false"
+            container-class="w-full"
             input-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
           />
         </article>

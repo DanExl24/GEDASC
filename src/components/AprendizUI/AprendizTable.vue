@@ -97,6 +97,7 @@ const handleMachineDetails = async (aprendiz: Aprendiz) => {
 }
 
 const openMachine = (aprendiz: Aprendiz) => {
+  console.log('[RegisterMachine] Abrir modal para aprendiz:', aprendiz)
   aprendizMachine.value = aprendiz
 
   nextTick(() => {
@@ -106,6 +107,7 @@ const openMachine = (aprendiz: Aprendiz) => {
 
 const closeMachineForm = () => {
   modalMachine.value.close()
+  aprendizMachine.value = null
 }
 
 defineProps<{

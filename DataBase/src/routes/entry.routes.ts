@@ -1,6 +1,6 @@
 import { Router } from 'express'
 // importar funcion
-import { AddEntry, SearchMachine } from '../controllers/entry.controller'
+import { AddEntry, SearchMachine, SearchPrincipalMachine } from '../controllers/entry.controller'
 import { EntryRecord } from '../controllers/entry.controller'
 import { DetectEntry } from '../controllers/entry.controller'
 import { EntryManual } from '../controllers/entry.controller'
@@ -19,5 +19,6 @@ router.post('/ingresoMaquina/:id',AddMachine)
 router.post('/ingresoDobleMaquina/:id_aprendiz',UpdateMachine)
 router.get('/detalleMaquinas/:id_aprendiz',SearchMachine)
 router.get('/firmaIngreso/:id_aprendiz',SearchMachine)
+router.get('/maquinaPrincipal/:id_aprendiz', SearchPrincipalMachine)
 
 export default router

@@ -163,12 +163,24 @@ export const getAllVehiclesController = async (req: Request, res: Response) => {
 ========================= */
 
 export const getBorrowedComputersController = async (req: Request, res: Response) => {
-  const data = await service.getBorrowedComputers()
+  const dates = typeof req.query.dates === 'string'
+    ? (req.query.dates.split(',') as DateFilter[])
+    : undefined
+
+  const data = await service.getBorrowedComputers({
+    dates
+  })
   res.json(ok(data))
 }
 
 export const getBorrowedVehiclesController = async (req: Request, res: Response) => {
-  const data = await service.getBorrowedVehicles()
+  const dates = typeof req.query.dates === 'string'
+    ? (req.query.dates.split(',') as DateFilter[])
+    : undefined
+
+  const data = await service.getBorrowedVehicles({
+    dates
+  })
   res.json(ok(data))
 }
 

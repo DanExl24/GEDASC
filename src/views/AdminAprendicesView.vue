@@ -209,10 +209,6 @@
                   {{ machine.pc ? 'Computador registrado' : 'Vehiculo registrado' }}
                 </h4>
               </div>
-
-              <div class="text-sm text-slate-500">
-                {{ machine.firma ? 'Con firma registrada' : 'Sin firma asociada' }}
-              </div>
             </div>
 
             <div class="mt-4 grid gap-3 md:grid-cols-3">
@@ -448,7 +444,7 @@ const formatInactivity = (days: number, lastVisit: string | null) => {
     return 'Sin registros'
   }
 
-  if (days === 0) return 'Hoy'
+  if (days === 0) return 'Activo en el CTA'
   if (days === 1) return '1 dia'
 
   return `${days} dias`

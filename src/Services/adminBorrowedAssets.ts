@@ -27,6 +27,7 @@ type BorrowComputerPayload = {
     marca: string
   } | null
   firma_ingreso: string | null
+  hora_ingreso: string | null
 }
 
 type BorrowVehiclePayload = {
@@ -45,6 +46,7 @@ type BorrowVehiclePayload = {
     modelo: string
   } | null
   firma_ingreso: string | null
+  hora_ingreso: string | null
 }
 
 type BorrowComputerApiRow = {
@@ -67,6 +69,7 @@ export interface BorrowedComputerRow {
   serial: string
   marca: string
   firmaIngreso: string | null
+  horaIngreso: string | null
 }
 
 export interface BorrowedVehicleRow {
@@ -80,11 +83,22 @@ export interface BorrowedVehicleRow {
   tipo: string
   modelo: string
   firmaIngreso: string | null
+  horaIngreso: string | null
 }
 
 const buildHeaders = (token: string) => ({
   Authorization: `Bearer ${token}`
 })
+
+const buildBorrowedUrl = (path: string, dates?: string) => {
+  const url = new URL(`${API_URL}${path}`)
+
+  if (dates) {
+    url.searchParams.set('dates', dates)
+  }
+
+  return url.toString()
+}
 
 const ensureSuccess = async <T>(response: Response): Promise<T> => {
   const payload = await response.json() as ApiEnvelope<T>
@@ -96,12 +110,12 @@ const ensureSuccess = async <T>(response: Response): Promise<T> => {
   return payload.data
 }
 
-export const getAdminBorrowedAssets = async (token: string) => {
+export const getAdminBorrowedAssets = async (token: string, dates?: string) => {
   const [computersData, vehiclesData] = await Promise.all([
-    fetch(`${API_URL}/api/admin/borrowed/computers`, {
+    fetch(buildBorrowedUrl('/api/admin/borrowed/computers', dates), {
       headers: buildHeaders(token)
     }).then((response) => ensureSuccess<BorrowComputerApiRow[]>(response)),
-    fetch(`${API_URL}/api/admin/borrowed/vehicles`, {
+    fetch(buildBorrowedUrl('/api/admin/borrowed/vehicles', dates), {
       headers: buildHeaders(token)
     }).then((response) => ensureSuccess<BorrowVehicleApiRow[]>(response))
   ])
@@ -121,7 +135,8 @@ export const getAdminBorrowedAssets = async (token: string) => {
       ownerDocument: data.owner.document || '-',
       serial: data.prestado?.serial || data.principal?.serial || '-',
       marca: data.prestado?.marca || data.principal?.marca || '-',
-      firmaIngreso: data.firma_ingreso
+      firmaIngreso: data.firma_ingreso,
+      horaIngreso: data.hora_ingreso
     }
   })
 
@@ -136,7 +151,8 @@ export const getAdminBorrowedAssets = async (token: string) => {
       placa: data.prestado?.placa || data.principal?.placa || '-',
       tipo: normalizeVehicleType(data.prestado?.tipo || data.principal?.tipo || '-'),
       modelo: data.prestado?.modelo || data.principal?.modelo || '-',
-      firmaIngreso: data.firma_ingreso
+      firmaIngreso: data.firma_ingreso,
+      horaIngreso: data.hora_ingreso
     }
   })
 

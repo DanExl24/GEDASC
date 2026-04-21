@@ -1,5 +1,5 @@
 <template>
-  <BaseModal @close="close" ref="modalRef" title="MÃ¡quinas registradas">
+  <BaseModal @close="close" ref="modalRef" title="Máquinas registradas">
     <div class="grid gap-4">
       <!-- PC -->
       <div
