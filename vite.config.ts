@@ -24,7 +24,7 @@ export default defineConfig({
 
     hmr: {
       protocol: 'wss',
-      host: ''
+      host: '10.9.50.112'
     }
   }
 })

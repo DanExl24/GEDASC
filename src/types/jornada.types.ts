@@ -11,5 +11,6 @@ export interface JornadaDefinition {
 export interface JornadaInfo {
   key: JornadaKey
   label: string
-  badgeClass: string
+  badgeClass: string,
+  isJornada? : boolean
 }

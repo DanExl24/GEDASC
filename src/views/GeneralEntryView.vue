@@ -18,7 +18,7 @@
               <h1 class="font-robotoSlab text-3xl font-bold leading-tight lg:text-4xl [text-shadow:0_2px_8px_rgba(0,0,0,0.4)]">
                 Registro de ingreso claro, rápido y con trazabilidad de máquinas.
               </h1>
-              <p class="mt-4 max-w-xl text-[#0f172a] text-sm leading-6 text-emerald-50/90 lg:text-base">
+              <p class="mt-4 max-w-xl text-[#0f172a] text-sm leading-6 text-slate-900 lg:text-base">
                 Centraliza el ingreso de aprendices, permite búsqueda inmediata, registro manual y captura de equipos en un flujo más fácil de leer.
               </p>
             </div>
@@ -77,6 +77,7 @@
           text="Escanear aprendiz"
           variant="green"
           class-button="min-w-[210px]"
+          :disabled="jornada.isSystemLocked"
         />
 
         <BaseButtonOpen
@@ -85,6 +86,7 @@
           text="Ingreso manual"
           variant="dark"
           class-button="min-w-[210px]"
+          :disabled="jornada.isSystemLocked"
         />
       </section>
 
@@ -124,6 +126,9 @@ import { SearchAprendiz } from '@/Services/SearchAprendiz'
 import { useAprendiz } from '@/composables/useAprendiz'
 import AprendizTable from '@/components/AprendizUI/AprendizTable.vue'
 import { useNotifications } from '@/composables/useNotifications';
+import { useJornadaStore } from '@/stores/jornada'
+
+const jornada = useJornadaStore()
 const {addNotification} = useNotifications()
 const { HistorialIngresoAprendiz,AñadirIngresoAprendiz,aprendizData,latestAprendiz } = useAprendiz()
 const scannerModal = ref<InstanceType<typeof BarcodeScanner> | null>(null)

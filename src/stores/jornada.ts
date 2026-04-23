@@ -4,27 +4,30 @@ import type {
   JornadaInfo,
   JornadaKey,
 } from '@/types/jornada.types'
+import { useNotifications } from '@/composables/useNotifications';
+import { API_URL } from '@/config/network'
+const {addNotification} = useNotifications()
 
 const JORNADAS: JornadaDefinition[] = [
   {
     key: 'DIURNA',
     label: 'Diurna',
     startMinutes: 6 * 60,
-    endMinutes: 9 * 60,
+    endMinutes: 12 * 60 - 1,
     badgeClass: 'bg-emerald-100 text-emerald-800',
   },
   {
     key: 'TARDE',
     label: 'Tarde',
     startMinutes: 12 * 60,
-    endMinutes: 15 * 60,
+    endMinutes: 18 * 60 - 1,
     badgeClass: 'bg-amber-100 text-amber-800',
   },
   {
     key: 'NOCHE',
     label: 'Noche',
     startMinutes: 18 * 60,
-    endMinutes: 22 * 60,
+    endMinutes: 24 * 60 - 1,
     badgeClass: 'bg-slate-200 text-slate-900',
   },
 ]
@@ -33,12 +36,13 @@ const FALLBACK_JORNADA: JornadaInfo = {
   key: 'SIN_JORNADA',
   label: 'Sin jornada',
   badgeClass: 'bg-slate-100 text-slate-500',
+  isJornada : false,
 }
 
 const extractMinutesFromHour = (value: string | null | undefined): number | null => {
   if (!value) return null
 
-  const match = value.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i)
+  const match = value.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i)
 
   if (!match) return null
 
@@ -68,10 +72,7 @@ const extractMinutesFromHour = (value: string | null | undefined): number | null
 const resolveJornada = (minutes: number | null): JornadaInfo => {
   if (minutes == null) return FALLBACK_JORNADA
 
-  const matched = JORNADAS.find(
-    (jornada) =>
-      minutes >= jornada.startMinutes && minutes <= jornada.endMinutes,
-  )
+  const matched = JORNADAS.find((jornada) =>minutes >= jornada.startMinutes && minutes <= jornada.endMinutes,)
 
   if (!matched) return FALLBACK_JORNADA
 
@@ -79,6 +80,7 @@ const resolveJornada = (minutes: number | null): JornadaInfo => {
     key: matched.key,
     label: matched.label,
     badgeClass: matched.badgeClass,
+    isJornada : true
   }
 }
 
@@ -87,12 +89,11 @@ export const useJornadaStore = defineStore('jornada', {
     definitions: JORNADAS,
     fallback: FALLBACK_JORNADA,
     byAprendizId: {} as Record<number, JornadaInfo>,
+    isSystemLocked : false,
+    intervalId: null as ReturnType<typeof setInterval> | null
   }),
   actions: {
-    registerAprendizJornada(
-      idAprendiz: number | null | undefined,
-      horaIngreso: string | null | undefined,
-    ) {
+    registerAprendizJornada(idAprendiz: number | null | undefined,horaIngreso: string | null | undefined,) {
       if (!idAprendiz) return
 
       const jornada = resolveJornada(extractMinutesFromHour(horaIngreso))
@@ -117,9 +118,7 @@ export const useJornadaStore = defineStore('jornada', {
     getJornadaByHour(horaIngreso: string | null | undefined): JornadaInfo {
       return resolveJornada(extractMinutesFromHour(horaIngreso))
     },
-    getJornadaForAprendiz(
-      idAprendiz: number | null | undefined,
-      horaIngreso: string | null | undefined,
+    getJornadaForAprendiz(idAprendiz: number | null | undefined,horaIngreso: string | null | undefined,
     ): JornadaInfo {
       const byHour = this.getJornadaByHour(horaIngreso)
 
@@ -136,5 +135,62 @@ export const useJornadaStore = defineStore('jornada', {
     isJornada(horaIngreso: string | null | undefined, key: JornadaKey): boolean {
       return this.getJornadaByHour(horaIngreso).key === key
     },
+    async fetchServerTime() {
+      try {
+        const res = await fetch(`${API_URL}/api/jornadaTime/timeNow`)
+        const data = await res.json()
+
+        return data.time // "03:45:27 PM"
+      } catch (error) {
+        console.error('Error obteniendo hora del servidor', error)
+        return null
+      }
+    },
+    async lockOrUnlockSystem() {
+      const now = await this.fetchServerTime()
+
+      if (!now) {
+        console.warn('No se pudo obtener la hora del servidor')
+        return
+      }
+
+      const date = new Date(now)
+      const minutes = date.getHours() * 60 + date.getMinutes()
+
+      const current = resolveJornada(minutes)
+
+      const wasLocked = this.isSystemLocked
+      this.isSystemLocked = !current.isJornada
+
+      if (!wasLocked && this.isSystemLocked) {
+        addNotification(
+          'El sistema está cerrado en este horario. Los registros comienzan a las 06:00',
+          'warning'
+        )
+      }
+
+      console.log({
+        now,
+        minutes,
+        jornada: current
+      })
+    },
+    async startAutoLockWatcher() {
+      if (this.intervalId) return
+
+      // Ejecuta una vez inmediatamente (para no esperar 1 minuto como un NPC)
+      await this.lockOrUnlockSystem()
+      console.log(this.isSystemLocked)
+      this.intervalId = setInterval(async () => {
+        await this.lockOrUnlockSystem()
+
+      }, 60000) // cada minuto
+    },
+    stopAutoLockWatcher() {
+      if (this.intervalId) {
+        clearInterval(this.intervalId)
+        this.intervalId = null
+      }
+    }
   },
 })

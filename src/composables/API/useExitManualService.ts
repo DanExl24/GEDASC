@@ -10,7 +10,7 @@ const API = API_URL
 export const useExitManualService = (
   form: ReturnType<typeof useExitManualForm>,
 ) => {
-  const { AñadirSalidaAprendiz } = useExitAprendiz()
+  const { AddSalidaAprendiz } = useExitAprendiz()
 
   const loadAprendizByDocument = async (documento: string) => {
     if (!documento || documento.length !== 10) {
@@ -54,6 +54,11 @@ export const useExitManualService = (
     const documento = form.formManual.documento.trim()
     const estado = await DetectExit(documento)
 
+    console.log('[ManualExit] Resultado de DetectExit:', {
+      documento,
+      estado,
+    })
+
     if (estado === 'no_existe') {
       form.setMessage('El aprendiz no existe', 'error')
       return false
@@ -70,15 +75,18 @@ export const useExitManualService = (
       return false
     }
 
-    const registrado = await AñadirSalidaAprendiz(documento)
+    const registrado = await AddSalidaAprendiz(documento)
 
-    if (!registrado) {
-      form.setMessage('Error al registrar la salida', 'error')
+    console.log('[ManualExit] Resultado real de AddSalidaAprendiz:', registrado)
+
+    if (!registrado.ok) {
+      form.setMessage(registrado.message, 'error')
+      addNotification(registrado.message, 'warning')
       return false
     }
 
-    form.setMessage('Registro aceptado', 'success')
-    addNotification('Registro Aceptado','success')
+    form.setMessage(registrado.message, 'success')
+    addNotification(registrado.message, 'success')
     return true
   }
 

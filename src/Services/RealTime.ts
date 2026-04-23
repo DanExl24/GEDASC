@@ -1,5 +1,14 @@
-export const getRealTimeNow = () => {
-      const thisDate = new Date()
+export const getRealTimeNow = (date? : Date) => {
+      let thisDate = null
+      if(date){
+        thisDate = date
+      }
+      else{
+        thisDate = new Date()
+      }
+      if (!thisDate){
+        return
+      }
       const hour = thisDate.getHours()
       const minutes = thisDate.getMinutes().toString().padStart(2, '0')
       const seconds = thisDate.getSeconds().toString().padStart(2, '0')

@@ -1,0 +1,54 @@
+Numero de Requisito	Detalle de requisito	Prioridad del requisito
+RF-81	El sistema debera generar un modulo de inicio de sesion para el acceso de usuarios internos del CTA.	ALTA
+RF-82	El formulario de inicio de sesion debe solicitar: Usuario y Contraseña.	ALTA
+RF-83	El sistema debera validar las credenciales del usuario contra la base de datos antes de permitir el acceso.	ALTA
+RF-84	El sistema debera permitir el acceso unicamente a usuarios autorizados con rol CELADOR o ADMIN.	ALTA
+RF-85	El sistema debera guardar la sesion activa del usuario autenticado para mantener el acceso al dashboard y a los modulos permitidos.	ALTA
+RF-86	El sistema debera redirigir automaticamente al dashboard cuando el usuario ya tenga una sesion activa e intente ingresar nuevamente al login.	ALTA
+RF-87	El sistema debera permitir cerrar sesion y redirigir nuevamente al modulo de inicio de sesion.	ALTA
+RF-88	El sistema debera restringir el acceso a las vistas administrativas unicamente a usuarios con rol administrador.	ALTA
+RF-89	El dashboard debera mostrar modulos diferentes segun el rol autenticado del usuario.	ALTA
+RF-90	El dashboard del administrador debera mostrar estadisticas de aprendices registrados por trimestre y por año.	MEDIA
+RF-91	El sistema debera generar un modulo administrativo para la correccion de registros de ingreso y salida.	ALTA
+RF-92	El modulo de correccion de registros debera permitir buscar aprendices y filtrar registros administrativos mediante lapsos de fecha predefinidos.	ALTA
+RF-93	El sistema debera permitir eliminar ingresos o salidas desde el modulo administrativo de correccion de registros.	ALTA
+RF-94	Para eliminar un registro, el sistema debera exigir la verificacion del aprendiz mediante documento o nombre completo, junto con una observacion del motivo.	ALTA
+RF-95	El sistema debera mostrar el estado del movimiento administrativo como Completo o Pendiente antes de permitir una correccion.	MEDIA
+RF-96	El sistema debera generar un modulo administrativo para visualizar maquinas prestadas entre aprendices.	ALTA
+RF-97	El modulo de maquinas prestadas debera permitir alternar la vista entre computadores y vehiculos.	ALTA
+RF-98	El sistema debera permitir buscar prestamos por serial, placa, propietario, receptor o documento del aprendiz.	ALTA
+RF-99	El sistema debera mostrar en la tabla de prestamos: datos del activo, aprendiz que presta, aprendiz que recibe, documento y tiempo transcurrido desde el registro.	ALTA
+RF-100	El sistema debera generar un modulo administrativo para visualizar todos los aprendices registrados y su actividad dentro del CTA.	ALTA
+RF-101	El modulo de aprendices y actividad debera permitir buscar por nombre, apellido o documento del aprendiz.	ALTA
+RF-102	El sistema debera permitir filtrar aprendices por cantidad de dias sin asistir al CTA.	MEDIA
+RF-103	El sistema debera mostrar para cada aprendiz: actividad acumulada, total de sesiones, ultima visita y dias de inasistencia.	ALTA
+RF-104	El sistema debera permitir abrir un modal para consultar el detalle completo de las maquinas registradas por cada aprendiz.	ALTA
+RF-105	El detalle de maquinas del aprendiz debera identificar si la maquina registrada corresponde a un equipo principal o secundario.	MEDIA
+RF-106	El sistema debera generar un centro de alertas para la visualizacion de eventos administrativos detectados.	ALTA
+RF-107	El centro de alertas debera mostrar alertas por prestamos de maquinas entre aprendices y por inasistencia prolongada.	ALTA
+RF-108	El sistema debera mostrar unicamente alertas de inasistencia para aprendices con 3 dias o mas sin asistir al CTA.	ALTA
+RF-109	El sistema debera mostrar en cada alerta: nombre del aprendiz, documento, resumen del evento, detalles relacionados y marca de tiempo.	ALTA
+RF-110	El sistema debera generar una vista unificada para consultar el historial de activos registrados en el CTA.	ALTA
+RF-111	La vista de historial de activos debera permitir alternar la consulta entre computadores y vehiculos.	ALTA
+RF-112	El sistema debera permitir buscar en el historial de activos por documento, nombre, serial o placa segun el tipo de vista seleccionada.	ALTA
+RF-113	El sistema debera permitir abrir el detalle del propietario del activo registrado desde la tabla del historial de activos.	ALTA
+RF-114	El sistema debera generar un centro de reportes para seleccionar el tipo de reporte a exportar.	ALTA
+RF-115	El centro de reportes debera permitir escoger entre: Reporte de ingresos, Reporte de salidas, Registro historico y Reporte de activos.	ALTA
+RF-116	El sistema debera construir un formulario dinamico de filtros segun el tipo de reporte seleccionado.	ALTA
+RF-117	El centro de reportes debera mostrar un resumen visible con la configuracion actual del reporte antes de exportarlo.	MEDIA
+RF-118	El sistema debera permitir limpiar la configuracion del reporte actual sin afectar los demas tipos de reporte.	MEDIA
+RF-119	El sistema debera generar una vista movil para la captura de la firma digital del aprendiz.	ALTA
+RF-120	La vista movil de firma debera enviar la firma capturada al sistema para completar el registro de la maquina asociada al ingreso.	ALTA
+RF-121	El sistema debera bloquear las opciones de ingreso y salida cuando el horario actual no corresponda a una jornada operativa habilitada.	ALTA
+RF-122	El sistema debera clasificar automaticamente cada registro de ingreso dentro de una jornada operativa segun la hora del movimiento.	ALTA
+RF-123	El sistema debera manejar como jornadas operativas las siguientes franjas horarias: Diurna, Tarde y Noche.	ALTA
+RF-124	La jornada Diurna debera corresponder a los registros comprendidos entre las 06:00 AM y las 11:59 AM.	ALTA
+RF-125	La jornada Tarde debera corresponder a los registros comprendidos entre las 12:00 PM y las 05:59 PM.	ALTA
+RF-126	La jornada Noche debera corresponder a los registros comprendidos entre las 06:00 PM y las 11:59 PM.	ALTA
+RF-127	El sistema debera mostrar una etiqueta visual de jornada dentro de la tabla de ingresos del aprendiz.	ALTA
+RF-128	El sistema debera conservar la jornada detectada del aprendiz para reutilizarla en consultas posteriores del mismo registro.	MEDIA
+RF-129	Si la hora del registro no corresponde a ninguna franja valida, el sistema debera marcar el movimiento como Sin jornada.	MEDIA
+RF-130	El sistema debera consultar la hora actual del servidor para determinar si el sistema se encuentra dentro de una jornada operativa.	ALTA
+RF-131	El sistema debera reevaluar automaticamente el estado de apertura o cierre del sistema en intervalos periodicos durante la operacion.	MEDIA
+RF-132	Cuando el sistema se encuentre fuera de jornada, debera deshabilitar las acciones de Escanear aprendiz, Ingreso manual, Escanear salida y Salida manual.	ALTA
+RF-133	Cuando el sistema pase de una jornada operativa a un horario no habilitado, debera mostrar una notificacion indicando que el sistema se encuentra cerrado en ese horario.	MEDIA

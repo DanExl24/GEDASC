@@ -1,0 +1,292 @@
+ESPECIFICACIONES TECNICAS DEL SOFTWARE
+
+Arquitectura del sistema:
+
+ Frontend
+Para la parte visual del sistema se utilizaron diferentes frameworks y librerías que permiten una interfaz dinámica, reutilizable y optimizada para la interacción con el usuario.
+________________________________________
+ Frameworks
+•	Vue.js con Router
+Se utiliza para la organización del sistema en vistas, permitiendo la navegación SPA (Single Page Application), reutilización de componentes y una estructura modular del proyecto. 
+•	Tailwind CSS
+Facilita el desarrollo de interfaces mediante clases utilitarias, permitiendo un diseño rápido, consistente y altamente personalizable directamente en el HTML. 
+________________________________________
+ Librerías
+•	QuaggaJS
+Utilizada para el escaneo de códigos de barras de los aprendices, permitiendo su identificación rápida dentro del sistema. 
+•	SignaturePad.js
+Permite la captura de la firma del aprendiz mediante un canvas HTML, incluyendo funcionalidades como limpiar firma, reiniciar y guardar en formato digital. 
+•	jsPDF
+Utilizada para la generación de documentos PDF a partir de datos del sistema, como reportes de ingresos o historiales. 
+•	SheetJS (xlsx)
+Permite la exportación de datos en formato Excel para reportes administrativos y análisis de información. 
+________________________________________
+ Backend
+Para la lógica interna del sistema se utiliza un entorno basado en Node.js, encargado de procesar solicitudes, manejar autenticación y gestionar la comunicación con la base de datos.
+________________________________________
+ Frameworks
+•	Express.js
+Permite la creación del servidor web y la definición de APIs REST de manera rápida y estructurada. Organiza el backend mediante rutas, controladores y servicios. 
+________________________________________
+ Seguridad y autenticación
+•	JSON Web Token (JWT)
+Implementado para el manejo de autenticación y autorización de usuarios. Permite validar sesiones mediante tokens seguros sin necesidad de mantener estado en el servidor. 
+________________________________________
+ Base de datos
+•	PostgreSQL
+Se utiliza como motor de base de datos principal debido a su alto rendimiento en consultas, soporte para grandes volúmenes de información, integridad referencial y escalabilidad. Además, facilita la conexión robusta con el backend del sistema.
+
+Requisitos Técnicos:
+Hardware: 
+•	Computador Core i5 14400 14th 16Gb RAM 512GB SSD W11P Monitor 22"
+•	Tablet KALLEY 10" Pulgadas T10 128GB WiFi Gris
+•	LAPIZ CAPACITIVO: Lápiz Universal Para Pantalla Táctil
+Software:
+•	Motor para correr el proyecto: Node.js
+•	Sistema Operativo donde estará el proyecto: Windows
+•	Lector de código de barras: Quagga.js
+•	Dibujar la firma del aprendiz en tiempo real: SignaturePad.Js
+
+ARQUITECTURA DE CARPETAS
+________________________________________
+ FRONTEND — GEDASC (Vue.js)
+ Estructura general
+El frontend está desarrollado en Vue.js con arquitectura modular orientada a componentes reutilizables y separación por dominio funcional.
+________________________________________
+ Raíz del frontend
+•	src/ → núcleo de la aplicación 
+•	public/ → archivos estáticos globales 
+•	scripts/ → scripts auxiliares de build o automatización 
+•	Shared/ → tipos compartidos entre frontend y backend 
+________________________________________
+ src/ (núcleo del frontend)
+ assets/
+Recursos estáticos internos del sistema.
+•	Icons/ → iconografía del sistema 
+•	Logos/ → identidad visual de la aplicación 
+________________________________________
+ components/
+Sistema de componentes reutilizables.
+•	AprendizUI/ → componentes específicos del dominio aprendiz 
+o	Forms/ → formularios especializados 
+o	Modals/ → ventanas emergentes del módulo aprendiz 
+•	Buttons/ → botones reutilizables 
+•	Cards/ → tarjetas UI 
+•	Forms/ → formularios genéricos 
+•	Library/ → inicialización de librerías externas 
+•	Modals/ → modales globales 
+•	Tables/ → tablas reutilizables 
+•	Text/ → componentes de texto 
+•	UI/ → componentes base (atomic design) 
+________________________________________
+ composables/
+Lógica reutilizable basada en Composition API.
+•	API/ → consumo de endpoints backend 
+•	Forms/ → lógica de formularios 
+•	History/ → manejo de historial 
+•	Library/ → integración de librerías externas 
+•	sockets/ → comunicación en tiempo real 
+________________________________________
+ config/
+Configuraciones globales del frontend.
+________________________________________
+ constants/
+Valores estáticos del sistema (selects, enums, configuraciones fijas).
+________________________________________
+ layouts/
+Estructuras base de la UI (headers, sidebars, templates generales).
+________________________________________
+mobile/
+Interfaz optimizada para tablet de firma digital del aprendiz.
+________________________________________
+ router/
+Definición de rutas del sistema SPA.
+________________________________________
+ Services/
+Capa de comunicación con la API backend.
+•	exports/ → servicios de exportación de datos 
+________________________________________
+ stores/
+Estado global del sistema (gestión tipo Pinia/Vuex).
+________________________________________
+ types/
+Definiciones TypeScript del frontend.
+•	exports/ → tipos exportables reutilizables 
+________________________________________
+ utils/
+Funciones auxiliares (helpers, formateos, cálculos).
+________________________________________
+ views/
+Pantallas principales del sistema (páginas).
+________________________________________
+⚙️ BACKEND — GEDASC (Node.js + Express + PostgreSQL)
+ Estructura general
+El backend está estructurado bajo arquitectura MVC con separación por capas y soporte para WebSockets.
+________________________________________
+ DataBase/src/
+ controllers/
+Contiene la lógica de negocio del sistema.
+•	HandlersMachine/ → lógica especializada para manejo de máquinas 
+________________________________________
+ routes/
+Define los endpoints de la API.
+________________________________________
+ composables/
+Lógica reutilizable del backend 
+________________________________________
+ config/
+Configuración de conexión a base de datos y variables del sistema.
+________________________________________
+ middlewares/
+Middlewares de autenticación, validación y control de acceso.
+________________________________________
+ query/
+Consultas SQL organizadas por módulo.
+________________________________________
+ sockets/
+Comunicación en tiempo real entre frontend y backend (WebSockets).
+________________________________________
+ types/
+Tipos TypeScript del backend.
+•	express/ → extensiones de tipos para Express 
+________________________________________
+ shared/
+Código compartido entre backend y frontend (tipos o utilidades comunes).
+________________________________________
+ index.js
+Archivo principal del backend:
+•	inicializa servidor Express 
+•	conecta WebSockets 
+•	registra rutas 
+•	activa middlewares 
+________________________________________
+ SHARED (Frontend + Backend)
+ Shared/types
+Contiene tipos globales reutilizados en ambos lados del sistema.
+
+ Buenas Prácticas:
+Las rutas no contienen lógica, solo conectan endpoints con controladores.
+Los controladores manejan la lógica, pero no deberían conectarse directamente a la base de datos 
+	 
+Cada línea de código representa rutas de la API, es decir, los puntos de acceso por donde el frontend se comunica con el servidor. El texto en amarillo es el endpoint y el texto blanco es el nombre del archivo del router que almacena las funciones de su controlador correspondiente
+
+
+
+Base de datos y sus relaciones
+ 
+
+Configuración 
+ Conexión a BD
+  Correr el servidor
+
+
+DESCRIPCIÓN TÉCNICA DE BASE DE DATOS 
+1. Descripción General
+La base de datos está diseñada para gestionar el control de ingreso y salida de aprendices, junto con el registro de equipos (computadores y vehículos) asociados a dichos ingresos.
+El modelo relacional garantiza integridad, trazabilidad y control mediante claves primarias y foráneas, permitiendo además relaciones flexibles entre aprendices y recursos mediante tablas intermedias de asignación.
+________________________________________
+2. Descripción de Tablas
+ Tabla: formaciones
+ Descripción:
+Almacena las formaciones académicas disponibles dentro del sistema. Sirve para clasificar a los aprendices según su programa de estudio. Estructura:
+•	id_formacion (INTEGER, PK) 
+•	nombre (VARCHAR(100), UNIQUE, NOT NULL) 
+•	nivel (VARCHAR(15), NOT NULL) 
+________________________________________
+ Tabla: aprendiz
+ Descripción:
+Contiene la información principal de los aprendices registrados en el sistema. Es la entidad central, ya que todo ingreso y asignación depende de ella.
+ Estructura:
+•	id_aprendiz (INTEGER, PK) 
+•	documento (VARCHAR(10), UNIQUE, NOT NULL) 
+•	nombre (VARCHAR(100), NOT NULL) 
+•	apellido (VARCHAR(100), NOT NULL) 
+•	id_formacion (INTEGER, FK → formaciones) 
+•	fecha_registro (TIMESTAMP, DEFAULT now()) 
+•	estado (BOOLEAN, DEFAULT true) 
+________________________________________
+ Tabla: computadores
+ Descripción:
+Registra los equipos de cómputo disponibles o asignados dentro del sistema.
+ Estructura:
+•	id_computador (INTEGER, PK) 
+•	serial (VARCHAR(50), UNIQUE, NOT NULL) 
+•	marca (VARCHAR(50), NOT NULL) 
+•	activo (BOOLEAN, DEFAULT true) 
+
+________________________________________
+ Tabla: vehiculos
+ Descripción:
+Almacena los vehículos registrados en el sistema para control de acceso y asignación.
+ Estructura:
+•	id_vehiculo (INTEGER, PK) 
+•	tipo_vehiculo (VARCHAR(255)) 
+•	placa (VARCHAR(10), NOT NULL) 
+•	modelo (VARCHAR(50), NOT NULL) 
+________________________________________
+ Tabla: aprendiz_computador
+ Descripción:
+Tabla intermedia que relaciona aprendices con computadores. Permite asignación múltiple (N:M) y define el equipo principal.
+ Estructura:
+•	id (INTEGER, PK) 
+•	id_aprendiz (INTEGER, FK → aprendiz) 
+•	id_computador (INTEGER, FK → computadores) 
+•	principal (BOOLEAN, DEFAULT false) 
+•	fecha_asignacion (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP) 
+________________________________________
+ Tabla: aprendiz_vehiculo
+ Descripción:
+Tabla intermedia que relaciona aprendices con vehículos. Permite múltiples asignaciones y define un vehículo principal.
+ Estructura:
+•	id (INTEGER, PK) 
+•	id_aprendiz (INTEGER, FK → aprendiz) 
+•	id_vehiculo (INTEGER, FK → vehiculos) 
+•	principal (BOOLEAN, DEFAULT false) 
+•	fecha_asignacion (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP) 
+________________________________________
+ Tabla: detalles_maquinas
+ Descripción:
+Registra los equipos utilizados en un ingreso (computador, vehículo o ambos). Incluye la firma digital del aprendiz como validación del registro.
+ Estructura:
+•	id_detallemaquina (INTEGER, PK) 
+•	id_computador (INTEGER, FK → computadores, NULLABLE) 
+•	id_vehiculo (INTEGER, FK → vehiculos, NULLABLE) 
+•	firma_ingreso (TEXT, NOT NULL) 
+•	CHECK: al menos uno de los dos (computador o vehículo) debe existir 
+________________________________________
+ Tabla: detalles_ingreso
+ Descripción:
+Registra cada ingreso realizado por un aprendiz, asociándolo a los recursos utilizados.
+ Estructura:
+•	id_ingreso (INTEGER, PK) 
+•	id_aprendiz (INTEGER, FK → aprendiz) 
+•	id_detallemaquina (INTEGER, FK → detalles_maquinas) 
+•	hora_ingreso (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP) 
+________________________________________
+ Tabla: detalles_salida
+ Descripción:
+Registra la salida de un aprendiz asociada a un ingreso específico.
+ Estructura:
+•	id_salida (INTEGER, PK) 
+•	id_ingreso (INTEGER, FK → detalles_ingreso) 
+•	hora_salida (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP) 
+________________________________________
+ Tabla: roles
+ Descripción:
+Define los tipos de usuarios del sistema y sus niveles de acceso.
+ Estructura:
+•	id_rol (INTEGER, PK) 
+•	nombre (VARCHAR(50), UNIQUE, NOT NULL) 
+________________________________________
+ Tabla: usuarios
+ Descripción:
+Gestiona las cuentas de acceso al sistema, incluyendo autenticación y control de roles.
+ Estructura:
+•	id_usuario (INTEGER, PK) 
+•	nombre (VARCHAR(100), NOT NULL) 
+•	email (VARCHAR(120), UNIQUE, NOT NULL) 
+•	password (TEXT, NOT NULL) 
+•	id_rol (INTEGER, FK → roles) 
+•	activo (BOOLEAN, DEFAULT true) 
+•	creado_en (TIMESTAMP, DEFAULT now()) 
+•	ultimo_login (TIMESTAMP) 

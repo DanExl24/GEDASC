@@ -46,7 +46,6 @@ import BaseText from '@/components/Text/BaseText.vue'
 import BaseButton from '@/components/Buttons/BaseButton.vue'
 import { useExitManualForm } from '@/composables/Forms/useExitManualForm'
 import { useExitManualService } from '@/composables/API/useExitManualService'
-
 const emit = defineEmits<{
   (e: 'cerrar-modal'): void
 }>()
@@ -57,13 +56,17 @@ const { loadAprendizByDocument, submitManualExit } = useExitManualService(form)
 form.watchDocument(loadAprendizByDocument)
 
 const submitManual = async () => {
-  const ok = await submitManualExit()
+  const success = await submitManualExit()
 
-  if (!ok) return
+  if (!success) {
+    return false
+  }
 
   setTimeout(() => {
     form.resetForm()
     emit('cerrar-modal')
   }, 1000)
+
+  return true
 }
 </script>

@@ -4,16 +4,20 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { getRealTimeNow } from '@/Services/RealTime';
 import { onMounted, ref, onUnmounted } from 'vue';
-
+import { useJornadaStore } from '@/stores/jornada';
+import { getRealTimeNow } from '@/Services/RealTime';
+const jornada = useJornadaStore()
 const hour = ref()
 let interval: number | undefined = undefined
 
-onMounted(()=>{
-  hour.value = getRealTimeNow()
-  interval = setInterval(() => {
-    hour.value = getRealTimeNow()
+onMounted(async ()=>{
+  const serverTime = await jornada.fetchServerTime()
+  let time = new Date(serverTime)
+  hour.value = getRealTimeNow(time)
+  interval = setInterval(async () => {
+    time = new Date(time.getTime() + 1000)
+    hour.value = getRealTimeNow(time)
   }, 1000);
 })
 

@@ -374,6 +374,7 @@ export const AddMachine = async (request: Request, response: Response) => {
     if (checkExist) {
       await client.query('ROLLBACK');
       return response.status(409).json({
+        aviso : 'maquinaYaRegistrada',
         message: "Esta máquina ya está registrada hoy"
       });
     }

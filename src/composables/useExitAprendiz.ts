@@ -25,8 +25,8 @@ export const useExitAprendiz = () => {
     }
   }
 
-  const AnadirSalidaAprendiz = async (documento: string) => {
-    if (!documento) return false
+  const AddSalidaAprendiz = async (documento: string) => {
+    if (!documento) return { ok: false, message: 'Documento vacío' }
 
     try {
       const response = await fetch(
@@ -39,24 +39,39 @@ export const useExitAprendiz = () => {
 
       const data = await response.json()
 
+      console.log('[AddSalidaAprendiz] Respuesta backend:', {
+        documento,
+        status: response.status,
+        ok: response.ok,
+        data,
+      })
+
       if (!response.ok) {
-        if (response.status !== 409) {
-          console.error('Error:', data.message)
+        return {
+          ok: false,
+          message: data.message || 'Error desconocido'
         }
-        return false
       }
 
       await HistorialSalidaAprendiz()
-      return true
+
+      return {
+        ok: true,
+        message: data.message || 'Salida registrada'
+      }
+
     } catch (error) {
       console.error(error)
-      return false
+      return {
+        ok: false,
+        message: 'Error de red o servidor'
+      }
     }
   }
 
   return {
     HistorialSalidaAprendiz,
-    'AñadirSalidaAprendiz': AnadirSalidaAprendiz,
+    AddSalidaAprendiz,
     aprendizData,
     latestAprendiz,
   }

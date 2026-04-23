@@ -1,7 +1,7 @@
 export type MachineResponse = {
   message?: string
   tipoEquipo?: "vehiculo" | "computador"
-  aviso?: "diferenteAprendiz" | "maquinaSinDueño" | "maquinaPrincipalExistente" | "maquinaYaPrestadaHoy"
+  aviso?: "diferenteAprendiz" | "maquinaSinDueño" | "maquinaPrincipalExistente" | "maquinaYaPrestadaHoy" | "maquinaYaRegistrada"
   excepcion?: boolean
   placa?: string
   serial?: string

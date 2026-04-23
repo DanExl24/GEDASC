@@ -231,15 +231,15 @@
 
               <div class="rounded-[18px] border border-slate-200 bg-slate-900 px-4 py-3 text-white">
                 <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200">Cierre</p>
-                <p class="mt-1 font-robotoSlab text-2xl font-bold text-white">10:00 PM</p>
+                <p class="mt-1 font-robotoSlab text-2xl font-bold text-white">12:00 AM</p>
               </div>
             </div>
           </article>
         </section>
       </section>
 
-      <section class="rounded-[28px] border border-emerald-200 bg-white shadow-[0_18px_45px_rgba(15,107,63,0.08)]">
-        <div class="flex flex-col gap-1 border-b border-emerald-100 px-5 py-4 lg:flex-row lg:items-end lg:justify-between lg:px-6">
+      <section class="overflow-hidden rounded-[28px] border border-emerald-200 bg-[linear-gradient(180deg,#f8fcf8_0%,#eef7f0_100%)] shadow-[0_18px_45px_rgba(15,107,63,0.08)]">
+        <div class="flex flex-col gap-1 border-b border-emerald-100 px-5 py-4 lg:flex-row lg:items-end lg:justify-between lg:px-6 bg-white/80">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-senaColor">Modulos del sistema</p>
             <h2 class="mt-2 font-robotoSlab text-2xl font-bold text-slate-900">Accesos principales</h2>
@@ -247,7 +247,7 @@
           <p class="text-sm text-slate-500">{{ actionsSummary }}</p>
         </div>
 
-        <div class="grid gap-4 p-4 md:grid-cols-2 lg:p-6">
+        <div class="relative grid gap-4 p-4 md:grid-cols-2 lg:p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(244,250,245,0.94)_100%)]">
         <BaseCard
           v-for="(action, index) in dashboardActions"
           :key="action.title"

@@ -455,6 +455,40 @@ const getAllMachinesByAprendiz = async (
   }))
 }
 
+
+const InconsistentExit = async () => {
+  const { rows } = await pool.query(`
+    SELECT
+      ds.hora_salida,
+      a.id_aprendiz AS id_aprendiz,
+      a.nombre AS nombreAprendiz,
+      a.apellido AS apellidoAprendiz,
+      a.documento AS documento,
+      f.nombre AS nombreFormacion
+    FROM detalles_ingreso AS di
+    LEFT JOIN detalles_salida ds
+      ON ds.id_ingreso = di.id_ingreso
+    INNER JOIN aprendiz AS a
+      ON a.id_aprendiz = di.id_aprendiz
+    INNER JOIN formaciones AS f
+      ON f.id_formacion = a.id_formacion
+    WHERE NOT (
+      di.hora_ingreso >= CURRENT_DATE
+      AND ds.hora_salida IS NULL
+    )
+  `)
+
+  return rows.map((row) => ({
+    aprendiz : {
+      id : row.id_aprendiz,
+      documento : row.documento,
+      nombreCompleto : `${row.nombreaprendiz} ${row.apellidoaprendiz}`,
+      formacion : row.nombreformacion,
+      salida: row.hora_salida ? 'EXITOSA' : 'NO_EXISTE'
+    }
+  }))
+}
+
 export const AdminService = () => ({
   getAllAprendices,
   getAprendicesTrimestrales,
@@ -468,5 +502,6 @@ export const AdminService = () => ({
   getBorrowedVehicles,
   getAllMachinesByAprendiz,
   deleteIngreso,
-  deleteSalida
+  deleteSalida,
+  InconsistentExit
 })

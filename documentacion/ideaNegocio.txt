@@ -1,0 +1,86 @@
+ NECESIDAD O PROBLEMA
+En el centro de formación se realiza el registro manual de ingreso y salida de aprendices, así como el control de equipos (computadores y vehículos) asociados a su permanencia.
+Este proceso actualmente genera varios problemas:
+•	Acumulación constante de registros en papel. 
+•	Riesgo de pérdida o deterioro de la información. 
+•	Lentitud en la búsqueda de registros de aprendices o equipos. 
+•	Falta de trazabilidad clara sobre préstamos y uso de recursos. 
+•	Dificultad para generar reportes históricos confiables. 
+Esto impacta directamente la eficiencia operativa del control de acceso y la gestión administrativa del centro de formación.
+________________________________________
+ ¿CÓMO SE RESUELVE?
+Se propone el desarrollo de un sistema web con soporte de interacción en tiempo real, diseñado para centralizar y automatizar el control de ingresos, salidas y gestión de equipos.
+El sistema permitirá:
+ Registro de aprendices
+•	Identificación mediante escaneo de código de barras del carné. 
+•	Registro automático de entrada y salida. 
+ Control de equipos (computadores y vehículos)
+•	Registro de equipos asociados al ingreso mediante firma digital. 
+•	Validación de si el aprendiz ingresa con equipo propio o asignado. 
+ Gestión de equipos múltiples
+•	Posibilidad de asignar múltiples computadores o vehículos a un aprendiz. 
+•	Identificación de equipo principal mediante lógica de prioridad (principal). 
+•	Control de préstamos entre aprendices y trazabilidad de uso. 
+ Firma digital
+•	Captura de firma en tablet o dispositivo táctil. 
+•	Almacenamiento como evidencia del ingreso con equipo. 
+________________________________________
+ ¿QUÉ FACILITA EL SISTEMA?
+El sistema mejora significativamente los procesos administrativos:
+•	Registro centralizado y digital de aprendices y equipos. 
+•	Eliminación del uso de papel y reducción de errores humanos. 
+•	Búsqueda rápida de información en tiempo real. 
+•	Mayor control sobre entradas y salidas del centro de formación. 
+•	Historial detallado de actividad de cada aprendiz: 
+o	tiempo activo dentro del sistema 
+o	periodos de inactividad 
+o	frecuencia de ingreso 
+•	Control de préstamos de equipos entre aprendices. 
+•	Mayor trazabilidad del uso de computadores y vehículos. 
+•	Generación automática de reportes exportables. 
+________________________________________
+ GENERACIÓN DE REPORTES
+El sistema incluye un módulo de analítica y exportación de datos que permite:
+•	Exportar reportes en formato PDF. 
+•	Exportar datos en Excel. 
+•	Aplicar filtros avanzados como: 
+o	rango de fechas 
+o	aprendiz específico 
+o	tipo de equipo 
+o	estado de actividad 
+•	Reducir el uso de documentos físicos. 
+•	Mejorar la organización y consulta de información histórica. 
+________________________________________
+ TECNOLOGÍAS PROPUESTAS
+El sistema se construye con un stack moderno orientado a escalabilidad y eficiencia:
+ Frontend
+•	Vue.js
+Para construcción de interfaz modular, dinámica y basada en componentes. 
+•	Tailwind CSS
+Para diseño rápido, consistente y responsivo. 
+•	QuaggaJS
+Para lectura del carné del aprendiz mediante código de barras. 
+•	SignaturePad.js
+Para captura de firma del aprendiz en dispositivos táctiles. 
+•	jsPDF
+Para exportación de reportes en formato PDF. 
+•	SheetJS (xlsx)
+Para generación de reportes en formato Excel. 
+________________________________________
+ Backend
+•	Express.js
+Para creación de API REST y manejo de lógica del sistema. 
+•	JSON Web Token (JWT)
+Para autenticación segura de usuarios y control de sesiones. 
+________________________________________
+ Base de datos
+•	PostgreSQL
+Para almacenamiento estructurado, seguro y escalable de toda la información del sistema. 
+________________________________________
+ CONCEPTO GENERAL DEL SISTEMA
+El sistema evoluciona de un simple control de acceso a una plataforma integral de gestión de:
+•	ingresos y salidas 
+•	activos (equipos y vehículos) 
+•	trazabilidad de usuarios 
+•	analítica histórica 
+•	generación de reportes administrativos

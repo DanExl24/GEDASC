@@ -1,7 +1,7 @@
 import { getAdminBorrowedAssets } from '@/Services/adminBorrowedAssets'
-import { getAdminAprendices, getAdminTrack } from '@/Services/adminAprendices'
-import type { AdminAlertItem } from '@/types/adminAlerts.types'
-
+import { getAdminAprendices, getAdminTrack, getAdminExits } from '@/Services/adminAprendices'
+import type { AdminAlertItem, InconsistentExit } from '@/types/adminAlerts.types'
+import { API_URL } from '@/config/network'
 const formatDateLabel = (value: Date) =>
   new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'medium',
@@ -26,12 +26,13 @@ const calculateInactiveDays = (lastVisit: string | null) => {
 }
 
 export const getAdminAlerts = async (token: string) => {
-  const [borrowedAssets, aprendicesData, trackData] = await Promise.all([
+  const [borrowedAssets, aprendicesData, trackData, exitsData] = await Promise.all([
     getAdminBorrowedAssets(token),
     getAdminAprendices(token),
-    getAdminTrack(token)
+    getAdminTrack(token),
+    getAdminExits(token)
   ])
-
+  console.log(exitsData)
   const nowLabel = formatDateLabel(new Date())
 
   const borrowedAlerts: AdminAlertItem[] = [
@@ -122,5 +123,26 @@ export const getAdminAlerts = async (token: string) => {
       ]
     }))
 
-  return [...inactivityAlerts, ...borrowedAlerts]
+
+    const exitAlerts: AdminAlertItem[] = exitsData.filter((item: InconsistentExit) => item.aprendiz.salida === 'NO_EXISTE').map((item: InconsistentExit, index: number) => {
+        const aprendiz = item.aprendiz
+
+        return {
+          id: `exit-${aprendiz.id}-${index}`,
+          type: 'EXIT' as const,
+          title: 'Salida inconsistente detectada',
+          summary: `${aprendiz.nombreCompleto} no tiene salida registrada.`,
+          level: 'warning',
+          timestampLabel: nowLabel,
+          subjectName: aprendiz.nombreCompleto,
+          subjectDocument: aprendiz.documento,
+          details: [
+            { label: 'Documento', value: aprendiz.documento },
+            { label: 'Formación', value: aprendiz.formacion },
+            { label: 'Estado de salida', value: aprendiz.salida }
+          ]
+        }
+      })
+
+  return [...inactivityAlerts, ...borrowedAlerts, ...exitAlerts]
 }

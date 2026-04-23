@@ -16,6 +16,7 @@ import VehicleRecord from './routes/vehicle.routes'
 import  StatsRecord  from './routes/stats.routes';
 import adminFunction from './routes/admin.routes'
 import auth from './routes/auth.routes'
+import jornada from './routes/jornada.routes'
 // sockets
 import initSockets from "./sockets/index"
 
@@ -103,6 +104,8 @@ app.use('/api/HistorialVehiculos', VehicleRecord)
 app.use('/api/estadisticas', StatsRecord)
 app.use('/api/admin',adminFunction)
 app.use('/api/auth',auth)
+app.use('/api/jornadaTime',jornada)
+
 // 🚀 servidor
 const PORT = 3000
 server.listen(PORT, '0.0.0.0', () => {

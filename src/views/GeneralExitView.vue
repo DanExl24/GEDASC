@@ -70,6 +70,7 @@
           text="Escanear aprendiz"
           variant="green"
           class-button="min-w-[210px]"
+          :disabled = "jornada.isSystemLocked"
         />
 
         <BaseButtonOpen
@@ -78,6 +79,7 @@
           text="Salida manual"
           variant="dark"
           class-button="min-w-[210px]"
+          :disabled = "jornada.isSystemLocked"
         />
       </section>
 
@@ -115,6 +117,9 @@ import { DetectExit } from '@/Services/DetectExits'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
 import { useExitAprendiz } from '@/composables/useExitAprendiz'
 import { useNotifications } from '@/composables/useNotifications';
+import { useJornadaStore } from '@/stores/jornada'
+
+const jornada = useJornadaStore()
 const {addNotification} = useNotifications()
 const {
   HistorialSalidaAprendiz,

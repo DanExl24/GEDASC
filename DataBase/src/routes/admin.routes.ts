@@ -20,7 +20,9 @@ import {
 
 
   getStatsTrimestral,
-  getStatsAnual
+  getStatsAnual,
+
+  getAdminStatsController
 } from '../controllers/admin.controller'
 
 import { authMiddleware } from '../middlewares/admin.middleware'
@@ -52,4 +54,6 @@ router.get('/allMachines/:id', getAllMachinesByAprendizController)
 
 router.get('/statsQuarter', getStatsTrimestral)
 router.get('/statsYear', getStatsAnual)
+
+router.get('/statsExits',getAdminStatsController)
 export default router

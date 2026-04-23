@@ -26,6 +26,16 @@ export interface AdminTrackRow {
   [key: string]: unknown
 }
 
+export interface AdminExitRow {
+  aprendiz: {
+    id: string
+    documento: string
+    nombreCompleto: string
+    formacion: string
+    salida: 'EXITOSA' | 'NO_EXISTE'
+  }
+}
+
 export interface AdminMachineRecord {
   pc: {
     marca: string | null
@@ -55,12 +65,9 @@ const buildHeaders = (token: string) => ({
 })
 
 const ensureSuccess = async <T>(response: Response): Promise<T> => {
-  const payload = await response.json() as ApiEnvelope<T>
+  const text = await response.text()
 
-  if (!response.ok || !payload.success || payload.data === undefined) {
-    throw new Error(payload.message || 'No fue posible cargar la informacion administrativa.')
-  }
-
+  const payload = JSON.parse(text)
   return payload.data
 }
 
@@ -100,4 +107,12 @@ export const getAdminMachinesByAprendiz = async (token: string, idAprendiz: stri
 
     return bPriority - aPriority
   })
+}
+
+export const getAdminExits = async (token: string) => {
+  const response = await fetch(`${API_URL}/api/admin/statsExits`, {
+    headers: buildHeaders(token)
+  })
+
+  return ensureSuccess<AdminExitRow[]>(response)
 }

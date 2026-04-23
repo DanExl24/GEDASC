@@ -222,6 +222,15 @@ export const getTrackController = async (req: Request, res: Response) => {
   res.json(ok(data))
 }
 
+export const getAdminStatsController = async (req: Request, res: Response) => {
+  const resultInconsistentExits = await service.InconsistentExit()
+  console.log(resultInconsistentExits)
+  return res.status(200).json({
+    success: true,
+    data: resultInconsistentExits
+  })
+}
+
 /* =========================
    TODO: MÁQUINAS EN TIEMPO REAL
 ========================= */

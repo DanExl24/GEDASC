@@ -55,8 +55,13 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
     if (data.inconsistencia) {
       return { status: 'inconsistencia', data }
     }
-
+    if(data.aviso == 'maquinaYaRegistrada'){
+      setMessage('Esta maquina ya esta registrada', 'error')
+      addNotification('Esta maquina ya esta registrada','error')
+      return { status: 'error' }
+    }
     if (!response.ok) {
+      setMessage('Error al registrar la maquina', 'error')
       addNotification('Error al registrar la maquina','error')
       return { status: 'error' }
     }

@@ -1,4 +1,4 @@
-export type AdminAlertType = 'BORROWED_MACHINE' | 'INACTIVITY'
+export type AdminAlertType = 'BORROWED_MACHINE' | 'INACTIVITY' | 'EXIT'
 export type AdminAlertLevel = 'info' | 'warning'
 export type BorrowedAssetType = 'COMPUTER' | 'VEHICLE'
 
@@ -30,4 +30,15 @@ export interface InactivityAlertItem extends AdminAlertBase {
   lastVisitLabel: string
 }
 
-export type AdminAlertItem = BorrowedMachineAlertItem | InactivityAlertItem
+export interface InconsistentExit extends AdminAlertBase {
+  type: 'EXIT',
+    aprendiz : {
+      id : number | null,
+      documento : string,
+      nombreCompleto : string,
+      formacion : string,
+      salida: 'EXITOSA' | 'NO_EXISTE'
+    }
+}
+
+export type AdminAlertItem = BorrowedMachineAlertItem | InactivityAlertItem | InconsistentExit

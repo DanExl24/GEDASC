@@ -1,0 +1,86 @@
+Numero de Requisito	Detalle de requisito	Prioridad del requisito
+RF-01   El sistema debe implantar la libreria Quagga.js para el escaneo del codigo de barras del aprendiz.	ALTA
+RF-02	El sistema debe generar un dashboard interactivo con datos importantes sobre la gestion del acceso	ALTA
+RF-03	El dashboard debe mostrar los 4 ultimos movimientos mas recientes en el dia	MEDIA
+RF-04	El dashboard debe mostrar el total de ingresos, salidas, ingresos de mes y del trimestre de los aprendices	MEDIA
+RF-05	El sistema debe generar los modulos correspondientes en el dashboard 	ALTA
+RF-06	El sistema debe generar un modulo para la visualizacion en tiempo real del ingreso de los aprendices	ALTA
+RF-07	El sistema debe mostrar en la tabla de aprendices los siguientes campos: Nombre, Apeliido, DNI, Nombre de la Formacion, Hora de Ingreso, Registro de Maquina	ALTA
+RF-08	El sistema debe rellenar los datos personales del aprendiz automáticamente por medio de escaneo del carne	ALTA
+RF-09	El sistema debe guardar adecuadamente todos los registros de Ingreso de aprendices en la base de datos	ALTA
+RF-10	El sistema debe mostrar un botón en cada fila de la tabla de aprendices ingresados para agregar el ingreso de su equipo por medio de un modal	ALTA
+RF-11	El modulo de Ingreso de Maquina debera tener: Opcion para elegir si es computador o vehiculo, Marca de la Maquina, Serial/Placa de la Maquina, Espacio en blanco para mostrar la firma del Aprendiz, boton para finalizar registro	ALTA
+RF-12	El sistema debera mostrar maquina registrada en la tabla si el aprendiz registro su equipo exitosamente	ALTA
+RF-13	El sistema debera mostrar no registrada en la tabla si el aprendiz no ingreso algun equipo	ALTA
+RF-14	El sistema debe guardar y enlazar la firma con el aprendiz	ALTA
+RF-15	"El sistema debe cargar un formulario de ingreso manual para los aprendices sin carnet y mostrar un boton para redigir a el formulario de ingreso manual
+"	ALTA
+RF-16	El formulario de ingreso manual debe pedir: DNI	ALTA
+RF-17	La base de datos debera buscar al aprendiz que corresponda con el DNI registrado en el ingreso manual y traer los datos personales	ALTA
+RF-18	El sistema debe guardar adecuadamente todos los registros manuales	ALTA
+RF-19	El sistema detectara automáticamente la hora de ingreso y sera reflejado en la tabla de aprendices	ALTA
+RF-20	El sistema debe generar un modulo para el registro de las salidas de los aprendices	ALTA
+RF-21	El sistema debe mostrar en una tabla los aprendices que han salido hoy del CTA	ALTA
+RF-22	El sistema debe mostrar en la tabla de salida los siguientes campos: Nombre del aprendiz, Apellido del aprendiz, DNI, Programa de Formación, Hora de Salida, Firma exitosa/no registrada si el aprendiz posee maquina	ALTA
+RF-23	El sistema debe rellenar los datos personales del aprendiz automáticamente	ALTA
+RF-24	El sistema colocara automaticamente la hora de salida en la tabla	ALTA
+RF-25	El sistema debe guardar adecuadamente todos los registros	ALTA
+RF-26	El sistema debe generar una barra de búsqueda en la parte izquierda superior del modulo	MEDIA
+RF-27	El aprendiz dentro de la tabla debe aparecer con todos sus datos personales	MEDIA
+RF-28	El sistema debe generar un modulo para visualizar el registro histórico de ingresos y salidas de aprendices	ALTA
+RF-29	El sistema deberá poner el registro detallado de salida dentro de la tabla de registro historico	ALTA
+RF-30	El sistema deberá mostrar dentro de la tabla si el aprendiz llevo consigo alguna Maquina	ALTA
+RF-31	"La tabla debe contener: Nombres, Apellidos, DNI, Programa de Formación, Hora Ingreso, Hora Salida, Posee Maquina/Sin maquina
+"	ALTA
+RF-32	El sistema deberá almacenar estos datos automáticamente al detectar el ingreso y la salida del aprendiz	ALTA
+RF-33	El sistema deberá guardar y almacenar exitosamente todos los registros para futuras visualizaciones	ALTA
+RF-34	El sistema debe generar una barra de búsqueda en la parte izquierda superior del modulo	ALTA
+RF-35	El sistema debe mostrar el registro de ingreso y salidas del aprendiz en la tabla de aprendices desde una fecha en especifico	ALTA
+RF-36	El sistema debe generar un selector para poder filtrar aprendices mediante un rango de fechas	ALTA
+RF-37	El sistema debe colocar el selector en la parte superior derecha de la vista	ALTA
+RF-38	El sistema debe generar el filtro dentro del selector para poder filtrar aprendices mediante programa de formación	ALTA
+RF-39	El selector debe dejar filtrar por programa de formación del aprendiz	ALTA
+RF-40	El sistema debe mostrar en la tabla de aprendices, aquellos aprendices que sean del programa de formación filtrado.	ALTA
+RF-41	El sistema debe generar un modulo para visualizar el ingreso de computadores en el CTA	ALTA
+RF-42	El sistema debe mostrar una tabla con registros, registros deben incluir: Marca de computador, Serial de computador, DNI del aprendiz, Hora de Ingreso del computador, Hora de Salida del Computador, Ver detalles de Propietario	ALTA
+RF-43	El sistema debe generar un pequeño botón en cada registro de la tabla para ir a el modulo de Propiedad de Equipo de Computo	ALTA
+RF-44	El modulo de propiedad del equipo de computo debe contener: Datos personales del aprendiz que posee aquel equipo de computo: Nombre, DNI, Programa de Formacion, Firma	ALTA
+RF-45	"El sistema debe generar el filtro dentro del selector para poder filtrar computador por medio del serial
+"	MEDIA
+RF-46	Al momento de seleccionar el filtro, el sistema debe crear un Buscador donde el celador podra digitar el serial de computador	MEDIA
+RF-47	El buscador debera buscar en todos los registros de la tabla, el computador que coincida con el numero de serial	MEDIA
+RF-48	El sistema debe generar el filtro dentro del selector para poder filtrar el computador mediante DNI del aprendiz	MEDIA
+RF-49	Al momento de seleccionar el filtro, el sistema debe crear un Buscador donde el celador podra digitar el DNI del Aprendiz	MEDIA
+RF-50	El buscador debera buscar en todos los registros de la tabla, el computador que sea propiedad del aprendiz	MEDIA
+RF-51	El sistema debe generar un selector para poder filtrar registros de computadores mediante un rango de fechas	MEDIA
+RF-52	El sistema debe colocar el selector en la parte superior derecha de la vista	MEDIA
+RF-53	El sistema debe mostrar en la tabla de computadores, aquellos aprendices computadores segun el rango de fechas.	MEDIA
+RF-54	El sistema debe generar un modulo para la visualizacion de los vehiculos que ingresan al CTA	ALTA
+RF-55	"El sistema debe mostrar una tabla con registros debe contener: Marca, Placa, DNI del Aprendiz, Hora de Ingreso, Hora de salida, Detalles de propietario
+"	ALTA
+RF-56	El sistema debe generar el filtro dentro del selector para poder filtrar el vehiculo por medio de su placa	MEDIA
+RF-57	Al momento de seleccionar el filtro, el sistema debe crear un Buscador donde el celador podra digitar la placa del vehiculo	MEDIA
+RF-58	El buscador debera buscar en todos los registros de la tabla, el vehiculo que coincida con la placa	MEDIA
+RF-59	Al momento de encontrar el vehiculo, la tabla solo debe mostrar la placa del vehiculo y sus datos	MEDIA
+RF-60	El sistema debe generar el filtro dentro del selector para poder filtrar el vehiculo mediante DNI del aprendiz	MEDIA
+RF-61	Al momento de seleccionar el filtro, el sistema debe crear un Buscador donde el celador podra digitar el DNI del Aprendiz	MEDIA
+RF-62	El buscador debera buscar en todos los registros de la tabla, el vehiculo que sea propiedad del aprendiz	MEDIA
+RF-63	Al momento de encontrar el vehiculo, la tabla solo debe mostrar el vehiculo perteneciente al aprendiz	MEDIA
+RF-64	El sistema debe generar un selector para poder filtrar registros de vehiculos mediante un rango de fechas	MEDIA
+RF-65	El sistema debe colocar el selector en la parte superior derecha de la vista	MEDIA
+RF-66	El sistema debe mostrar en la tabla de vehiculos, aquellos aprendices vehiculos segun el rango de fechas.	MEDIA
+RF-67	El sistema debera crear el rol de administrador	ALTA
+RF-68	El rol administrador debera tener todos los permisos del rol celador	ALTA
+RF-69	El administrador podra visualizar la pertenencia exacta del equipo enlazado al aprendiz	ALTA
+RF-70 	El administrador podra visualizar si algun aprendiz intento registrar un equipo que ya esta enlazado con un aprendiz, y mostrara una alerta	MEDIA
+RF-71	El sistema no debera de permitir registrar una salida si no han pasado menos de 5 minutos del ingreso	ALTA
+RF-72	El sistema debe permitir crear informes exportables en excel o pdf	MEDIA
+RF-72	Se debera crear formatos para informes de entradas y salidas del dia actual	MEDIA
+RF-73	Se debera crear formatos para informes de entrads y salidas segun un rango de fechas	MEDIA
+RF-74	Se debera implementar un sistema que recopile los dias consecutivos que un aprendiz ha ingresado al CTA	MEDIA
+RF-75	Se debera mostrar una alerta a aquellos aprendices que lleven 3 dias consecutivos faltando al CTA	MEDIA
+RF-76	El administrador podra editar y eliminar registros de entradas y salidas	MEDIA
+RF-77	El sistema debera mostrar el total de aprendices que han ingresado este year	MEDIA
+RF-78	El sistema debera mostrar en los registros del aprendiz, una etiqueta que identifique su jornada	BAJA
+RF-79	(Implementacion de escaneo de codigo de barras desde el movil)	BAJA
+RF-80	(Implementacion de enlace unico del equipo con el aprendiz, sin permitir seriales diferentes en diferente dias	ALTA

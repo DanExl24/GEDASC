@@ -40,7 +40,11 @@
           type="text"
         />
 
-        <BaseText :text="errorMachine" :type="message.type" text-class="text-sm font-medium" />
+        <BaseText
+          :text="message.message || errorMachine"
+          :type="message.message ? message.type : 'error'"
+          text-class="text-sm font-medium"
+        />
 
         <BaseButtonOpen
           v-if="!form.aprendizMachine.value?.firma"
@@ -76,7 +80,7 @@
       <ModalConfirm
         ref="modalBorrow"
         title="Registro de Maquina"
-        subTitle="Esta máquina ya tiene un dueño. Â¿El aprendiz decidio prestar esta maquina?"
+        subTitle="Esta máquina ya tiene un dueño. ¿El aprendiz decidio prestar esta maquina?"
         ifYes="Sí­, y quiero prestarla"
         ifNo="No, no lo hizo"
         @confirm="handleBorrowedMachine"
@@ -86,7 +90,7 @@
       <ModalConfirm
         ref="modalConfirmExists"
         title="Registro de Maquina"
-        subTitle="El aprendiz ya tiene maquina principal, Â¿Seguro?"
+        subTitle="El aprendiz ya tiene maquina principal, ¿Seguro?"
         ifYes="Sí, quiero registrar otra"
         ifNo="No, fue un error"
         @confirm="handleRegisterOther"
@@ -141,7 +145,7 @@ const { getPrincipalMachine } = useMachineService()
 const {emitirAbrirFirma,recibirFirmaMovil} = useMachineSocket(form)
 
 // 3. mensajes
-const { message } = useMessage()
+const { message, clearMessage } = useMessage()
 
 // 4. desestructurar lo necesario del form
 const {
@@ -246,7 +250,6 @@ const handleSubmitMachine = async () => {
       case 'diferenteAprendiz':
         modalBorrow.value.open()
         return
-
       case 'maquinaPrincipalExistente':
         modalConfirmExists.value.open()
         return
@@ -317,6 +320,7 @@ const handleNotRegisterOther = () => {
 
 onMounted(() => {
   form.aprendizMachine.value = { ...props.aprendiz, firma: '' }
+  clearMessage()
   loadPrincipalMachine(props.aprendiz)
 })
 
@@ -324,6 +328,7 @@ watch(()=>props.aprendiz, (aprendiz) => {
   if (aprendiz) {
     console.log('[RegisterMachine] Cambio de aprendiz recibido por props:', aprendiz)
     form.aprendizMachine.value = { ...aprendiz, firma: '' }
+    clearMessage()
     loadPrincipalMachine(aprendiz)
   }
 })
