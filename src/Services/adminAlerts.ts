@@ -94,7 +94,7 @@ export const getAdminAlerts = async (token: string) => {
         lastVisit: track?.ultima_visita ?? null
       }
     })
-    .filter((item) => item.inactiveDays >= 3 || !Number.isFinite(item.inactiveDays))
+    .filter((item) => item.inactiveDays > 1 || !Number.isFinite(item.inactiveDays))
     .map(({ aprendiz, inactiveDays, lastVisit }) => ({
       id: `inactive-${aprendiz.id_aprendiz}`,
       type: 'INACTIVITY' as const,

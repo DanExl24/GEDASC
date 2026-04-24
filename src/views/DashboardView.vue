@@ -277,7 +277,7 @@ import registerPerson from '@/assets/Icons/registerPerson.png'
 import ExitDoor from '@/assets/Icons/ExitDoor.png'
 import RecordPaper from '@/assets/Icons/RecordPaper.png'
 import SendComputer from '@/assets/Icons/SendComputer.png'
-import clockGreen from '@/assets/Icons/clockGreen.png'
+import Clock from '@/assets/Icons/Clock.png'
 import { getActivity, type DashboardActivityItem } from '@/constants/optionsActivity'
 import { getEstadisticas, type DashboardStatItem } from '@/constants/optionsStats'
 import book from '@/assets/Icons/book.png'
@@ -376,7 +376,7 @@ const allDashboardActions: DashboardAction[] = [
     eyebrow: 'Admin',
     description: 'Notificaciones por prestamos de maquinas e inasistencias prolongadas en el CTA.',
     to: '/admin-alerts',
-    icon: clockGreen,
+    icon: Clock,
     accentClass: 'bg-senaColor',
   },
 ]

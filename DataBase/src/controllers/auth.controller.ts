@@ -37,7 +37,7 @@ export const loginController = async (req: Request, res: Response) => {
 
     const user = rows[0]
 
-    // ⚠️ aquí por ahora password plano (mejorable con bcrypt después)
+    //  aquí por ahora password plano (mejorable con bcrypt después)
     if (user.password !== password) {
       return res.status(401).json({
         success: false,

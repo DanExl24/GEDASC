@@ -459,7 +459,6 @@ const getAllMachinesByAprendiz = async (
 const InconsistentExit = async () => {
   const { rows } = await pool.query(`
     SELECT
-      ds.hora_salida,
       a.id_aprendiz AS id_aprendiz,
       a.nombre AS nombreAprendiz,
       a.apellido AS apellidoAprendiz,
@@ -472,10 +471,8 @@ const InconsistentExit = async () => {
       ON a.id_aprendiz = di.id_aprendiz
     INNER JOIN formaciones AS f
       ON f.id_formacion = a.id_formacion
-    WHERE NOT (
-      di.hora_ingreso >= CURRENT_DATE
+    WHERE di.hora_ingreso < CURRENT_DATE
       AND ds.hora_salida IS NULL
-    )
   `)
 
   return rows.map((row) => ({
@@ -484,7 +481,7 @@ const InconsistentExit = async () => {
       documento : row.documento,
       nombreCompleto : `${row.nombreaprendiz} ${row.apellidoaprendiz}`,
       formacion : row.nombreformacion,
-      salida: row.hora_salida ? 'EXITOSA' : 'NO_EXISTE'
+      salida: 'NO_EXISTE'
     }
   }))
 }

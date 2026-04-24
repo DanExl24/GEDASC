@@ -25,6 +25,6 @@ export const filtersMap : typeFilterMap = {
   },
 
   program: {
-    ADSO: `f.id_formacion = 1`
+    ADSO: `a.id_formacion = 1`
   }
 } as const

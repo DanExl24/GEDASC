@@ -30,7 +30,7 @@
                 <p class="mt-1 text-sm text-slate-600">Aprendices en el historial actual</p>
               </div>
               <div class="rounded-2xl bg-[#1a9551] p-4 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white">Pendientes de máquina</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white">Sin máquina</p>
                 <p class="mt-2 text-3xl font-bold">{{ pendingMachineCount }}</p>
                 <p class="mt-1 text-sm text-[#0f172a]">Registros sin equipo asociado</p>
               </div>
@@ -160,8 +160,10 @@ const handleScanner = async (code: string) => {
       return
     }
 
-    await AñadirIngresoAprendiz(code)
-
+    const validacion = await AñadirIngresoAprendiz(code)
+    if(validacion){
+      addNotification('Ingreso Registrado','success')
+    }
   } finally {
     scannerModal.value?.closeScanner()
   }

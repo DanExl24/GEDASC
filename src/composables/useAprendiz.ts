@@ -43,6 +43,7 @@ export const useAprendiz = () => {
       }
 
       console.log('Ingreso registrado:', data)
+
       await HistorialIngresoAprendiz()
       return true
     } catch (error) {

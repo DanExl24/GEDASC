@@ -13,16 +13,16 @@
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Resumen operativo</p>
           <div class="mt-4 grid gap-7">
             <div class="rounded-2xl bg-emerald-50 p-4">
-              <p class="text-sm text-slate-500">Última salida visible</p>
+              <p class="text-sm text-slate-500">Ultima salida visible</p>
               <p class="mt-1 font-robotoSlab text-xl font-bold text-slate-900">
-                {{ latestAprendiz ? `${latestAprendiz.nombre} ${latestAprendiz.apellido}` : 'Sin salidas aún' }}
+                {{ latestAprendiz ? `${latestAprendiz.nombre} ${latestAprendiz.apellido}` : 'Sin salidas aun' }}
               </p>
               <p class="mt-1 text-sm text-slate-600">
-                {{ latestAprendiz?.hora_salida || 'Esperando el próximo registro' }}
+                {{ latestAprendiz?.hora_salida || 'Esperando el proximo registro' }}
               </p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-              <p class="text-sm text-slate-500">Sin detalle de máquina</p>
+              <p class="text-sm text-slate-500">Sin detalle de maquina</p>
               <p class="mt-1 text-2xl font-bold text-slate-900">{{ noMachineCount }}</p>
               <p class="mt-1 text-sm text-slate-600">Movimientos sin equipo asociado en el detalle.</p>
             </div>
@@ -36,10 +36,10 @@
                 Flujo de salida
               </p>
               <h1 class="font-robotoSlab text-3xl font-bold leading-tight lg:text-4xl [text-shadow:0_2px_8px_rgba(0,0,0,0.4)]">
-                Registro de salida ordenado, visible y conectado con el detalle de máquinas.
+                Registro de salida ordenado, visible y conectado con el detalle de maquinas.
               </h1>
               <p class="mt-4 max-w-xl text-sm leading-6 text-[#0f172a] lg:text-base">
-                Confirma salidas por escáner o de forma manual, consulta el historial inmediato y revisa los equipos asociados antes del cierre del movimiento.
+                Confirma salidas por escaner o de forma manual, consulta el historial inmediato y revisa los equipos asociados antes del cierre del movimiento.
               </p>
             </div>
 
@@ -50,7 +50,7 @@
                 <p class="mt-1 text-sm text-slate-600">Aprendices registrados en el historial actual</p>
               </div>
               <div class="rounded-2xl bg-[#1a9551] p-4 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white">Con máquina asociada</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white">Con maquina asociada</p>
                 <p class="mt-2 text-3xl font-bold">{{ machineLinkedCount }}</p>
                 <p class="mt-1 text-sm text-[#0f172a]">Registros con detalle disponible para consulta</p>
               </div>
@@ -70,7 +70,7 @@
           text="Escanear aprendiz"
           variant="green"
           class-button="min-w-[210px]"
-          :disabled = "jornada.isSystemLocked"
+          :disabled="jornada.isSystemLocked"
         />
 
         <BaseButtonOpen
@@ -79,7 +79,7 @@
           text="Salida manual"
           variant="dark"
           class-button="min-w-[210px]"
-          :disabled = "jornada.isSystemLocked"
+          :disabled="jornada.isSystemLocked"
         />
       </section>
 
@@ -90,7 +90,7 @@
             <h2 class="font-robotoSlab text-2xl font-bold text-slate-900">Aprendices registrados en salida</h2>
           </div>
           <p class="text-sm text-slate-500">
-            Consulta el detalle de máquinas cuando exista un registro asociado al aprendiz.
+            Consulta el detalle de maquinas cuando exista un registro asociado al aprendiz.
           </p>
         </div>
 
@@ -116,14 +116,14 @@ import add from '@/assets/Icons/add.png'
 import { DetectExit } from '@/Services/DetectExits'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
 import { useExitAprendiz } from '@/composables/useExitAprendiz'
-import { useNotifications } from '@/composables/useNotifications';
+import { useNotifications } from '@/composables/useNotifications'
 import { useJornadaStore } from '@/stores/jornada'
 
 const jornada = useJornadaStore()
-const {addNotification} = useNotifications()
+const { addNotification } = useNotifications()
 const {
   HistorialSalidaAprendiz,
-  AñadirSalidaAprendiz,
+  AddSalidaAprendiz,
   aprendizData,
   latestAprendiz,
 } = useExitAprendiz()
@@ -147,26 +147,25 @@ const handleScanner = async (code: string) => {
 
   const messages = {
     no_existe: 'El aprendiz no existe',
-    ya_registrado: 'El aprendiz no tiene ingreso o ya registró salida',
+    ya_registrado: 'El aprendiz no tiene ingreso o ya registro salida',
   }
 
   try {
     if (estado === 'no_existe' || estado === 'ya_registrado') {
       scannerModal.value?.setResultMessage(messages[estado])
-      addNotification(messages[estado],'warning')
+      addNotification(messages[estado], 'warning')
       return
     }
 
     if (estado === 'error') {
       scannerModal.value?.setResultMessage('Error al procesar la salida')
+      addNotification('Error al procesar la salida', 'warning')
       return
     }
 
-    const registered = await AñadirSalidaAprendiz(code)
-
-    scannerModal.value?.setResultMessage(
-      registered ? 'Salida registrada correctamente' : 'Error al registrar la salida',
-    )
+    const registered = await AddSalidaAprendiz(code)
+    scannerModal.value?.setResultMessage(registered.message)
+    addNotification(registered.message, registered.ok ? 'success' : 'warning')
   } finally {
     scannerModal.value?.closeScanner()
   }
