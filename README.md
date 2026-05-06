@@ -41,7 +41,7 @@ user: 'postgres',
 password: 'contraseña',
 host: 'localhost',
 port: 5432,
-database: 'GEDASC'
+database: 'GEDACS'
 ```
 
 
