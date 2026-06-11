@@ -1,9 +1,25 @@
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-import { filtersMap } from '../shared/filtersMap'
-import { QueryBuilder } from '../shared/baseQuery'
-import { searchGlobal } from '../query/search.query'
+import { filtersMap } from '../utils/filtersMap'
+import { QueryBuilder } from '../utils/queryBuilder.util'
+import { searchGlobal } from '../utils/search.util'
 // 🔥 Historial computadores con filtros dinámicos
+/**
+ * @swagger
+ * /api/HistorialComputadores/historial:
+ *   get:
+ *     summary: Obtener historial de ingresos de computadores con filtros
+ *     tags: [HistorialComputadores]
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *         description: Filtro de fecha (TODAY, WEEK, etc.)
+ *     responses:
+ *       200:
+ *         description: Lista de historial de computadores
+ */
 export const getHistorialComputadores = async (req: Request, res: Response) => {
   try {
     const { date } = req.query as {
@@ -51,6 +67,22 @@ export const getHistorialComputadores = async (req: Request, res: Response) => {
   }
 }
 
+/**
+ * @swagger
+ * /api/HistorialComputadores/propietario/{id_detallemaquina}:
+ *   get:
+ *     summary: Obtener el propietario (aprendiz) de un computador por su ID de detalle
+ *     tags: [HistorialComputadores]
+ *     parameters:
+ *       - in: path
+ *         name: id_detallemaquina
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Datos del propietario y firma
+ */
 export const getPropietario = async (req: Request, res: Response) => {
   try {
     const { id_detallemaquina } = req.params

@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Rol {
+  id_rol   Int       @id @default(autoincrement())
+  nombre   String    @unique
+  usuarios Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id_usuario Int    @id @default(autoincrement())
+  nombre     String
+  email      String @unique
+  password   String
+  id_rol     Int
+  rol        Rol    @relation(fields: [id_rol], references: [id_rol])
+
+  @@map("usuarios")
+}
+
+model Formacion {
+  id_formacion Int        @id @default(autoincrement())
+  nombre       String     @unique
+  nivel        String
+  aprendices   Aprendiz[]
+
+  @@map("formaciones")
+}
+
+model Aprendiz {
+  id_aprendiz  Int       @id @default(autoincrement())
+  documento    String    @unique
+  nombre       String
+  apellido     String
+  id_formacion Int
+  formacion    Formacion @relation(fields: [id_formacion], references: [id_formacion])
+
+  @@map("aprendiz")
+}
+
+model Registro {
+  id_registro Int      @id @default(autoincrement())
+  id_aprendiz Int
+  fecha       DateTime @db.Date
+  hora_ingreso DateTime? @db.Time
+  hora_salida  DateTime? @db.Time
+  observacion  String?
+
+  @@map("registros")
+}

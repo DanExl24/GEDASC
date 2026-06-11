@@ -1,16 +1,51 @@
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { pool } from '../config/db'
+import bcrypt from 'bcryptjs'
 
+import { loginSchema } from '../schemas/auth.schema'
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Iniciar sesión en el sistema
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: admin@gedasc.com
+ *               password:
+ *                 type: string
+ *                 example: admin123
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *       400:
+ *         description: Credenciales inválidas o incompletas
+ */
 export const loginController = async (req: Request, res: Response) => {
-  const { email, password } = req.body
+  const result = loginSchema.safeParse(req.body)
 
-  if (!email || !password) {
+  if (!result.success) {
     return res.status(400).json({
       success: false,
-      message: 'Faltan credenciales'
+      message: 'Datos de entrada inválidos',
+      errors: result.error.issues.map(issue => ({
+        path: issue.path.join('.'),
+        message: issue.message
+      }))
     })
   }
+
+  const { email, password } = result.data
 
   try {
     const { rows } = await pool.query(
@@ -37,8 +72,10 @@ export const loginController = async (req: Request, res: Response) => {
 
     const user = rows[0]
 
-    //  aquí por ahora password plano (mejorable con bcrypt después)
-    if (user.password !== password) {
+    // Comparar contraseña usando bcrypt
+    const isMatch = await bcrypt.compare(password, user.password)
+
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Contraseña incorrecta'

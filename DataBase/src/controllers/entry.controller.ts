@@ -1,16 +1,32 @@
 // Controlador para consultar id del aprendiz
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-import { checkDuplicate } from './HandlersMachine/checkDuplicate';
-import { checkVehicle } from './HandlersMachine/checkVehicle';
-import { checkComputer } from './HandlersMachine/checkComputer';
+import { checkDuplicate } from '../services/machines/checkDuplicate';
+import { checkVehicle } from '../services/machines/checkVehicle';
+import { checkComputer } from '../services/machines/checkComputer';
 import { checkMachineResult } from '../types/InconsistentMachine.types';
-import { getTheBorrowedMachine } from './HandlersMachine/checksBorroweds';
-import { getNonPrincipalMachine } from './HandlersMachine/checkNonPrincipal';
-import { QueryBuilder } from '../shared/baseQuery';
-import { searchGlobal } from '../query/search.query';
-import { buildQuery } from '../shared/baseQuery';
+import { getTheBorrowedMachine } from '../services/machines/checksBorroweds';
+import { getNonPrincipalMachine } from '../services/machines/checkNonPrincipal';
+import { QueryBuilder } from '../utils/queryBuilder.util';
+import { searchGlobal } from '../utils/search.util';
+import { buildQuery } from '../utils/queryBuilder.util';
 // Funcion para el ingreso de aprendiz
+/**
+ * @swagger
+ * /api/registroIngresos/addEntry/{documento}:
+ *   post:
+ *     summary: Registrar el ingreso de un aprendiz
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: documento
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Ingreso registrado exitosamente
+ */
 export const AddEntry = async (req: Request, res: Response) => {
   console.log("Documento recibido:", req.params.documento);
   try {
@@ -65,6 +81,22 @@ export const AddEntry = async (req: Request, res: Response) => {
 
 
 // Funcion para verificar el ingreso de un aprendiz
+/**
+ * @swagger
+ * /api/registroIngresos/verificarEntrada/{documento}:
+ *   get:
+ *     summary: Verificar si un aprendiz ya ingresó hoy
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: documento
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Estado del ingreso
+ */
 export const DetectEntry = async (request: Request, response: Response) => {
   try {
     const { documento } = request.params;
@@ -116,6 +148,16 @@ export const DetectEntry = async (request: Request, response: Response) => {
 
 
 // Funcion para el historial de ingresos
+/**
+ * @swagger
+ * /api/registroIngresos/historial:
+ *   get:
+ *     summary: Obtener historial de ingresos de hoy
+ *     tags: [RegistroIngresos]
+ *     responses:
+ *       200:
+ *         description: Lista de ingresos hoy
+ */
 export const EntryRecord = async (request: Request, response: Response) => {
   try {
 
@@ -168,6 +210,22 @@ export const EntryRecord = async (request: Request, response: Response) => {
 
 
 // Funcion para traer los datos del aprendiz
+/**
+ * @swagger
+ * /api/registroIngresos/ingresoManual/{documento}:
+ *   get:
+ *     summary: Preparar ingreso manual capturando datos del aprendiz
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: documento
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Datos del aprendiz para ingreso manual
+ */
 export const EntryManual = async (request: Request, response : Response) =>{
   const {documento} = request.params
     // Obtener el aprendiz por documento
@@ -183,6 +241,21 @@ export const EntryManual = async (request: Request, response : Response) =>{
 
 
 // Funcion para la busqueda de un aprendiz
+/**
+ * @swagger
+ * /api/registroIngresos/buscar:
+ *   get:
+ *     summary: Buscar aprendiz por nombre o documento
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Resultados de la búsqueda
+ */
 export const SearchAprendiz = async (request: Request, response: Response) => {
   try {
     const text = (request.query.q as string)?.trim()
@@ -236,6 +309,22 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
   }
 }
 
+/**
+ * @swagger
+ * /api/registroIngresos/maquinaPrincipal/{id_aprendiz}:
+ *   get:
+ *     summary: Consultar máquina principal vinculada al aprendiz
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: id_aprendiz
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Datos de la máquina principal
+ */
 export const SearchPrincipalMachine = async (request: Request, response: Response) => {
   const { id_aprendiz } = request.params
 
@@ -315,6 +404,33 @@ export const SearchPrincipalMachine = async (request: Request, response: Respons
 
 
 // Funcion para ingresar la maquina del aprendiz
+/**
+ * @swagger
+ * /api/registroIngresos/ingresoMaquina/{id}:
+ *   post:
+ *     summary: Registrar ingreso de una máquina/vehículo
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               tipo:
+ *                 type: string
+ *               datos:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Máquina registrada
+ */
 export const AddMachine = async (request: Request, response: Response) => {
   const client = await pool.connect();
 
@@ -499,6 +615,22 @@ export const AddMachine = async (request: Request, response: Response) => {
 
 
 // Funcion para la doble maquina del aprendiz
+/**
+ * @swagger
+ * /api/registroIngresos/ingresoDobleMaquina/{id_aprendiz}:
+ *   post:
+ *     summary: Registrar una segunda máquina para el aprendiz
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: id_aprendiz
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Segunda máquina registrada
+ */
 export const UpdateMachine = async (request: Request, response: Response) => {
 
   const { tipoMaquina, tipoVehiculo, modelo, placaSerial, firma } = request.body
@@ -562,6 +694,22 @@ export const UpdateMachine = async (request: Request, response: Response) => {
 
 // Funcion para consultar los datos de las maquinas del aprendiz
 
+/**
+ * @swagger
+ * /api/registroIngresos/detalleMaquinas/{id_aprendiz}:
+ *   get:
+ *     summary: Obtener detalle de las máquinas vinculadas al aprendiz
+ *     tags: [RegistroIngresos]
+ *     parameters:
+ *       - in: path
+ *         name: id_aprendiz
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lista de máquinas (PC/Vehículos) vinculadas
+ */
 export const SearchMachine = async (request: Request, response: Response) => {
   const { id_aprendiz } = request.params
 

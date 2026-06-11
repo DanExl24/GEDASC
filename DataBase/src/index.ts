@@ -20,63 +20,16 @@ import jornada from './routes/jornada.routes'
 // sockets
 import initSockets from "./sockets/index"
 
+// Swagger
+import swaggerUi from 'swagger-ui-express'
+import { swaggerSpec } from './config/swagger'
+
 const app = express()
 const server = http.createServer(app)
 
-// ✅ SOLO UNA instancia
+// ✅ Inicialización de Socket.io
 const io = new Server(server, {
   cors: { origin: "*" }
-})
-
-io.on("connection", (socket) => {
-  console.log("Socket conectado:", socket.id)
-
-  // =========================
-  // REGISTRO DE DISPOSITIVO
-  // =========================
-  socket.on("registrar", ({ tipo }) => {
-    socket.data.tipo = tipo
-    console.log(`Socket registrado como ${tipo}:`, socket.id)
-  })
-
-  // =========================
-  // PC -> pedir firma al móvil
-  // =========================
-  socket.on("abrirFirmaEnMovil", ({ documento }) => {
-    console.log("PC solicitó firma para:", documento)
-
-    for (const [, s] of io.of("/").sockets) {
-      if (s.data.tipo === "movil") {
-        s.emit("abrirFirma", { documento })
-      }
-    }
-  })
-
-  // =========================
-  // MÓVIL -> envía firma
-  // =========================
-  socket.on("firmaRegistrada", ({ documento, firma }) => {
-    console.log("Firma recibida del móvil:", documento)
-
-    for (const [, s] of io.of("/").sockets) {
-      if (s.data.tipo === "pc") {
-        s.emit("firmaRegistrada", { documento, firma })
-      }
-    }
-  })
-
-  // =========================
-  // PC -> cerrar modal móvil
-  // =========================
-  socket.on("cerrarFirmaEnMovil", ({ documento }) => {
-    console.log("Cerrar firma:", documento)
-
-    for (const [, s] of io.of("/").sockets) {
-      if (s.data.tipo === "movil") {
-        s.emit("cerrarFirma", { documento })
-      }
-    }
-  })
 })
 
 // 🔥 inicializar IO global
@@ -88,6 +41,7 @@ initSockets(io)
 // middlewares
 app.use(express.json())
 app.use(cors())
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 // rutas
 app.get('/', (req, res) => {
@@ -106,8 +60,12 @@ app.use('/api/admin',adminFunction)
 app.use('/api/auth',auth)
 app.use('/api/jornadaTime',jornada)
 
+// error handler (debe ir después de las rutas)
+import { errorMiddleware } from './middlewares/error.middleware'
+app.use(errorMiddleware)
+
 // 🚀 servidor
-const PORT = 3000
-server.listen(PORT, '0.0.0.0', () => {
+const PORT = process.env.PORT || 3000
+server.listen(PORT, () => {
   console.log(`Servidor + sockets en http://localhost:${PORT}`)
 })

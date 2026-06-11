@@ -3,7 +3,7 @@ import { BorrowRow } from '../../types/BorrowRows'
 import type { RawBorrowRow } from '../../types/BorrowRows'
 import { MaquinaDetalleUI } from '../../types/machineDetails'
 
-import { filtersMap } from '../../shared/filtersMap'
+import { filtersMap } from '../../utils/filtersMap'
 
 const buildDateWhere = (
   dates?: (keyof typeof filtersMap.date)[],

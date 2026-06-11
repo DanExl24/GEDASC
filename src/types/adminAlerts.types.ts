@@ -33,7 +33,7 @@ export interface InactivityAlertItem extends AdminAlertBase {
 export interface InconsistentExit extends AdminAlertBase {
   type: 'EXIT',
     aprendiz : {
-      id : number | null,
+      id : string | number | null,
       documento : string,
       nombreCompleto : string,
       formacion : string,

@@ -1,12 +1,12 @@
 import { pool } from '../config/db'
-import { filtersMap } from '../shared/filtersMap'
+import { filtersMap } from '../utils/filtersMap'
 import type { PoolClient } from 'pg'
 import { MaquinaDetalleUI } from '../types/machineDetails'
-import { QueryParam } from '../shared/baseQuery'
+import { QueryParam } from '../utils/queryBuilder.util'
 import {
   getGlobalBorrowedComputers,
   getGlobalBorrowedVehicles
-} from '../controllers/HandlersMachine/checksBorroweds'
+} from './machines/checksBorroweds'
 
 type AdminFilters = {
   dates?: (keyof typeof filtersMap.date)[] | string

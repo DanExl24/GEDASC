@@ -3,6 +3,22 @@ import { Request, Response } from 'express'
 import { pool } from '../config/db'
 
 // Funcion para el ingreso de aprendiz
+/**
+ * @swagger
+ * /api/registroSalidas/addExit/{documento}:
+ *   post:
+ *     summary: Registrar la salida de un aprendiz
+ *     tags: [RegistroSalidas]
+ *     parameters:
+ *       - in: path
+ *         name: documento
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Salida registrada exitosamente
+ */
 export const addExit = async (req: Request, res: Response) => {
   try {
     const documento = req.params.documento;
@@ -69,6 +85,21 @@ export const addExit = async (req: Request, res: Response) => {
 
 
 // Funcion para la busqueda de un aprendiz
+/**
+ * @swagger
+ * /api/registroSalidas/buscar:
+ *   get:
+ *     summary: Buscar aprendiz en historial de salidas por nombre o documento
+ *     tags: [RegistroSalidas]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Resultados de la búsqueda
+ */
 export const SearchAprendiz = async (request: Request, response: Response) => {
   try {
 
@@ -134,6 +165,22 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
 }
 
 // Funcion para verificar el ingreso de un aprendiz
+/**
+ * @swagger
+ * /api/registroSalidas/verificarSalida/{documento}:
+ *   get:
+ *     summary: Verificar si un aprendiz ya registró salida hoy
+ *     tags: [RegistroSalidas]
+ *     parameters:
+ *       - in: path
+ *         name: documento
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Estado de la salida
+ */
 export const DetectExit = async (request: Request, response: Response) => {
   try {
 
@@ -188,6 +235,16 @@ export const DetectExit = async (request: Request, response: Response) => {
 
 
 // Funcion para el historial de salidas
+/**
+ * @swagger
+ * /api/registroSalidas/historial:
+ *   get:
+ *     summary: Obtener historial de salidas de hoy
+ *     tags: [RegistroSalidas]
+ *     responses:
+ *       200:
+ *         description: Lista de salidas hoy
+ */
 export const ExitRecord = async (request: Request, response: Response) => {
   try {
 

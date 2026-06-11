@@ -3,6 +3,22 @@ import { Request, Response } from 'express'
 import { pool } from '../config/db'
 
 // funcion para traer
+/**
+ * @swagger
+ * /api/aprendiz/{documento}:
+ *   get:
+ *     summary: Obtener el ID de un aprendiz mediante su número de documento
+ *     tags: [Aprendices]
+ *     parameters:
+ *       - in: path
+ *         name: documento
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: ID del aprendiz encontrado
+ */
 export const getId = async (request : Request , response : Response) => {
   try{
     // traer documento

@@ -1,9 +1,19 @@
 // Controlador para consultar id del aprendiz
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-import { filtersMap } from '../shared/filtersMap';
+import { filtersMap } from '../utils/filtersMap';
 
 // Funcion para el ingreso de aprendiz
+/**
+ * @swagger
+ * /api/historico/historial:
+ *   get:
+ *     summary: Obtener historial general de ingresos y salidas
+ *     tags: [Historial]
+ *     responses:
+ *       200:
+ *         description: Lista histórica de registros
+ */
 export const HistoryRecord = async (request: Request, response: Response) => {
   try {
 
@@ -47,6 +57,22 @@ export const HistoryRecord = async (request: Request, response: Response) => {
 };
 
 // Historial con filtro
+/**
+ * @swagger
+ * /api/historico/historialFechas:
+ *   get:
+ *     summary: Obtener historial filtrado por fechas predefinidas (Hoy, Ayer, Mes, etc.)
+ *     tags: [Historial]
+ *     parameters:
+ *       - in: query
+ *         name: dates
+ *         schema:
+ *           type: string
+ *         description: Filtros de fecha separados por coma
+ *     responses:
+ *       200:
+ *         description: Historial filtrado
+ */
 export const DateRecord = async (request: Request, response: Response) => {
   try {
     const { date, program,search } = request.query as {
@@ -109,6 +135,26 @@ export const DateRecord = async (request: Request, response: Response) => {
   }
 }
 
+/**
+ * @swagger
+ * /api/historico/historialGeneral:
+ *   post:
+ *     summary: Exportar historial general filtrado
+ *     tags: [Historial]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               search:
+ *                 type: string
+ *               dates:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Datos para exportación
+ */
 export const DataRegister = async (request: Request, response: Response) => {
   try {
     const { date, program, search, reportType, entryStatus } = request.body as {
@@ -266,6 +312,26 @@ export const DataRegister = async (request: Request, response: Response) => {
 
 // Query universal para  exportaciones
 
+/**
+ * @swagger
+ * /api/historico/historialMaquinas:
+ *   post:
+ *     summary: Exportar historial de máquinas filtrado
+ *     tags: [Historial]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               search:
+ *                 type: string
+ *               dates:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Datos de máquinas para exportación
+ */
 export const DataMachine = async (request: Request, response: Response) => {
   try {
     const { date, program, search, tipoMaquina } = request.body as {
@@ -411,6 +477,22 @@ return response.json(responseData)
 
 // Funcion para consultar los datos de las maquinas del aprendiz
 
+/**
+ * @swagger
+ * /api/historico/historialMaquinas/{id_detallemaquina}:
+ *   get:
+ *     summary: Consultar detalle de una máquina específica por su ID de detalle
+ *     tags: [Historial]
+ *     parameters:
+ *       - in: path
+ *         name: id_detallemaquina
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Detalle de la máquina
+ */
 export const SearchMachine = async (request: Request, response: Response) => {
 
   const { id_detallemaquina } = request.params

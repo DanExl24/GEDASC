@@ -1,9 +1,19 @@
 // Controlador para consultar id del aprendiz
 import { Request, Response } from 'express'
 import { pool } from '../config/db'
-import { filtersMap } from '../shared/filtersMap';
+import { filtersMap } from '../utils/filtersMap';
 
 // Funcion para el historial de ingresos
+/**
+ * @swagger
+ * /api/estadisticas/historial:
+ *   get:
+ *     summary: Obtener conteos estadísticos de hoy, mes y trimestre
+ *     tags: [Estadisticas]
+ *     responses:
+ *       200:
+ *         description: Resumen estadístico
+ */
 export const StatsRecord = async (request: Request, response: Response) => {
   try{
 
@@ -23,6 +33,16 @@ export const StatsRecord = async (request: Request, response: Response) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/estadisticas/actividadHoy:
+ *   get:
+ *     summary: Obtener las últimas 4 actividades del día
+ *     tags: [Estadisticas]
+ *     responses:
+ *       200:
+ *         description: Lista de actividades recientes
+ */
 export const TodayActivity = async (request: Request, response: Response) => {
   try{
     const result = await pool.query(`SELECT

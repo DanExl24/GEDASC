@@ -1,6 +1,6 @@
 import { Pool } from 'pg'
-import { QueryBuilder } from '../shared/baseQuery'
-import { buildQuery } from '../shared/baseQuery'
+import { QueryBuilder } from './queryBuilder.util'
+import { buildQuery } from './queryBuilder.util'
 
 
 

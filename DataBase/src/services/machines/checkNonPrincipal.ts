@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
 import { MaquinaDetalleUI } from '../../types/machineDetails'
-import { filtersMap } from '../../shared/filtersMap'
+import { filtersMap } from '../../utils/filtersMap'
 
 type MachineType = 'pc' | 'vh' | 'all'
 

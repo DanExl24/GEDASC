@@ -124,8 +124,8 @@ export const getAdminAlerts = async (token: string) => {
     }))
 
 
-    const exitAlerts: AdminAlertItem[] = exitsData.filter((item: InconsistentExit) => item.aprendiz.salida === 'NO_EXISTE').map((item: InconsistentExit, index: number) => {
-        const aprendiz = item.aprendiz
+    const exitAlerts: AdminAlertItem[] = (exitsData as any[]).filter((item) => item.aprendiz.salida === 'NO_EXISTE').map((item, index: number) => {
+        const { aprendiz } = item
 
         return {
           id: `exit-${aprendiz.id}-${index}`,
@@ -136,6 +136,7 @@ export const getAdminAlerts = async (token: string) => {
           timestampLabel: nowLabel,
           subjectName: aprendiz.nombreCompleto,
           subjectDocument: aprendiz.documento,
+          aprendiz,
           details: [
             { label: 'Documento', value: aprendiz.documento },
             { label: 'Formación', value: aprendiz.formacion },
