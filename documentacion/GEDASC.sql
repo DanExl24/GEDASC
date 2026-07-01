@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gvbJnMF9yOcu6XA7b7s0iBb4SlnU4p2lOb4N6LIDqVash1DUu51WCQNKhugpI7Y
+\restrict BvwSwF5w94l6GIopildIoLCA0C0R8L6XOP758hKS6hTsuGOjVudoV3DS2uUSQBK
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -32,9 +32,9 @@ CREATE TABLE public.aprendiz (
     documento character varying(10) NOT NULL,
     nombre character varying(100) NOT NULL,
     apellido character varying(100) NOT NULL,
-    id_formacion integer NOT NULL,
     fecha_registro timestamp without time zone DEFAULT now(),
-    estado boolean DEFAULT true
+    estado boolean DEFAULT true,
+    es_monitor boolean DEFAULT false
 );
 
 
@@ -75,6 +75,45 @@ ALTER SEQUENCE public.aprendiz_computador_id_seq OWNER TO postgres;
 --
 
 ALTER SEQUENCE public.aprendiz_computador_id_seq OWNED BY public.aprendiz_computador.id;
+
+
+--
+-- Name: aprendiz_formacion; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.aprendiz_formacion (
+    id integer NOT NULL,
+    id_aprendiz integer NOT NULL,
+    id_formacion integer NOT NULL,
+    estado character varying(20) DEFAULT 'activo'::character varying,
+    fecha_inicio timestamp without time zone DEFAULT now(),
+    fecha_fin timestamp without time zone,
+    CONSTRAINT aprendiz_formacion_estado_check CHECK (((estado)::text = ANY ((ARRAY['activo'::character varying, 'inactivo'::character varying, 'finalizado'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.aprendiz_formacion OWNER TO postgres;
+
+--
+-- Name: aprendiz_formacion_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.aprendiz_formacion_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.aprendiz_formacion_id_seq OWNER TO postgres;
+
+--
+-- Name: aprendiz_formacion_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.aprendiz_formacion_id_seq OWNED BY public.aprendiz_formacion.id;
 
 
 --
@@ -180,7 +219,10 @@ CREATE TABLE public.detalles_ingreso (
     id_ingreso integer NOT NULL,
     id_aprendiz integer NOT NULL,
     id_detallemaquina integer,
-    hora_ingreso timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    hora_ingreso timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    tipo_sesion character varying(20) DEFAULT 'formacion'::character varying,
+    motivo_reingreso text,
+    CONSTRAINT detalles_ingreso_tipo_sesion_check CHECK (((tipo_sesion)::text = ANY ((ARRAY['formacion'::character varying, 'monitoria'::character varying])::text[])))
 );
 
 
@@ -216,7 +258,11 @@ CREATE TABLE public.detalles_maquinas (
     id_detallemaquina integer NOT NULL,
     id_computador integer,
     id_vehiculo integer,
-    firma_ingreso text NOT NULL
+    firma_ingreso text NOT NULL,
+    firma_salida text,
+    estado_equipo character varying(20) DEFAULT 'dentro'::character varying,
+    hora_retiro_equipo timestamp without time zone,
+    CONSTRAINT detalles_maquinas_estado_equipo_check CHECK (((estado_equipo)::text = ANY ((ARRAY['dentro'::character varying, 'retirado'::character varying])::text[])))
 );
 
 
@@ -439,6 +485,13 @@ ALTER TABLE ONLY public.aprendiz_computador ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
+-- Name: aprendiz_formacion id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aprendiz_formacion ALTER COLUMN id SET DEFAULT nextval('public.aprendiz_formacion_id_seq'::regclass);
+
+
+--
 -- Name: aprendiz_vehiculo id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -515,6 +568,22 @@ ALTER TABLE ONLY public.aprendiz_computador
 
 ALTER TABLE ONLY public.aprendiz
     ADD CONSTRAINT aprendiz_documento_key UNIQUE (documento);
+
+
+--
+-- Name: aprendiz_formacion aprendiz_formacion_id_aprendiz_id_formacion_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aprendiz_formacion
+    ADD CONSTRAINT aprendiz_formacion_id_aprendiz_id_formacion_key UNIQUE (id_aprendiz, id_formacion);
+
+
+--
+-- Name: aprendiz_formacion aprendiz_formacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aprendiz_formacion
+    ADD CONSTRAINT aprendiz_formacion_pkey PRIMARY KEY (id);
 
 
 --
@@ -630,6 +699,48 @@ ALTER TABLE ONLY public.vehiculos
 
 
 --
+-- Name: idx_aprendiz_formacion_activo; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_aprendiz_formacion_activo ON public.aprendiz_formacion USING btree (id_aprendiz, estado) WHERE ((estado)::text = 'activo'::text);
+
+
+--
+-- Name: idx_aprendiz_formacion_aprendiz; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_aprendiz_formacion_aprendiz ON public.aprendiz_formacion USING btree (id_aprendiz);
+
+
+--
+-- Name: idx_aprendiz_formacion_formacion; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_aprendiz_formacion_formacion ON public.aprendiz_formacion USING btree (id_formacion);
+
+
+--
+-- Name: idx_detalles_ingreso_aprendiz_hora; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_detalles_ingreso_aprendiz_hora ON public.detalles_ingreso USING btree (id_aprendiz, hora_ingreso);
+
+
+--
+-- Name: idx_detalles_salida_hora; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_detalles_salida_hora ON public.detalles_salida USING btree (hora_salida);
+
+
+--
+-- Name: idx_detalles_salida_id_ingreso; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_detalles_salida_id_ingreso ON public.detalles_salida USING btree (id_ingreso);
+
+
+--
 -- Name: aprendiz_computador aprendiz_computador_id_aprendiz_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -646,11 +757,19 @@ ALTER TABLE ONLY public.aprendiz_computador
 
 
 --
--- Name: aprendiz aprendiz_id_formacion_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: aprendiz_formacion aprendiz_formacion_id_aprendiz_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.aprendiz
-    ADD CONSTRAINT aprendiz_id_formacion_fkey FOREIGN KEY (id_formacion) REFERENCES public.formaciones(id_formacion);
+ALTER TABLE ONLY public.aprendiz_formacion
+    ADD CONSTRAINT aprendiz_formacion_id_aprendiz_fkey FOREIGN KEY (id_aprendiz) REFERENCES public.aprendiz(id_aprendiz) ON DELETE CASCADE;
+
+
+--
+-- Name: aprendiz_formacion aprendiz_formacion_id_formacion_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aprendiz_formacion
+    ADD CONSTRAINT aprendiz_formacion_id_formacion_fkey FOREIGN KEY (id_formacion) REFERENCES public.formaciones(id_formacion);
 
 
 --
@@ -721,5 +840,5 @@ ALTER TABLE ONLY public.usuarios
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gvbJnMF9yOcu6XA7b7s0iBb4SlnU4p2lOb4N6LIDqVash1DUu51WCQNKhugpI7Y
+\unrestrict BvwSwF5w94l6GIopildIoLCA0C0R8L6XOP758hKS6hTsuGOjVudoV3DS2uUSQBK
 
