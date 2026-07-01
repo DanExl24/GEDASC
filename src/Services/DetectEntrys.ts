@@ -4,33 +4,47 @@ import type { DetectRegisterStatus } from "@/types/register.types";
 
 export const DetectEntry = async (
   documento: string
-): Promise<DetectRegisterStatus> => {
+): Promise<{
+  status: DetectRegisterStatus
+  es_monitor?: boolean
+  activeSession?: boolean
+  hasMachine?: boolean
+  id_detallemaquina?: number
+  id_ingreso?: number
+  id_aprendiz?: number
+  isReentry?: boolean
+}> => {
 
-  if (!documento) return 'error';
+  if (!documento) return { status: 'error' };
 
   try {
     const response = await fetch(`${API}/api/registroIngresos/verificarEntrada/${documento}`);
 
     // 🔴 PRIMERO validar status
     if (response.status === 404) {
-      return 'no_existe';
+      return { status: 'no_existe' };
     }
 
     if (!response.ok) {
-      return 'error';
+      return { status: 'error' };
     }
 
     // 🟢 SOLO aquí parseas JSON
     const data = await response.json();
 
-    if (!data.yaIngresado) {
-      return 'ok';
-    } else {
-      return 'ya_registrado';
-    }
+    return {
+      status: 'ok',
+      es_monitor: data.es_monitor,
+      activeSession: data.activeSession,
+      hasMachine: data.hasMachine,
+      id_detallemaquina: data.id_detallemaquina,
+      id_ingreso: data.id_ingreso,
+      id_aprendiz: data.id_aprendiz,
+      isReentry: data.isReentry
+    };
 
   } catch (error) {
     console.error(error);
-    return 'error';
+    return { status: 'error' };
   }
 }

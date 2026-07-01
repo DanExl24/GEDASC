@@ -308,20 +308,12 @@ const currentDate = new Date()
 
 const allDashboardActions: DashboardAction[] = [
   {
-    title: 'Ingreso general',
+    title: 'Control de Acceso',
     eyebrow: 'Registro',
-    description: 'Entrada de aprendices al centro.',
+    description: 'Registrar ingresos y salidas de aprendices y equipos.',
     to: '/general-entry',
     icon: registerPerson,
     accentClass: 'bg-senaColor',
-  },
-  {
-    title: 'Salida general',
-    eyebrow: 'Control',
-    description: 'Salida general de aprendices.',
-    to: '/general-exit',
-    icon: ExitDoor,
-    accentClass: '!bg-[rgb(21,142,79)]',
   },
   {
     title: 'Historial general',
@@ -452,7 +444,7 @@ const dashboardActions = computed(() => {
   }
 
   return allDashboardActions.filter((action) =>
-    action.to !== '/general-entry' && action.to !== '/general-exit'
+    action.to !== '/general-entry'
   )
 })
 

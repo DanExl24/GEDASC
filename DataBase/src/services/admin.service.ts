@@ -362,6 +362,9 @@ const getAllMachinesByAprendiz = async (
     SELECT
       base.id_aprendiz,
       base.firma_ingreso,
+      base.firma_salida,
+      base.estado_equipo,
+      base.id_detallemaquina,
       base.pc_serial,
       base.pc_marca,
       base.pc_principal,
@@ -389,6 +392,36 @@ const getAllMachinesByAprendiz = async (
           ORDER BY di.hora_ingreso DESC
           LIMIT 1
         ) AS firma_ingreso,
+        (
+          SELECT dm.firma_salida
+          FROM detalles_ingreso di
+          INNER JOIN detalles_maquinas dm
+            ON dm.id_detallemaquina = di.id_detallemaquina
+          WHERE di.id_aprendiz = ac.id_aprendiz
+            AND dm.id_computador = ac.id_computador
+          ORDER BY di.hora_ingreso DESC
+          LIMIT 1
+        ) AS firma_salida,
+        (
+          SELECT dm.estado_equipo
+          FROM detalles_ingreso di
+          INNER JOIN detalles_maquinas dm
+            ON dm.id_detallemaquina = di.id_detallemaquina
+          WHERE di.id_aprendiz = ac.id_aprendiz
+            AND dm.id_computador = ac.id_computador
+          ORDER BY di.hora_ingreso DESC
+          LIMIT 1
+        ) AS estado_equipo,
+        (
+          SELECT dm.id_detallemaquina
+          FROM detalles_ingreso di
+          INNER JOIN detalles_maquinas dm
+            ON dm.id_detallemaquina = di.id_detallemaquina
+          WHERE di.id_aprendiz = ac.id_aprendiz
+            AND dm.id_computador = ac.id_computador
+          ORDER BY di.hora_ingreso DESC
+          LIMIT 1
+        ) AS id_detallemaquina,
         0 AS sort_group,
         CASE WHEN ac.principal THEN 0 ELSE 1 END AS sort_priority,
         c.serial AS sort_label
@@ -418,6 +451,36 @@ const getAllMachinesByAprendiz = async (
           ORDER BY di.hora_ingreso DESC
           LIMIT 1
         ) AS firma_ingreso,
+        (
+          SELECT dm.firma_salida
+          FROM detalles_ingreso di
+          INNER JOIN detalles_maquinas dm
+            ON dm.id_detallemaquina = di.id_detallemaquina
+          WHERE di.id_aprendiz = av.id_aprendiz
+            AND dm.id_vehiculo = av.id_vehiculo
+          ORDER BY di.hora_ingreso DESC
+          LIMIT 1
+        ) AS firma_salida,
+        (
+          SELECT dm.estado_equipo
+          FROM detalles_ingreso di
+          INNER JOIN detalles_maquinas dm
+            ON dm.id_detallemaquina = di.id_detallemaquina
+          WHERE di.id_aprendiz = av.id_aprendiz
+            AND dm.id_vehiculo = av.id_vehiculo
+          ORDER BY di.hora_ingreso DESC
+          LIMIT 1
+        ) AS estado_equipo,
+        (
+          SELECT dm.id_detallemaquina
+          FROM detalles_ingreso di
+          INNER JOIN detalles_maquinas dm
+            ON dm.id_detallemaquina = di.id_detallemaquina
+          WHERE di.id_aprendiz = av.id_aprendiz
+            AND dm.id_vehiculo = av.id_vehiculo
+          ORDER BY di.hora_ingreso DESC
+          LIMIT 1
+        ) AS id_detallemaquina,
         1 AS sort_group,
         CASE WHEN av.principal THEN 0 ELSE 1 END AS sort_priority,
         v.placa AS sort_label
@@ -448,6 +511,9 @@ const getAllMachinesByAprendiz = async (
         }
       : null,
     firma: row.firma_ingreso ?? null,
+    firma_salida: row.firma_salida ?? null,
+    estado_equipo: row.estado_equipo ?? null,
+    id_detallemaquina: row.id_detallemaquina ?? null,
     aprendices: {
       actual: { id: row.id_aprendiz },
       owner: { id: null, name: null }
@@ -469,8 +535,10 @@ const InconsistentExit = async () => {
       ON ds.id_ingreso = di.id_ingreso
     INNER JOIN aprendiz AS a
       ON a.id_aprendiz = di.id_aprendiz
-    INNER JOIN formaciones AS f
-      ON f.id_formacion = a.id_formacion
+    LEFT JOIN aprendiz_formacion AS af
+      ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+    LEFT JOIN formaciones AS f
+      ON f.id_formacion = af.id_formacion
     WHERE di.hora_ingreso < CURRENT_DATE
       AND ds.hora_salida IS NULL
   `)

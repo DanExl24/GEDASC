@@ -86,14 +86,22 @@
       </section>
 
       <section class="rounded-[28px] border border-emerald-200 bg-white shadow-[0_18px_45px_rgba(15,107,63,0.08)]">
-        <div class="flex flex-col gap-1 border-b border-emerald-100 px-5 py-4 lg:flex-row lg:items-end lg:justify-between lg:px-6">
+        <div class="flex flex-col gap-3 border-b border-emerald-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-senaColor">Resultados</p>
             <h2 class="mt-1 font-robotoSlab text-[1.45rem] font-bold text-slate-900">Aprendices registrados</h2>
           </div>
-          <p class="text-sm text-slate-500">
-            {{ inactiveDays > 0 ? `Filtro activo: ${inactiveDays} dias o mas sin asistir.` : 'Sin filtro de inactividad aplicado.' }}
-          </p>
+          <div class="flex items-center gap-3">
+            <BaseButtonOpen
+              text="Gestionar Asociaciones"
+              variant="green"
+              class-button="rounded-2xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition"
+              @click="openAsociacionesModal()"
+            />
+            <p class="text-sm text-slate-500">
+              {{ inactiveDays > 0 ? `Filtro activo: ${inactiveDays} dias o mas sin asistir.` : 'Sin filtro de inactividad aplicado.' }}
+            </p>
+          </div>
         </div>
 
         <div class="p-4 lg:px-6 lg:py-5">
@@ -114,6 +122,7 @@
                   <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Documento</th>
                   <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Actividad</th>
                   <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Sin asistir</th>
+                  <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Monitor</th>
                   <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Maquinas</th>
                 </tr>
               </thead>
@@ -142,17 +151,39 @@
                     </span>
                   </td>
                   <td>
-                    <BaseButtonOpen
-                      text="Ver detalle"
-                      variant="ghost"
-                      class-button="min-h-0 px-0 py-0 font-semibold shadow-none"
-                      @click="openMachinesModal(aprendiz)"
-                    />
+                    <span
+                      v-if="aprendiz.es_monitor"
+                      class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]"
+                    >
+                      Monitor
+                    </span>
+                    <span
+                      v-else
+                      class="inline-flex rounded-full border border-slate-200 bg-slate-50 text-slate-400 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]"
+                    >
+                      No
+                    </span>
+                  </td>
+                  <td>
+                    <div class="flex flex-col gap-1 items-center">
+                      <BaseButtonOpen
+                        text="Equipos"
+                        variant="ghost"
+                        class-button="min-h-0 px-0 py-0 font-semibold shadow-none text-xs"
+                        @click="openMachinesModal(aprendiz)"
+                      />
+                      <BaseButtonOpen
+                        text="Asociaciones"
+                        variant="ghost"
+                        class-button="min-h-0 px-0 py-0 font-semibold shadow-none text-xs text-emerald-600"
+                        @click="openAsociacionesModal(aprendiz)"
+                      />
+                    </div>
                   </td>
                 </tr>
 
                 <tr v-if="filteredAprendices.length === 0">
-                  <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">
                     No hay aprendices para los filtros actuales.
                   </td>
                 </tr>
@@ -246,6 +277,13 @@
         </div>
       </template>
     </BaseModal>
+
+    <ModalAsociaciones
+      ref="asociacionesModal"
+      :aprendices="aprendices"
+      :token="auth.token || ''"
+      @update="loadAprendices"
+    />
   </div>
 </template>
 
@@ -258,15 +296,18 @@ import BaseModal from '@/components/Modals/BaseModal.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import HeaderView from '@/layouts/HeaderView.vue'
+import ModalAsociaciones from '@/components/AprendizUI/Modals/ModalAsociaciones.vue'
 import { useAuthStore } from '@/stores/auth'
 import {
   getAdminAprendices,
   getAdminMachinesByAprendiz,
   getAdminTrack,
+  toggleAdminMonitor,
   type AdminAprendizRow,
   type AdminMachineRecord,
   type AdminTrackRow,
 } from '@/Services/adminAprendices'
+import { useNotifications } from '@/composables/useNotifications'
 
 type SummaryCard = {
   label: string
@@ -291,6 +332,7 @@ type AprendizWithActivity = AdminAprendizRow & {
 }
 
 const auth = useAuthStore()
+const { addNotification } = useNotifications()
 const search = ref('')
 const inactiveDaysInput = ref('')
 const isLoading = ref(false)
@@ -300,6 +342,7 @@ const machinesModal = ref<{
   openModal: () => void
   closeModal: () => void
 } | null>(null)
+const asociacionesModal = ref<InstanceType<typeof ModalAsociaciones> | null>(null)
 const selectedAprendiz = ref<AprendizWithActivity | null>(null)
 const selectedMachines = ref<AdminMachineRecord[]>([])
 const machinesLoading = ref(false)
@@ -538,6 +581,25 @@ const openMachinesModal = async (aprendiz: AprendizWithActivity) => {
   } finally {
     machinesLoading.value = false
   }
+}
+
+const toggleMonitor = async (aprendiz: AprendizWithActivity) => {
+  if (!auth.token) return
+  const originalState = aprendiz.es_monitor
+  const newState = !originalState
+  // optimistic update
+  aprendiz.es_monitor = newState
+
+  try {
+    await toggleAdminMonitor(auth.token, aprendiz.id_aprendiz, newState)
+  } catch (error) {
+    console.error(error)
+    aprendiz.es_monitor = originalState // rollback on error
+  }
+}
+
+const openAsociacionesModal = (aprendiz?: AprendizWithActivity) => {
+  asociacionesModal.value?.open(aprendiz)
 }
 
 onMounted(loadAprendices)

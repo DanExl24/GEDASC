@@ -51,45 +51,30 @@ const {addNotification} = useNotifications()
 const { AñadirIngresoAprendiz } = useAprendiz()
 const {message, setMessage} = useMessage()
 const { formManual, validateForm, setManualForm } = useManualForm()
-const emit = defineEmits(['cerrar-modal'])
+const emit = defineEmits<{
+  (e: 'submit-manual', documento: string): void
+}>()
 
 const submitManual = async () => {
   if (!validateForm()) return
 
   const documento = formManual.documento.trim()
 
-  await setManualForm(documento)
+  // Validar primero si el documento existe en BD antes de proceder
+  const resDetect = await DetectEntry(documento)
 
-  const estado = await DetectEntry(documento)
-
-  if (estado === 'ok') {
-    addNotification("Registro aceptado", "success")
-    setTimeout(() => emit('cerrar-modal'), 1000)
-
-  } else if (estado === 'ya_registrado') {
-    addNotification("El aprendiz ya tiene un registro", "warning")
-
-  } else if (estado === 'no_existe') {
+  if (resDetect.status === 'no_existe') {
     addNotification("Este documento no existe", "error")
-
-  } else {
-    setMessage("Error en el registro", "error")
-  }
-
-
-  const res = await AñadirIngresoAprendiz(documento)
-
-
-  if (!res) {
-    setMessage("Error registrando ingreso", "error")
+    setMessage("Este documento no existe", "error")
     return
   }
 
-  setMessage("Registro aceptado", "success")
+  if (resDetect.status === 'error') {
+    setMessage("Error en el registro", "error")
+    return
+  }
 
-  setTimeout(() => {
-    emit('cerrar-modal')
-  }, 1000)
+  emit('submit-manual', documento)
 }
 
 </script>

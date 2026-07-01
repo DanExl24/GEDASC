@@ -115,6 +115,29 @@ export const useJornadaStore = defineStore('jornada', {
         )
       }
     },
+    async loadInferredJornada(idAprendiz: number) {
+      if (!idAprendiz || this.byAprendizId[idAprendiz]) return
+
+      try {
+        const res = await fetch(`${API_URL}/api/jornadaTime/predominante/${idAprendiz}`)
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (data.jornada && data.jornada !== 'SIN_JORNADA') {
+          const matched = this.definitions.find((j) => j.key === data.jornada)
+          if (matched) {
+            this.byAprendizId[idAprendiz] = {
+              key: matched.key,
+              label: matched.label,
+              badgeClass: matched.badgeClass,
+              isJornada: true
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching inferred journey:', error)
+      }
+    },
     getJornadaByHour(horaIngreso: string | null | undefined): JornadaInfo {
       return resolveJornada(extractMinutesFromHour(horaIngreso))
     },

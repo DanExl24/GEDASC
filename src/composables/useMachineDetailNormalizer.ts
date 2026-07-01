@@ -8,6 +8,10 @@ export const createEmptyMachineDetail = (): MaquinaDetalleUI => ({
   pc: null,
   vh: null,
   firma: null,
+  firma_salida: null,
+  estado_equipo: null,
+  hora_retiro_equipo: null,
+  id_detallemaquina: null,
   estado: 'NORMAL',
   aprendices: {
     actual: { id: null },
@@ -37,6 +41,10 @@ export const normalizeMachineDetail = (
         }
       : null,
     firma: raw?.firma ?? null,
+    firma_salida: raw?.firma_salida ?? null,
+    estado_equipo: raw?.estado_equipo ?? null,
+    hora_retiro_equipo: raw?.hora_retiro_equipo ?? null,
+    id_detallemaquina: raw?.id_detallemaquina ?? null,
     estado,
     aprendices: {
       actual: {

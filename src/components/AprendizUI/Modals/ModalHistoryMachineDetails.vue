@@ -6,7 +6,29 @@
     header-class="relative flex items-center justify-center border-b border-emerald-100 bg-[linear-gradient(90deg,#ffffff_0%,#f3fbf5_40%,#e2f4e6_100%)] px-5 py-4 text-center font-robotoSlab text-lg font-bold text-slate-800"
     body-class="relative max-h-[calc(100vh-8rem)] space-y-3 overflow-y-auto px-4 py-4 lg:px-5"
   >
-    <div class="grid gap-3 lg:grid-cols-3">
+    <!-- ESTADO DEL EQUIPO -->
+    <div v-if="detail" class="mb-4 p-3.5 rounded-[18px] bg-slate-50 border border-slate-200 flex flex-wrap justify-between items-center">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Estado del Equipo</p>
+        <BaseText
+          v-if="detail.estado_equipo === 'retirado'"
+          type="success"
+          text="RETIRADO DEL CENTRO"
+          class="font-robotoSlab text-base font-bold"
+        />
+        <BaseText
+          v-else
+          type="error"
+          text="DENTRO DEL CENTRO"
+          class="font-robotoSlab text-base font-bold"
+        />
+      </div>
+      <p v-if="detail.hora_retiro_equipo" class="text-xs text-slate-500">
+        Retirado en: {{ detail.hora_retiro_equipo }}
+      </p>
+    </div>
+
+    <div class="grid gap-3" :class="detail.firma_salida && detail.firma_salida !== 'Sin firma de salida' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'">
       <article
         v-if="detail.pc"
         class="rounded-[18px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] p-3.5"
@@ -98,13 +120,33 @@
             FIR
           </div>
           <div>
-            <h3 class="font-robotoSlab text-base font-bold text-slate-900">Firma del aprendiz</h3>
-            <p class="text-xs text-slate-600">Evidencia asociada al registro consultado.</p>
+            <h3 class="font-robotoSlab text-base font-bold text-slate-900">Firma de ingreso</h3>
+            <p class="text-xs text-slate-600">Evidencia asociada al ingreso del equipo.</p>
           </div>
         </div>
 
         <div class="mt-3 flex min-h-[180px] items-center justify-center rounded-[16px] border border-emerald-100 bg-white p-2">
           <img :src="detail.firma" class="max-h-40 w-auto rounded-lg" alt="Firma del aprendiz" />
+        </div>
+      </article>
+
+      <!-- FIRMA SALIDA -->
+      <article
+        v-if="detail.firma_salida && detail.firma_salida !== 'Sin firma de salida'"
+        class="rounded-[18px] border border-dashed border-slate-300 bg-slate-100 p-3.5"
+      >
+        <div class="flex items-center gap-3 border-b border-slate-200 pb-2.5">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[10px] font-bold uppercase tracking-[0.14em] text-slate-800">
+            FSA
+          </div>
+          <div>
+            <h3 class="font-robotoSlab text-base font-bold text-slate-900">Firma de salida</h3>
+            <p class="text-xs text-slate-600">Evidencia asociada a la salida del equipo.</p>
+          </div>
+        </div>
+
+        <div class="mt-3 flex min-h-[180px] items-center justify-center rounded-[16px] border border-slate-200 bg-white p-2">
+          <img :src="detail.firma_salida" class="max-h-40 w-auto rounded-lg" alt="Firma de salida" />
         </div>
       </article>
 

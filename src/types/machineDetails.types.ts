@@ -15,6 +15,10 @@ export type RawMachineDetailResult = {
   } | null
 
   firma?: string | null
+  firma_salida?: string | null
+  estado_equipo?: 'dentro' | 'retirado' | null
+  hora_retiro_equipo?: string | null
+  id_detallemaquina?: number | null
 
   aprendices?: {
     actual?: {
@@ -40,6 +44,10 @@ export type MaquinaDetalleUI = {
   } | null
 
   firma: string | null
+  firma_salida?: string | null
+  estado_equipo?: 'dentro' | 'retirado' | null
+  hora_retiro_equipo?: string | null
+  id_detallemaquina?: number | null
 
   estado: EstadoMaquina
 

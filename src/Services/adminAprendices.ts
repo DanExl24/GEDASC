@@ -116,3 +116,58 @@ export const getAdminExits = async (token: string) => {
 
   return ensureSuccess<AdminExitRow[]>(response)
 }
+
+export const toggleAdminMonitor = async (token: string, idAprendiz: string, esMonitor: boolean) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/toggleMonitor/${idAprendiz}`, {
+    method: 'POST',
+    headers: {
+      ...buildHeaders(token),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ es_monitor: esMonitor })
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al actualizar el estado de monitor')
+  }
+
+  return response.json()
+}
+
+export const getAdminFormacionesAprendiz = async (token: string, idAprendiz: string) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/${idAprendiz}/formaciones`, {
+    headers: buildHeaders(token)
+  })
+
+  return ensureSuccess<{ asignadas: any[]; todas: any[] }>(response)
+}
+
+export const asignarFormacionAdmin = async (token: string, idAprendiz: string, idFormacion: number) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/${idAprendiz}/formaciones`, {
+    method: 'POST',
+    headers: {
+      ...buildHeaders(token),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id_formacion: idFormacion })
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al asignar formación')
+  }
+
+  return response.json()
+}
+
+export const desvincularFormacionAdmin = async (token: string, idAprendiz: string, idFormacion: number) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/${idAprendiz}/formaciones/${idFormacion}`, {
+    method: 'DELETE',
+    headers: buildHeaders(token)
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al desvincular formación')
+  }
+
+  return response.json()
+}

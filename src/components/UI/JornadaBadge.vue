@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useJornadaStore } from '@/stores/jornada'
 
 const props = defineProps<{
@@ -20,4 +20,13 @@ const jornadaStore = useJornadaStore()
 const jornada = computed(() =>
   jornadaStore.getJornadaForAprendiz(props.aprendizId, props.hour),
 )
+
+onMounted(async () => {
+  if (props.aprendizId) {
+    const byHour = jornadaStore.getJornadaByHour(props.hour)
+    if (byHour.key === 'SIN_JORNADA') {
+      await jornadaStore.loadInferredJornada(props.aprendizId)
+    }
+  }
+})
 </script>

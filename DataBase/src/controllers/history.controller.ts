@@ -26,11 +26,13 @@ export const HistoryRecord = async (request: Request, response: Response) => {
       f.nombre AS formacion,
       TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
       TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
-      di.id_detallemaquina
+      di.id_detallemaquina,
+      di.tipo_sesion
     FROM detalles_ingreso AS di
     JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
     LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
-    JOIN formaciones f ON f.id_formacion = a.id_formacion
+    LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+    LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
     WHERE di.hora_ingreso >= CURRENT_DATE
     AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
     ORDER BY di.hora_ingreso DESC
@@ -118,11 +120,13 @@ export const DateRecord = async (request: Request, response: Response) => {
         TO_CHAR(di.hora_ingreso, 'DD Mon HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida,
         di.id_detallemaquina,
+        di.tipo_sesion,
         di.id_ingreso
       FROM detalles_ingreso AS di
       JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
       LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
-      JOIN formaciones f ON f.id_formacion = a.id_formacion
+      LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+      LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
       ${whereClause}
       ORDER BY di.hora_ingreso DESC
     `,values)
@@ -225,6 +229,7 @@ export const DataRegister = async (request: Request, response: Response) => {
         { header: 'Nombre', dataKey: 'nombre' },
         { header: 'Apellido', dataKey: 'apellido' },
         { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+        { header: 'Tipo Sesión', dataKey: 'tipo_sesion' },
         { header: 'Firma', dataKey: 'firma_ingreso' },
       ]
     }
@@ -243,6 +248,7 @@ export const DataRegister = async (request: Request, response: Response) => {
         { header: 'Nombre', dataKey: 'nombre' },
         { header: 'Apellido', dataKey: 'apellido' },
         { header: 'Hora salida', dataKey: 'hora_salida' },
+        { header: 'Tipo Sesión', dataKey: 'tipo_sesion' },
         { header: 'Firma', dataKey: 'firma_ingreso' },
       ]
     }
@@ -264,6 +270,7 @@ export const DataRegister = async (request: Request, response: Response) => {
         { header: 'Apellido', dataKey: 'apellido' },
         { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
         { header: 'Hora salida', dataKey: 'hora_salida' },
+        { header: 'Tipo Sesión', dataKey: 'tipo_sesion' },
         { header: 'Firma', dataKey: 'firma_ingreso' },
       ]
     }
@@ -275,6 +282,7 @@ export const DataRegister = async (request: Request, response: Response) => {
         a.nombre,
         a.apellido,
         a.documento,
+        di.tipo_sesion,
         ${selectExtra}
       FROM detalles_ingreso di
       ${joinSalida}
@@ -294,7 +302,8 @@ export const DataRegister = async (request: Request, response: Response) => {
         : 'Sin maquina',
       hora_salida : row.hora_salida
         ? row.hora_salida
-        : 'Sin registro'
+        : 'Sin registro',
+      tipo_sesion: row.tipo_sesion === 'monitoria' ? 'Monitoría' : 'Formación'
     }))
     return response.json({
       title,
@@ -418,6 +427,9 @@ export const DataMachine = async (request: Request, response: Response) => {
       SELECT
         ${selectExtra}
         dm.id_detallemaquina,
+        dm.firma_salida,
+        dm.estado_equipo,
+        dm.hora_retiro_equipo,
         a.documento,
         a.id_aprendiz,
         dm.firma_ingreso,
@@ -436,38 +448,45 @@ export const DataMachine = async (request: Request, response: Response) => {
     `
 
     const result = await pool.query(query, values)
-        const rows = result.rows.map(row => ({
+    const rows = result.rows.map(row => ({
       ...row,
       hora_salida : row.hora_salida
         ? row.hora_salida
-        : 'Sin registro'
+        : 'Sin registro',
+      firma_salida: row.firma_salida
+        ? row.firma_salida
+        : 'Sin firma de salida'
     }))
-const responseData = {
-  title: tipoMaquina === 'pc' ? 'Reporte de Computadores' : 'Reporte de Vehículos',
+    const responseData = {
+      title: tipoMaquina === 'pc' ? 'Reporte de Computadores' : 'Reporte de Vehículos',
 
-  columns: tipoMaquina === 'pc'
-    ? [
-        { header: 'Documento', dataKey: 'documento' },
-        { header: 'Marca', dataKey: 'marca' },
-        { header: 'Serial', dataKey: 'serial' },
-        { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
-        { header: 'Hora salida', dataKey: 'hora_salida' },
-        { header: 'Firma', dataKey: 'firma_ingreso' },
-      ]
-    : [
-        { header: 'Documento', dataKey: 'documento' },
-        { header: 'Marca', dataKey: 'marca' },
-        { header: 'Placa', dataKey: 'placa' },
-        { header: 'Tipo vehículo', dataKey: 'tipo_vehiculo' },
-        { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
-        { header: 'Hora salida', dataKey: 'hora_salida' },
-        { header: 'Firma', dataKey: 'firma_ingreso' },
-      ],
+      columns: tipoMaquina === 'pc'
+        ? [
+            { header: 'Documento', dataKey: 'documento' },
+            { header: 'Marca', dataKey: 'marca' },
+            { header: 'Serial', dataKey: 'serial' },
+            { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+            { header: 'Hora salida', dataKey: 'hora_salida' },
+            { header: 'Firma Ingreso', dataKey: 'firma_ingreso' },
+            { header: 'Firma Salida', dataKey: 'firma_salida' },
+            { header: 'Estado', dataKey: 'estado_equipo' },
+          ]
+        : [
+            { header: 'Documento', dataKey: 'documento' },
+            { header: 'Marca', dataKey: 'marca' },
+            { header: 'Placa', dataKey: 'placa' },
+            { header: 'Tipo vehículo', dataKey: 'tipo_vehiculo' },
+            { header: 'Hora ingreso', dataKey: 'hora_ingreso' },
+            { header: 'Hora salida', dataKey: 'hora_salida' },
+            { header: 'Firma Ingreso', dataKey: 'firma_ingreso' },
+            { header: 'Firma Salida', dataKey: 'firma_salida' },
+            { header: 'Estado', dataKey: 'estado_equipo' },
+          ],
 
-  rows
-}
+      rows
+    }
 
-return response.json(responseData)
+    return response.json(responseData)
   } catch (error) {
     console.error(error)
     return response.status(500).json({ message: 'Error en el servidor' })
@@ -515,6 +534,9 @@ export const SearchMachine = async (request: Request, response: Response) => {
         v.placa AS vh_placa,
 
         dm.firma_ingreso,
+        dm.firma_salida,
+        dm.estado_equipo,
+        dm.hora_retiro_equipo,
 
         ac2.id_aprendiz AS owner_pc_id,
         aopc.nombre AS owner_pc_name,
@@ -601,6 +623,9 @@ export const SearchMachine = async (request: Request, response: Response) => {
       } : null,
 
       firma: data.firma_ingreso,
+      firma_salida: data.firma_salida,
+      estado_equipo: data.estado_equipo,
+      hora_retiro_equipo: data.hora_retiro_equipo,
 
       aprendices: {
         actual: {

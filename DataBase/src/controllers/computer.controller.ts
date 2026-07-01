@@ -110,8 +110,10 @@ export const getPropietario = async (req: Request, res: Response) => {
       JOIN aprendiz a
         ON a.id_aprendiz = di.id_aprendiz
 
-      JOIN formaciones f
-        ON f.id_formacion = a.id_formacion
+      LEFT JOIN aprendiz_formacion af
+        ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+      LEFT JOIN formaciones f
+        ON f.id_formacion = af.id_formacion
 
       WHERE dm.id_detallemaquina = $1
 

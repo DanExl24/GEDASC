@@ -11,6 +11,9 @@ export type MaquinaDetalleUI = {
   } | null
 
   firma: string | null
+  firma_salida?: string | null
+  estado_equipo?: 'dentro' | 'retirado' | null
+  id_detallemaquina?: number | null
 
   estado?: 'PRESTADA' | 'NO_PRINCIPAL' | 'NORMAL'
 

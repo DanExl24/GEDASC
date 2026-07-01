@@ -459,3 +459,95 @@ export const getAllMachinesByAprendizController = async (req: Request, res: Resp
     client.release()
   }
 }
+
+export const toggleMonitorController = async (req: Request, res: Response) => {
+  try {
+    const { id_aprendiz } = req.params
+    const { es_monitor } = req.body
+
+    if (id_aprendiz === undefined || es_monitor === undefined) {
+      return res.status(400).json({ success: false, message: "id_aprendiz y es_monitor son obligatorios" })
+    }
+
+    await pool.query(
+      'UPDATE aprendiz SET es_monitor = $1 WHERE id_aprendiz = $2',
+      [es_monitor, id_aprendiz]
+    )
+
+    res.json({ success: true, message: `Estado de monitor actualizado a ${es_monitor}` })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: "Error al actualizar estado de monitor" })
+  }
+}
+
+export const getFormacionesAprendizController = async (req: Request, res: Response) => {
+  try {
+    const { id_aprendiz } = req.params
+
+    const { rows: formacionesAsignadas } = await pool.query(
+      `SELECT f.id_formacion, f.nombre, f.nivel, af.estado, af.fecha_inicio
+       FROM aprendiz_formacion af
+       JOIN formaciones f ON f.id_formacion = af.id_formacion
+       WHERE af.id_aprendiz = $1`,
+      [id_aprendiz]
+    )
+
+    const { rows: todasFormaciones } = await pool.query(
+      'SELECT id_formacion, nombre, nivel FROM formaciones'
+    )
+
+    res.json({
+      success: true,
+      data: {
+        asignadas: formacionesAsignadas,
+        todas: todasFormaciones
+      }
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: "Error al obtener formaciones del aprendiz" })
+  }
+}
+
+export const asignarFormacionController = async (req: Request, res: Response) => {
+  try {
+    const { id_aprendiz } = req.params
+    const { id_formacion } = req.body
+
+    if (!id_aprendiz || !id_formacion) {
+      return res.status(400).json({ success: false, message: "id_aprendiz e id_formacion son obligatorios" })
+    }
+
+    await pool.query(
+      `INSERT INTO aprendiz_formacion (id_aprendiz, id_formacion, estado)
+       VALUES ($1, $2, 'activo')
+       ON CONFLICT (id_aprendiz, id_formacion)
+       DO UPDATE SET estado = 'activo', fecha_inicio = NOW()`,
+      [id_aprendiz, id_formacion]
+    )
+
+    res.json({ success: true, message: "Formación asignada correctamente" })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: "Error al asignar formación" })
+  }
+}
+
+export const desvincularFormacionController = async (req: Request, res: Response) => {
+  try {
+    const { id_aprendiz, id_formacion } = req.params
+
+    await pool.query(
+      `UPDATE aprendiz_formacion
+       SET estado = 'inactivo', fecha_fin = NOW()
+       WHERE id_aprendiz = $1 AND id_formacion = $2`,
+      [id_aprendiz, id_formacion]
+    )
+
+    res.json({ success: true, message: "Formación desvinculada correctamente" })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: "Error al desvincular formación" })
+  }
+}

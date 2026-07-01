@@ -8,6 +8,11 @@ export type MachineResponse = {
   marca?: string
   tipo_vehiculo?: string,
   inconsistencia : true
+  portador?: {
+    nombre: string
+    apellido: string
+    documento: string
+  }
 }
 
 export type handleMachineType =

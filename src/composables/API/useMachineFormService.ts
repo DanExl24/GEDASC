@@ -56,8 +56,12 @@ export const useMachineFormService = (form: ReturnType<typeof useMachineForm>) =
       return { status: 'inconsistencia', data }
     }
     if(data.aviso == 'maquinaYaRegistrada'){
-      setMessage('Esta maquina ya esta registrada', 'error')
-      addNotification('Esta maquina ya esta registrada','error')
+      const portador = data.portador
+      const portadorInfo = portador 
+        ? `${portador.nombre} ${portador.apellido} (${portador.documento})` 
+        : 'otro aprendiz'
+      setMessage(`Esta máquina tiene sesión activa. Portada por: ${portadorInfo}`, 'error')
+      addNotification(`Máquina en uso por ${portadorInfo}`, 'error')
       return { status: 'error' }
     }
     if (!response.ok) {

@@ -25,13 +25,17 @@ export const useAprendiz = () => {
     }
   }
 
-  const AnadirIngresoAprendiz = async (code: string) => {
+  const AnadirIngresoAprendiz = async (code: string, tipoSesion?: 'formacion' | 'monitoria', motivoReingreso?: string) => {
     if (!code) return
 
     try {
       const response = await fetch(`${API}/api/registroIngresos/addEntry/${code}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          tipo_sesion: tipoSesion || 'formacion',
+          motivo_reingreso: motivoReingreso || null
+        })
       })
       const data = await response.json()
 

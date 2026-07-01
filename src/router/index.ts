@@ -27,9 +27,7 @@ const router = createRouter({
     },
     {
       path : '/general-exit',
-      name : 'GeneralExitView',
-      component : () => import('../views/GeneralExitView.vue'),
-      meta: { requiresAuth: true }
+      redirect: '/general-entry'
     },
     {
       path : '/general-history',

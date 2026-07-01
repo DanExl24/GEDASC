@@ -8,4 +8,9 @@ export interface Aprendiz {
   hora_salida?: string
   id_detallemaquina?: number
   firma? : string
+  tipo_sesion?: 'formacion' | 'monitoria'
+  es_monitor?: boolean
+  total_formaciones?: number
+  numero_sesion?: number
+  motivo_reingreso?: string
 }

@@ -50,28 +50,44 @@ export const AddEntry = async (req: Request, res: Response) => {
     // traer el id del aprendiz
     const id_aprendiz = aprendizRecord.rows[0].id_aprendiz;
 
-    // Verificar si ya tiene ingreso
-    const ingresoRecord = await pool.query(`
-      SELECT id_ingreso
-      FROM detalles_ingreso
-      WHERE id_aprendiz = $1
-      AND hora_ingreso >= CURRENT_DATE
-      AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-    `,[id_aprendiz])
+    // 1️⃣ Verificar si tiene sesión activa (ingreso sin salida)
+    const activeSessionQuery = await pool.query(`
+      SELECT di.id_ingreso
+      FROM detalles_ingreso di
+      LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+      WHERE di.id_aprendiz = $1 AND ds.hora_salida IS NULL
+      ORDER BY di.hora_ingreso DESC
+      LIMIT 1
+    `, [id_aprendiz]);
 
-    // si se encuentra un registro, no permitir un nuevo registro
-    if (ingresoRecord.rowCount! > 0) {
-      return res.status(409).json({ message: "El aprendiz ya tiene un registro" });
+    if (activeSessionQuery.rowCount! > 0) {
+      // 2️⃣ Registrar salida automáticamente para cerrar la sesión activa
+      const id_ingreso = activeSessionQuery.rows[0].id_ingreso;
+      const result = await pool.query(
+        'INSERT INTO detalles_salida (id_ingreso) VALUES ($1) RETURNING *',
+        [id_ingreso]
+      );
+      return res.status(200).json({
+        type: 'exit',
+        message: 'Salida registrada con éxito',
+        data: result.rows[0]
+      });
     }
 
-    // Insertar nuevo ingreso
+    const { tipo_sesion, motivo_reingreso } = req.body;
+
+    // 3️⃣ Registrar un nuevo ingreso
     const result = await pool.query(
-      'INSERT INTO detalles_ingreso (id_aprendiz) VALUES ($1) RETURNING *',
-      [id_aprendiz]
+      'INSERT INTO detalles_ingreso (id_aprendiz, tipo_sesion, motivo_reingreso) VALUES ($1, $2, $3) RETURNING *',
+      [id_aprendiz, tipo_sesion || 'formacion', motivo_reingreso || null]
     );
 
     // mandar resultados
-    return res.status(201).json(result.rows[0]);
+    return res.status(201).json({
+      type: 'entry',
+      message: 'Ingreso registrado con éxito',
+      data: result.rows[0]
+    });
 
   } catch (error) {
     console.error(error);
@@ -103,7 +119,7 @@ export const DetectEntry = async (request: Request, response: Response) => {
 
     // 1️⃣ Verificar si el aprendiz existe
     const aprendiz = await pool.query(
-      `SELECT id_aprendiz FROM aprendiz WHERE documento = $1`,
+      `SELECT id_aprendiz, es_monitor FROM aprendiz WHERE documento = $1`,
       [documento]
     );
 
@@ -113,26 +129,56 @@ export const DetectEntry = async (request: Request, response: Response) => {
       });
     }
 
-    // 2️⃣ Verificar si ya tiene ingreso hoy
-    const ingresoVerificado = await pool.query(`
-      SELECT di.id_ingreso
-      FROM detalles_ingreso di
-      WHERE di.id_aprendiz = $1
-      AND di.hora_ingreso >= CURRENT_DATE
-      AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-    `, [aprendiz.rows[0].id_aprendiz]);
+    const id_aprendiz = aprendiz.rows[0].id_aprendiz;
+    const es_monitor = aprendiz.rows[0].es_monitor;
 
-    if (ingresoVerificado.rowCount! > 0) {
+    // 2️⃣ Verificar si tiene sesión activa (ingreso sin salida)
+    const activeSessionQuery = await pool.query(`
+      SELECT di.id_ingreso, di.id_detallemaquina, dm.estado_equipo
+      FROM detalles_ingreso di
+      LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+      LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina
+      WHERE di.id_aprendiz = $1 AND ds.hora_salida IS NULL
+      ORDER BY di.hora_ingreso DESC
+      LIMIT 1
+    `, [id_aprendiz]);
+
+    if (activeSessionQuery.rowCount! > 0) {
+      const session = activeSessionQuery.rows[0];
+      const hasMachine = session.id_detallemaquina !== null && session.estado_equipo === 'dentro';
+
       return response.status(200).json({
-        message: "El aprendiz ya tiene un registro hoy",
-        yaIngresado: true
+        message: "El aprendiz tiene una sesión activa. Registrando salida.",
+        yaIngresado: true,
+        activeSession: true,
+        es_monitor,
+        hasMachine,
+        id_detallemaquina: session.id_detallemaquina,
+        id_ingreso: session.id_ingreso,
+        id_aprendiz
       });
     }
 
-    // 3️⃣ Todo bien, puede ingresar
+    // 3️⃣ Verificar si tiene al menos un ingreso hoy (es decir, ya completó una sesión hoy y está reingresando)
+    const reentryQuery = await pool.query(`
+      SELECT COUNT(*) AS total_hoy
+      FROM detalles_ingreso
+      WHERE id_aprendiz = $1
+        AND hora_ingreso >= CURRENT_DATE
+        AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+    `, [id_aprendiz]);
+
+    const total_hoy = parseInt(reentryQuery.rows[0].total_hoy, 10);
+    const isReentry = total_hoy > 0;
+
+    // 4️⃣ Todo bien, puede ingresar (crear nueva sesión)
     return response.status(200).json({
       message: "El aprendiz puede ingresar",
-      yaIngresado: false
+      yaIngresado: false,
+      activeSession: false,
+      isReentry,
+      es_monitor,
+      id_aprendiz
     });
 
   } catch (error) {
@@ -167,15 +213,21 @@ export const EntryRecord = async (request: Request, response: Response) => {
         'a.nombre',
         'a.apellido',
         'a.documento',
+        'a.es_monitor',
         'f.nombre AS formacion',
         `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
         'di.id_detallemaquina',
-        'ds.hora_salida'
+        'di.tipo_sesion',
+        'di.motivo_reingreso',
+        `TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida`,
+        '(SELECT COUNT(*) FROM aprendiz_formacion apf WHERE apf.id_aprendiz = a.id_aprendiz AND apf.estado = \'activo\') AS total_formaciones',
+        'ROW_NUMBER() OVER (PARTITION BY di.id_aprendiz, di.hora_ingreso::date ORDER BY di.id_ingreso ASC) AS numero_sesion'
       ],
       from: 'detalles_ingreso di',
       joins: [
         'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
-        'JOIN formaciones f ON f.id_formacion = a.id_formacion',
+        'LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = \'activo\'',
+        'LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion',
         'LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina',
         'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
       ],
@@ -230,7 +282,11 @@ export const EntryManual = async (request: Request, response : Response) =>{
   const {documento} = request.params
     // Obtener el aprendiz por documento
     const aprendizRecord = await pool.query(
-      'SELECT a.nombre,a.apellido,f.nombre AS formacion FROM aprendiz AS a  JOIN formaciones AS f ON f.id_formacion = a.id_formacion WHERE documento = $1',[documento]);
+      `SELECT a.nombre, a.apellido, f.nombre AS formacion 
+       FROM aprendiz AS a  
+       LEFT JOIN aprendiz_formacion AS af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+       LEFT JOIN formaciones AS f ON f.id_formacion = af.id_formacion 
+       WHERE a.documento = $1`, [documento]);
     // verificar si el aprendiz si esta en la base de datos
     if (aprendizRecord.rowCount == 0) {
       return response.status(404).json({ message: "Aprendiz no encontrado" });
@@ -272,15 +328,21 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         'a.nombre',
         'a.apellido',
         'a.documento',
+        'a.es_monitor',
         'f.nombre AS formacion',
         `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
         'di.id_detallemaquina',
-        'ds.hora_salida'
+        'di.tipo_sesion',
+        'di.motivo_reingreso',
+        `TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida`,
+        '(SELECT COUNT(*) FROM aprendiz_formacion apf WHERE apf.id_aprendiz = a.id_aprendiz AND apf.estado = \'activo\') AS total_formaciones',
+        'ROW_NUMBER() OVER (PARTITION BY di.id_aprendiz, di.hora_ingreso::date ORDER BY di.id_ingreso ASC) AS numero_sesion'
       ],
       from: 'detalles_ingreso di',
       joins: [
         'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
-        'JOIN formaciones f ON f.id_formacion = a.id_formacion',
+        'LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = \'activo\'',
+        'LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion',
         'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
       ],
       where: [
@@ -467,31 +529,35 @@ export const AddMachine = async (request: Request, response: Response) => {
 
     await client.query('BEGIN');
 
-    //  verificar ingreso del día
+    //  verificar ingreso activo del día (sesión sin salida)
     const ingreso = await client.query(
-      `SELECT id_ingreso
-       FROM detalles_ingreso
-       WHERE id_aprendiz = $1
-       AND hora_ingreso >= CURRENT_DATE
-       AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+      `SELECT di.id_ingreso
+       FROM detalles_ingreso di
+       LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+       WHERE di.id_aprendiz = $1
+       AND di.hora_ingreso >= CURRENT_DATE
+       AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+       AND ds.hora_salida IS NULL
+       ORDER BY di.hora_ingreso DESC
        LIMIT 1`,
       [id_aprendiz]
     );
 
     if (ingreso.rowCount === 0) {
       await client.query('ROLLBACK');
-      return response.status(404).json({ message: "No hay ingreso hoy" });
+      return response.status(404).json({ message: "No hay ingreso activo hoy" });
     }
 
     const id_ingreso = ingreso.rows[0].id_ingreso;
 
-    //  duplicados
-    const checkExist = await checkDuplicate(client, placaNormalizada);
-    if (checkExist) {
+    //  verificar duplicados con detección de sesión activa
+    const duplicateCheck = await checkDuplicate(client, placaNormalizada);
+    if (duplicateCheck.isDuplicate) {
       await client.query('ROLLBACK');
       return response.status(409).json({
-        aviso : 'maquinaYaRegistrada',
-        message: "Esta máquina ya está registrada hoy"
+        aviso: 'maquinaYaRegistrada',
+        message: "Esta máquina está siendo portada actualmente por otro aprendiz",
+        portador: duplicateCheck.portador
       });
     }
 
@@ -712,57 +778,44 @@ export const UpdateMachine = async (request: Request, response: Response) => {
  */
 export const SearchMachine = async (request: Request, response: Response) => {
   const { id_aprendiz } = request.params
+  const id_detallemaquina = Array.isArray(id_aprendiz) ? id_aprendiz[0] : id_aprendiz
 
-  const id = Array.isArray(id_aprendiz) ? id_aprendiz[0] : id_aprendiz
-
-  if (!id) {
+  if (!id_detallemaquina) {
     return response.status(400).json({
-      message: "Debe enviar el id del aprendiz"
+      message: "Debe enviar el id del detalle de máquina"
     })
   }
 
   const client = await pool.connect()
 
   try {
-    // 1. PRESTADA
-    const prestada = await getTheBorrowedMachine(client, id)
-
-    if (prestada.length > 0) {
-      return response.status(200).json({
-        estado: 'PRESTADA',
-        result: prestada[0]
-      })
-    }
-
-    // 2. NO PRINCIPAL
-    const noPrincipal = await getNonPrincipalMachine(client, id)
-
-    if (noPrincipal.length > 0) {
-      return response.status(200).json({
-        estado: 'NO_PRINCIPAL',
-        result: noPrincipal[0]
-      })
-    }
-
-    // 3. NORMAL
     const query = `
       SELECT
+        di.id_aprendiz,
         c.marca AS pc_marca,
         c.serial AS pc_serial,
 
         v.tipo_vehiculo,
-        v.modelo AS vh_marca,
+        v.modelo AS vh_modelo,
         v.placa AS vh_placa,
 
         dm.firma_ingreso,
+        dm.firma_salida,
+        dm.estado_equipo,
+        dm.hora_retiro_equipo,
 
-        d.id_aprendiz AS "aprendizActual",
-        d.id_aprendiz AS "ownerId",
-        'Propietario' AS "ownerName"
+        ac2.id_aprendiz AS owner_pc_id,
+        aopc.nombre AS owner_pc_name,
 
-      FROM detalles_ingreso d
-      JOIN detalles_maquinas dm
-        ON dm.id_detallemaquina = d.id_detallemaquina
+        av2.id_aprendiz AS owner_vh_id,
+        aov.nombre AS owner_vh_name,
+
+        ac_np.id_computador AS non_principal_pc,
+        av_np.id_vehiculo AS non_principal_vh
+
+      FROM detalles_maquinas dm
+
+      JOIN detalles_ingreso AS di ON di.id_detallemaquina = dm.id_detallemaquina
 
       LEFT JOIN computadores c
         ON dm.id_computador = c.id_computador
@@ -770,51 +823,95 @@ export const SearchMachine = async (request: Request, response: Response) => {
       LEFT JOIN vehiculos v
         ON dm.id_vehiculo = v.id_vehiculo
 
-      WHERE d.id_aprendiz = $1
-        AND d.hora_ingreso >= CURRENT_DATE
-        AND d.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-      LIMIT 1
+      LEFT JOIN aprendiz_computador ac2
+        ON ac2.id_computador = dm.id_computador
+        AND ac2.principal = true
+
+      LEFT JOIN aprendiz aopc
+        ON aopc.id_aprendiz = ac2.id_aprendiz
+
+      LEFT JOIN aprendiz_vehiculo av2
+        ON av2.id_vehiculo = dm.id_vehiculo
+        AND av2.principal = true
+
+      LEFT JOIN aprendiz aov
+        ON aov.id_aprendiz = av2.id_aprendiz
+
+      LEFT JOIN aprendiz_computador ac_np
+        ON ac_np.id_aprendiz = di.id_aprendiz
+        AND ac_np.id_computador = dm.id_computador
+        AND ac_np.principal = false
+
+      LEFT JOIN aprendiz_vehiculo av_np
+        ON av_np.id_aprendiz = di.id_aprendiz
+        AND av_np.id_vehiculo = dm.id_vehiculo
+        AND av_np.principal = false
+
+      WHERE dm.id_detallemaquina = $1
     `
 
-    const result = await client.query(query, [id])
+    const result = await pool.query(query, [id_detallemaquina])
 
     if (result.rows.length === 0) {
       return response.status(404).json({
-        message: "No se encontraron máquinas registradas"
+        message: "No se encontró ese detalle de máquina"
       })
     }
 
     const data = result.rows[0]
 
-    const dto = {
-      pc: data.pc_marca
-        ? { marca: data.pc_marca, serial: data.pc_serial }
-        : null,
+    const ownerId = data.owner_pc_id ?? data.owner_vh_id ?? null
+    const ownerName = data.owner_pc_name ?? data.owner_vh_name ?? null
 
-      vh: data.vh_marca
-        ? {
-            tipo_vehiculo: data.tipo_vehiculo,
-            marca: data.vh_marca,
-            placa: data.vh_placa
-          }
-        : null,
+    const isBorrowed =
+      ownerId != null && String(ownerId) !== String(data.id_aprendiz)
 
-      firma: data.firma_ingreso ?? null,
+    const isNonPrincipal =
+      !isBorrowed &&
+      (data.non_principal_pc != null || data.non_principal_vh != null)
+
+    const estado = isBorrowed
+      ? 'PRESTADA'
+      : isNonPrincipal
+        ? 'NO_PRINCIPAL'
+        : 'NORMAL'
+
+    const maquinas = {
+      id_detallemaquina: parseInt(id_detallemaquina as string, 10),
+      pc: data.pc_marca ? {
+        marca: data.pc_marca,
+        serial: data.pc_serial,
+      } : null,
+
+      vh: data.vh_modelo ? {
+        tipo_vehiculo: data.tipo_vehiculo,
+        marca: data.vh_modelo,
+        placa: data.vh_placa,
+      } : null,
+
+      firma: data.firma_ingreso,
+      firma_salida: data.firma_salida,
+      estado_equipo: data.estado_equipo,
+      hora_retiro_equipo: data.hora_retiro_equipo,
 
       aprendices: {
-        actual: { id: data.aprendizActual },
-        owner: { id: data.ownerId, name: data.ownerName }
-      }
+        actual: {
+          id: data.id_aprendiz ?? null,
+        },
+        owner: {
+          id: ownerId,
+          name: ownerName,
+        },
+      },
     }
 
     return response.status(200).json({
-      estado: 'NORMAL',
-      result: dto
+      estado,
+      result: maquinas
     })
 
   } catch (error) {
     console.error(error)
-
     return response.status(500).json({
       message: "Error al buscar las máquinas",
       error

@@ -48,3 +48,6 @@ INSERT INTO usuarios (nombre, email, password, id_rol) VALUES
 ('Administrador', 'admin@gedasc.com', '$2b$10$JZeitk51jbFy9MrlEVXhFOPzpYpvp0uhRfqR39PoX4Ij9ZQOjdw/i', 1),
 ('Celador Turno Mañana', 'celador@gedasc.com', '$2b$10$47E2jRGGV1RSXa6w0XztXeySxecPTM9pPL2KChGwgGd8tqOFDmd.6', 2)
 ON CONFLICT (email) DO NOTHING;
+
+-- Definir monitores por defecto
+UPDATE aprendiz SET es_monitor = TRUE WHERE documento IN ('1051065897', '1099742508');

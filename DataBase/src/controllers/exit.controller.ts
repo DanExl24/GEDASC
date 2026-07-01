@@ -39,36 +39,23 @@ export const addExit = async (req: Request, res: Response) => {
 
     const id_aprendiz = aprendizRecord.rows[0].id_aprendiz;
 
-    // Validar si ya tiene salida hoy
-    const salidaRecord = await pool.query(`
-      SELECT ds.id_salida
-      FROM detalles_salida ds
-      JOIN detalles_ingreso di ON di.id_ingreso = ds.id_ingreso
-      WHERE di.id_aprendiz = $1
-      AND ds.hora_salida >= CURRENT_DATE
-      AND ds.hora_salida < CURRENT_DATE + INTERVAL '1 day'
+    // 1️⃣ Buscar la sesión activa del aprendiz (ingreso sin salida)
+    const activeSession = await pool.query(`
+      SELECT di.id_ingreso
+      FROM detalles_ingreso di
+      LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+      WHERE di.id_aprendiz = $1 AND ds.hora_salida IS NULL
+      ORDER BY di.hora_ingreso DESC
+      LIMIT 1
     `, [id_aprendiz]);
 
-    if (salidaRecord.rowCount && salidaRecord.rowCount > 0) {
-      return res.status(409).json({ message: "Ya registró salida hoy" });
+    if (activeSession.rowCount === 0) {
+      return res.status(400).json({ message: "No tiene un ingreso activo para registrar salida" });
     }
 
-    // Buscar ingreso del día
-    const ingresoHoy = await pool.query(`
-      SELECT id_ingreso
-      FROM detalles_ingreso
-      WHERE id_aprendiz = $1
-      AND hora_ingreso >= CURRENT_DATE
-      AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
-    `, [id_aprendiz]);
+    const id_ingreso = activeSession.rows[0].id_ingreso;
 
-    if (ingresoHoy.rowCount === 0) {
-      return res.status(400).json({ message: "No tiene ingreso registrado hoy" });
-    }
-
-    const id_ingreso = ingresoHoy.rows[0].id_ingreso;
-
-    // Insertar salida
+    // 2️⃣ Registrar salida
     const result = await pool.query(
       'INSERT INTO detalles_salida (id_ingreso) VALUES ($1) RETURNING *',
       [id_ingreso]
@@ -119,10 +106,15 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         a.nombre,
         a.apellido,
         a.documento,
+        a.es_monitor,
         f.nombre AS formacion,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
-        di.id_detallemaquina
+        di.id_detallemaquina,
+        di.tipo_sesion,
+        di.motivo_reingreso,
+        (SELECT COUNT(*) FROM aprendiz_formacion apf WHERE apf.id_aprendiz = a.id_aprendiz AND apf.estado = 'activo') AS total_formaciones,
+        ROW_NUMBER() OVER (PARTITION BY di.id_aprendiz, di.hora_ingreso::date ORDER BY di.id_ingreso ASC) AS numero_sesion
 
       FROM detalles_salida AS ds
 
@@ -132,8 +124,11 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
       JOIN aprendiz AS a
         ON a.id_aprendiz = di.id_aprendiz
 
-      JOIN formaciones AS f
-        ON f.id_formacion = a.id_formacion
+      LEFT JOIN aprendiz_formacion AS af
+        ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+
+      LEFT JOIN formaciones AS f
+        ON f.id_formacion = af.id_formacion
 
       LEFT JOIN detalles_maquinas AS dm
         ON dm.id_detallemaquina = di.id_detallemaquina
@@ -254,10 +249,15 @@ export const ExitRecord = async (request: Request, response: Response) => {
         a.nombre,
         a.apellido,
         a.documento,
+        a.es_monitor,
         f.nombre AS formacion,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
-        di.id_detallemaquina
+        di.id_detallemaquina,
+        di.tipo_sesion,
+        di.motivo_reingreso,
+        (SELECT COUNT(*) FROM aprendiz_formacion apf WHERE apf.id_aprendiz = a.id_aprendiz AND apf.estado = 'activo') AS total_formaciones,
+        ROW_NUMBER() OVER (PARTITION BY di.id_aprendiz, di.hora_ingreso::date ORDER BY di.id_ingreso ASC) AS numero_sesion
 
       FROM detalles_salida AS ds
 
@@ -269,8 +269,11 @@ export const ExitRecord = async (request: Request, response: Response) => {
       JOIN aprendiz AS a
       ON a.id_aprendiz = di.id_aprendiz
 
-      JOIN formaciones AS f
-      ON f.id_formacion = a.id_formacion
+      LEFT JOIN aprendiz_formacion AS af
+      ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+
+      LEFT JOIN formaciones AS f
+      ON f.id_formacion = af.id_formacion
 
       LEFT JOIN detalles_maquinas AS dm
       ON dm.id_detallemaquina = di.id_detallemaquina
@@ -299,4 +302,55 @@ export const ExitRecord = async (request: Request, response: Response) => {
     });
   }
 };
+
+// Nueva función: Registrar retiro de equipo con firma de salida
+export const retirarEquipo = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    const { id_detallemaquina } = req.params
+    const { firma_salida } = req.body
+
+    if (!id_detallemaquina || !firma_salida) {
+      return res.status(400).json({ message: "ID de detalle y firma son obligatorios" })
+    }
+
+    // Verificar que el equipo existe y está "dentro"
+    const equipo = await client.query(
+      `SELECT id_detallemaquina, estado_equipo
+       FROM detalles_maquinas
+       WHERE id_detallemaquina = $1`,
+      [id_detallemaquina]
+    )
+
+    if (equipo.rowCount === 0) {
+      return res.status(404).json({ message: "Equipo no encontrado" })
+    }
+
+    if (equipo.rows[0].estado_equipo === 'retirado') {
+      return res.status(409).json({ message: "El equipo ya fue retirado" })
+    }
+
+    // Registrar firma de salida y cambiar estado
+    await client.query(
+      `UPDATE detalles_maquinas
+       SET firma_salida = $1,
+           estado_equipo = 'retirado',
+           hora_retiro_equipo = NOW()
+       WHERE id_detallemaquina = $2`,
+      [firma_salida, id_detallemaquina]
+    )
+
+    return res.status(200).json({
+      message: "Equipo retirado correctamente",
+      id_detallemaquina
+    })
+
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: "Error al retirar equipo" })
+  } finally {
+    client.release()
+  }
+}
+
 

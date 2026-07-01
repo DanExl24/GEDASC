@@ -30,23 +30,37 @@ model Usuario {
 }
 
 model Formacion {
-  id_formacion Int        @id @default(autoincrement())
-  nombre       String     @unique
+  id_formacion Int                 @id @default(autoincrement())
+  nombre       String              @unique
   nivel        String
-  aprendices   Aprendiz[]
+  aprendices   AprendizFormacion[]
 
   @@map("formaciones")
 }
 
 model Aprendiz {
-  id_aprendiz  Int       @id @default(autoincrement())
-  documento    String    @unique
+  id_aprendiz  Int                 @id @default(autoincrement())
+  documento    String              @unique
   nombre       String
   apellido     String
-  id_formacion Int
-  formacion    Formacion @relation(fields: [id_formacion], references: [id_formacion])
+  es_monitor   Boolean             @default(false)
+  formaciones  AprendizFormacion[]
 
   @@map("aprendiz")
+}
+
+model AprendizFormacion {
+  id           Int       @id @default(autoincrement())
+  id_aprendiz  Int
+  id_formacion Int
+  estado       String    @default("activo")
+  fecha_inicio DateTime  @default(now())
+  fecha_fin    DateTime?
+  aprendiz     Aprendiz  @relation(fields: [id_aprendiz], references: [id_aprendiz], onDelete: Cascade)
+  formacion    Formacion @relation(fields: [id_formacion], references: [id_formacion])
+
+  @@unique([id_aprendiz, id_formacion])
+  @@map("aprendiz_formacion")
 }
 
 model Registro {

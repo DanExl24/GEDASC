@@ -55,7 +55,8 @@ export const TodayActivity = async (request: Request, response: Response) => {
       f.nombre AS formacion
     FROM detalles_ingreso di
     JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
-    JOIN formaciones f ON f.id_formacion = a.id_formacion
+    LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+    LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
     WHERE ${filtersMap.date.TODAY}
 
     UNION ALL
@@ -71,7 +72,8 @@ export const TodayActivity = async (request: Request, response: Response) => {
     FROM detalles_salida ds
     JOIN detalles_ingreso AS di ON di.id_ingreso = ds.id_ingreso
     JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
-    JOIN formaciones f ON f.id_formacion = a.id_formacion
+    LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+    LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
     WHERE ds.hora_salida >= CURRENT_DATE
       AND ds.hora_salida < CURRENT_DATE + INTERVAL '1 day'
 
