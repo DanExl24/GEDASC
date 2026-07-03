@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BvwSwF5w94l6GIopildIoLCA0C0R8L6XOP758hKS6hTsuGOjVudoV3DS2uUSQBK
+\restrict whnfVRV5mjmnVMnMnlpSddWK96sQawTrw6EOvkc5OhUeNqp6PUM3JvACCw1qUXN
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -222,6 +222,8 @@ CREATE TABLE public.detalles_ingreso (
     hora_ingreso timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     tipo_sesion character varying(20) DEFAULT 'formacion'::character varying,
     motivo_reingreso text,
+    id_formacion integer,
+    motivo_visita character varying(255),
     CONSTRAINT detalles_ingreso_tipo_sesion_check CHECK (((tipo_sesion)::text = ANY ((ARRAY['formacion'::character varying, 'monitoria'::character varying])::text[])))
 );
 
@@ -331,8 +333,12 @@ ALTER SEQUENCE public.detalles_salida_id_salida_seq OWNED BY public.detalles_sal
 
 CREATE TABLE public.formaciones (
     id_formacion integer NOT NULL,
-    nombre character varying(100) NOT NULL,
-    nivel character varying(15) NOT NULL
+    id_programa integer NOT NULL,
+    id_horario integer NOT NULL,
+    fecha_inicio date DEFAULT CURRENT_DATE,
+    fecha_fin date DEFAULT (CURRENT_DATE + '2 years'::interval),
+    estado character varying(20) DEFAULT 'activa'::character varying,
+    CONSTRAINT formaciones_estado_check CHECK (((estado)::text = ANY ((ARRAY['activa'::character varying, 'finalizada'::character varying])::text[])))
 );
 
 
@@ -358,6 +364,94 @@ ALTER SEQUENCE public.formaciones_id_formacion_seq OWNER TO postgres;
 --
 
 ALTER SEQUENCE public.formaciones_id_formacion_seq OWNED BY public.formaciones.id_formacion;
+
+
+--
+-- Name: horario; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.horario (
+    id_horario integer NOT NULL,
+    hora_inicio time without time zone NOT NULL,
+    hora_fin time without time zone NOT NULL,
+    jornada character varying(20),
+    CONSTRAINT horario_jornada_check CHECK (((jornada)::text = ANY ((ARRAY['Mañana'::character varying, 'Tarde'::character varying, 'Noche'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.horario OWNER TO postgres;
+
+--
+-- Name: horario_dia; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.horario_dia (
+    id_horario integer NOT NULL,
+    dia_semana character varying(20) NOT NULL,
+    CONSTRAINT horario_dia_dia_semana_check CHECK (((dia_semana)::text = ANY ((ARRAY['Lunes'::character varying, 'Martes'::character varying, 'Miércoles'::character varying, 'Jueves'::character varying, 'Viernes'::character varying, 'Sábado'::character varying, 'Domingo'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.horario_dia OWNER TO postgres;
+
+--
+-- Name: horario_id_horario_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.horario_id_horario_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.horario_id_horario_seq OWNER TO postgres;
+
+--
+-- Name: horario_id_horario_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.horario_id_horario_seq OWNED BY public.horario.id_horario;
+
+
+--
+-- Name: programa; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.programa (
+    id_programa integer NOT NULL,
+    nombre_programa character varying(255) NOT NULL,
+    version character varying(50) NOT NULL,
+    estado character varying(20) DEFAULT 'activo'::character varying,
+    nivel character varying(50) NOT NULL,
+    CONSTRAINT programa_estado_check CHECK (((estado)::text = ANY ((ARRAY['activo'::character varying, 'inactivo'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.programa OWNER TO postgres;
+
+--
+-- Name: programa_id_programa_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.programa_id_programa_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.programa_id_programa_seq OWNER TO postgres;
+
+--
+-- Name: programa_id_programa_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.programa_id_programa_seq OWNED BY public.programa.id_programa;
 
 
 --
@@ -527,10 +621,17 @@ ALTER TABLE ONLY public.detalles_salida ALTER COLUMN id_salida SET DEFAULT nextv
 
 
 --
--- Name: formaciones id_formacion; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: horario id_horario; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.formaciones ALTER COLUMN id_formacion SET DEFAULT nextval('public.formaciones_id_formacion_seq'::regclass);
+ALTER TABLE ONLY public.horario ALTER COLUMN id_horario SET DEFAULT nextval('public.horario_id_horario_seq'::regclass);
+
+
+--
+-- Name: programa id_programa; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.programa ALTER COLUMN id_programa SET DEFAULT nextval('public.programa_id_programa_seq'::regclass);
 
 
 --
@@ -568,14 +669,6 @@ ALTER TABLE ONLY public.aprendiz_computador
 
 ALTER TABLE ONLY public.aprendiz
     ADD CONSTRAINT aprendiz_documento_key UNIQUE (documento);
-
-
---
--- Name: aprendiz_formacion aprendiz_formacion_id_aprendiz_id_formacion_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.aprendiz_formacion
-    ADD CONSTRAINT aprendiz_formacion_id_aprendiz_id_formacion_key UNIQUE (id_aprendiz, id_formacion);
 
 
 --
@@ -643,19 +736,43 @@ ALTER TABLE ONLY public.detalles_salida
 
 
 --
--- Name: formaciones formaciones_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.formaciones
-    ADD CONSTRAINT formaciones_nombre_key UNIQUE (nombre);
-
-
---
 -- Name: formaciones formaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.formaciones
     ADD CONSTRAINT formaciones_pkey PRIMARY KEY (id_formacion);
+
+
+--
+-- Name: horario_dia horario_dia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.horario_dia
+    ADD CONSTRAINT horario_dia_pkey PRIMARY KEY (id_horario, dia_semana);
+
+
+--
+-- Name: horario horario_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.horario
+    ADD CONSTRAINT horario_pkey PRIMARY KEY (id_horario);
+
+
+--
+-- Name: programa programa_nombre_programa_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.programa
+    ADD CONSTRAINT programa_nombre_programa_key UNIQUE (nombre_programa);
+
+
+--
+-- Name: programa programa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.programa
+    ADD CONSTRAINT programa_pkey PRIMARY KEY (id_programa);
 
 
 --
@@ -672,6 +789,14 @@ ALTER TABLE ONLY public.roles
 
 ALTER TABLE ONLY public.roles
     ADD CONSTRAINT roles_pkey PRIMARY KEY (id_rol);
+
+
+--
+-- Name: aprendiz_formacion unique_id_aprendiz_id_formacion; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aprendiz_formacion
+    ADD CONSTRAINT unique_id_aprendiz_id_formacion UNIQUE (id_aprendiz, id_formacion);
 
 
 --
@@ -727,6 +852,13 @@ CREATE INDEX idx_detalles_ingreso_aprendiz_hora ON public.detalles_ingreso USING
 
 
 --
+-- Name: idx_detalles_ingreso_formacion; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_detalles_ingreso_formacion ON public.detalles_ingreso USING btree (id_formacion);
+
+
+--
 -- Name: idx_detalles_salida_hora; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -738,6 +870,27 @@ CREATE INDEX idx_detalles_salida_hora ON public.detalles_salida USING btree (hor
 --
 
 CREATE INDEX idx_detalles_salida_id_ingreso ON public.detalles_salida USING btree (id_ingreso);
+
+
+--
+-- Name: idx_formaciones_horario; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_formaciones_horario ON public.formaciones USING btree (id_horario);
+
+
+--
+-- Name: idx_formaciones_programa; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_formaciones_programa ON public.formaciones USING btree (id_programa);
+
+
+--
+-- Name: idx_horario_dia_busqueda; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_horario_dia_busqueda ON public.horario_dia USING btree (id_horario, dia_semana);
 
 
 --
@@ -762,14 +915,6 @@ ALTER TABLE ONLY public.aprendiz_computador
 
 ALTER TABLE ONLY public.aprendiz_formacion
     ADD CONSTRAINT aprendiz_formacion_id_aprendiz_fkey FOREIGN KEY (id_aprendiz) REFERENCES public.aprendiz(id_aprendiz) ON DELETE CASCADE;
-
-
---
--- Name: aprendiz_formacion aprendiz_formacion_id_formacion_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.aprendiz_formacion
-    ADD CONSTRAINT aprendiz_formacion_id_formacion_fkey FOREIGN KEY (id_formacion) REFERENCES public.formaciones(id_formacion);
 
 
 --
@@ -829,6 +974,46 @@ ALTER TABLE ONLY public.detalles_salida
 
 
 --
+-- Name: aprendiz_formacion fk_aprendiz_formacion_id_formacion; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aprendiz_formacion
+    ADD CONSTRAINT fk_aprendiz_formacion_id_formacion FOREIGN KEY (id_formacion) REFERENCES public.formaciones(id_formacion) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: detalles_ingreso fk_detalles_ingreso_id_formacion; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.detalles_ingreso
+    ADD CONSTRAINT fk_detalles_ingreso_id_formacion FOREIGN KEY (id_formacion) REFERENCES public.formaciones(id_formacion) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: formaciones formaciones_id_horario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.formaciones
+    ADD CONSTRAINT formaciones_id_horario_fkey FOREIGN KEY (id_horario) REFERENCES public.horario(id_horario);
+
+
+--
+-- Name: formaciones formaciones_id_programa_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.formaciones
+    ADD CONSTRAINT formaciones_id_programa_fkey FOREIGN KEY (id_programa) REFERENCES public.programa(id_programa);
+
+
+--
+-- Name: horario_dia horario_dia_id_horario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.horario_dia
+    ADD CONSTRAINT horario_dia_id_horario_fkey FOREIGN KEY (id_horario) REFERENCES public.horario(id_horario) ON DELETE CASCADE;
+
+
+--
 -- Name: usuarios usuarios_id_rol_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -840,5 +1025,5 @@ ALTER TABLE ONLY public.usuarios
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BvwSwF5w94l6GIopildIoLCA0C0R8L6XOP758hKS6hTsuGOjVudoV3DS2uUSQBK
+\unrestrict whnfVRV5mjmnVMnMnlpSddWK96sQawTrw6EOvkc5OhUeNqp6PUM3JvACCw1qUXN
 
