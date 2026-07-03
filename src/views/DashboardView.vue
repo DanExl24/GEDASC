@@ -371,6 +371,22 @@ const allDashboardActions: DashboardAction[] = [
     icon: Clock,
     accentClass: 'bg-senaColor',
   },
+  {
+    title: 'Gestión de Formaciones',
+    eyebrow: 'Admin',
+    description: 'Gestión y asignación de horarios, fichas y programas de formación.',
+    to: '/admin-horarios',
+    icon: Clock,
+    accentClass: 'bg-emerald-700',
+  },
+  {
+    title: 'Programas de Formación',
+    eyebrow: 'Admin',
+    description: 'Registro y control de programas curriculares y sus versiones.',
+    to: '/admin-programas',
+    icon: RecordPaper,
+    accentClass: '!bg-[rgb(21,142,79)]',
+  },
 ]
 
 const isAdmin = computed(() => auth.isAdmin)
@@ -439,7 +455,9 @@ const dashboardActions = computed(() => {
       action.to !== '/admin-record-control' &&
       action.to !== '/admin-borrowed-assets' &&
       action.to !== '/admin-aprendices' &&
-      action.to !== '/admin-alerts'
+      action.to !== '/admin-alerts' &&
+      action.to !== '/admin-horarios' &&
+      action.to !== '/admin-programas'
     )
   }
 

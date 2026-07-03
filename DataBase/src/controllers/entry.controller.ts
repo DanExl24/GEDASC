@@ -5,8 +5,6 @@ import { checkDuplicate } from '../services/machines/checkDuplicate';
 import { checkVehicle } from '../services/machines/checkVehicle';
 import { checkComputer } from '../services/machines/checkComputer';
 import { checkMachineResult } from '../types/InconsistentMachine.types';
-import { getTheBorrowedMachine } from '../services/machines/checksBorroweds';
-import { getNonPrincipalMachine } from '../services/machines/checkNonPrincipal';
 import { QueryBuilder } from '../utils/queryBuilder.util';
 import { searchGlobal } from '../utils/search.util';
 import { buildQuery } from '../utils/queryBuilder.util';
@@ -74,12 +72,12 @@ export const AddEntry = async (req: Request, res: Response) => {
       });
     }
 
-    const { tipo_sesion, motivo_reingreso } = req.body;
+    const { tipo_sesion, motivo_reingreso, id_formacion, motivo_visita } = req.body;
 
     // 3️⃣ Registrar un nuevo ingreso
     const result = await pool.query(
-      'INSERT INTO detalles_ingreso (id_aprendiz, tipo_sesion, motivo_reingreso) VALUES ($1, $2, $3) RETURNING *',
-      [id_aprendiz, tipo_sesion || 'formacion', motivo_reingreso || null]
+      'INSERT INTO detalles_ingreso (id_aprendiz, tipo_sesion, motivo_reingreso, id_formacion, motivo_visita) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [id_aprendiz, tipo_sesion || 'formacion', motivo_reingreso || null, id_formacion || null, motivo_visita || null]
     );
 
     // mandar resultados
@@ -171,6 +169,64 @@ export const DetectEntry = async (request: Request, response: Response) => {
     const total_hoy = parseInt(reentryQuery.rows[0].total_hoy, 10);
     const isReentry = total_hoy > 0;
 
+    // 3.5️⃣ Verificar horarios de formaciones activas del aprendiz
+    const schedulesQuery = await pool.query(`
+      SELECT 
+        f.id_formacion,
+        f.id_formacion::text AS nombre_ficha,
+        p.nombre_programa,
+        h.hora_inicio,
+        h.hora_fin,
+        h.jornada,
+        (
+          CURRENT_TIME >= (h.hora_inicio - INTERVAL '30 minutes') 
+          AND CURRENT_TIME <= (h.hora_fin + INTERVAL '30 minutes')
+          AND hd.dia_semana = CASE EXTRACT(ISODOW FROM CURRENT_TIMESTAMP)
+              WHEN 1 THEN 'Lunes'
+              WHEN 2 THEN 'Martes'
+              WHEN 3 THEN 'Miércoles'
+              WHEN 4 THEN 'Jueves'
+              WHEN 5 THEN 'Viernes'
+              WHEN 6 THEN 'Sábado'
+              WHEN 7 THEN 'Domingo'
+          END
+        ) AS coincide_horario
+      FROM aprendiz_formacion af
+      JOIN formaciones f ON f.id_formacion = af.id_formacion
+      JOIN programa p ON p.id_programa = f.id_programa
+      JOIN horario h ON h.id_horario = f.id_horario
+      JOIN horario_dia hd ON hd.id_horario = h.id_horario
+      WHERE af.id_aprendiz = $1 AND af.estado = 'activo' AND f.estado = 'activa'
+    `, [id_aprendiz]);
+
+    const uniqueFormationsMap = new Map();
+    schedulesQuery.rows.forEach(row => {
+      if (!uniqueFormationsMap.has(row.id_formacion)) {
+        uniqueFormationsMap.set(row.id_formacion, {
+          id_formacion: row.id_formacion,
+          nombre_ficha: row.nombre_ficha,
+          nombre_programa: row.nombre_programa,
+          hora_inicio: row.hora_inicio,
+          hora_fin: row.hora_fin,
+          jornada: row.jornada
+        });
+      }
+    });
+    const allActiveFormations = Array.from(uniqueFormationsMap.values());
+
+    const matchingFormations = schedulesQuery.rows
+      .filter(row => row.coincide_horario)
+      .map(row => ({
+        id_formacion: row.id_formacion,
+        nombre_ficha: row.nombre_ficha,
+        nombre_programa: row.nombre_programa,
+        hora_inicio: row.hora_inicio,
+        hora_fin: row.hora_fin,
+        jornada: row.jornada
+      }));
+
+    const isWithinSchedule = matchingFormations.length > 0;
+
     // 4️⃣ Todo bien, puede ingresar (crear nueva sesión)
     return response.status(200).json({
       message: "El aprendiz puede ingresar",
@@ -178,7 +234,12 @@ export const DetectEntry = async (request: Request, response: Response) => {
       activeSession: false,
       isReentry,
       es_monitor,
-      id_aprendiz
+      id_aprendiz,
+      schedule: {
+        isWithinSchedule,
+        matchingFormations,
+        allActiveFormations
+      }
     });
 
   } catch (error) {
@@ -214,7 +275,10 @@ export const EntryRecord = async (request: Request, response: Response) => {
         'a.apellido',
         'a.documento',
         'a.es_monitor',
-        'f.nombre AS formacion',
+        "COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion",
+        'p.nombre_programa',
+        'f.id_formacion AS id_formacion',
+        'di.motivo_visita',
         `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
         'di.id_detallemaquina',
         'di.tipo_sesion',
@@ -226,8 +290,18 @@ export const EntryRecord = async (request: Request, response: Response) => {
       from: 'detalles_ingreso di',
       joins: [
         'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
-        'LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = \'activo\'',
-        'LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion',
+        `LEFT JOIN (
+          SELECT id_aprendiz, id_formacion
+          FROM (
+            SELECT id_aprendiz, id_formacion,
+                   ROW_NUMBER() OVER (PARTITION BY id_aprendiz ORDER BY id_formacion DESC) as rn
+            FROM aprendiz_formacion
+            WHERE estado = 'activo'
+          ) sub
+          WHERE rn = 1
+        ) af_fallback ON af_fallback.id_aprendiz = di.id_aprendiz AND di.id_formacion IS NULL`,
+        "LEFT JOIN formaciones f ON f.id_formacion = COALESCE(di.id_formacion, af_fallback.id_formacion)",
+        "LEFT JOIN programa p ON p.id_programa = f.id_programa",
         'LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina',
         'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
       ],
@@ -282,10 +356,11 @@ export const EntryManual = async (request: Request, response : Response) =>{
   const {documento} = request.params
     // Obtener el aprendiz por documento
     const aprendizRecord = await pool.query(
-      `SELECT a.nombre, a.apellido, f.nombre AS formacion 
+      `SELECT a.nombre, a.apellido, p.nombre_programa AS formacion 
        FROM aprendiz AS a  
        LEFT JOIN aprendiz_formacion AS af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
        LEFT JOIN formaciones AS f ON f.id_formacion = af.id_formacion 
+       LEFT JOIN programa AS p ON p.id_programa = f.id_programa
        WHERE a.documento = $1`, [documento]);
     // verificar si el aprendiz si esta en la base de datos
     if (aprendizRecord.rowCount == 0) {
@@ -329,7 +404,10 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         'a.apellido',
         'a.documento',
         'a.es_monitor',
-        'f.nombre AS formacion',
+        "COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion",
+        'p.nombre_programa',
+        'f.id_formacion AS id_formacion',
+        'di.motivo_visita',
         `TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso`,
         'di.id_detallemaquina',
         'di.tipo_sesion',
@@ -341,8 +419,18 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
       from: 'detalles_ingreso di',
       joins: [
         'JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz',
-        'LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = \'activo\'',
-        'LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion',
+        `LEFT JOIN (
+          SELECT id_aprendiz, id_formacion
+          FROM (
+            SELECT id_aprendiz, id_formacion,
+                   ROW_NUMBER() OVER (PARTITION BY id_aprendiz ORDER BY id_formacion DESC) as rn
+            FROM aprendiz_formacion
+            WHERE estado = 'activo'
+          ) sub
+          WHERE rn = 1
+        ) af_fallback ON af_fallback.id_aprendiz = di.id_aprendiz AND di.id_formacion IS NULL`,
+        "LEFT JOIN formaciones f ON f.id_formacion = COALESCE(di.id_formacion, af_fallback.id_formacion)",
+        "LEFT JOIN programa p ON p.id_programa = f.id_programa",
         'LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso'
       ],
       where: [

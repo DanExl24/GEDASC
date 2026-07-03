@@ -107,7 +107,7 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
         a.apellido,
         a.documento,
         a.es_monitor,
-        f.nombre AS formacion,
+        COALESCE(f.nombre, di.motivo_visita, 'Sin formación') AS formacion,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
         di.id_detallemaquina,
@@ -124,11 +124,8 @@ export const SearchAprendiz = async (request: Request, response: Response) => {
       JOIN aprendiz AS a
         ON a.id_aprendiz = di.id_aprendiz
 
-      LEFT JOIN aprendiz_formacion AS af
-        ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
-
       LEFT JOIN formaciones AS f
-        ON f.id_formacion = af.id_formacion
+        ON f.id_formacion = di.id_formacion
 
       LEFT JOIN detalles_maquinas AS dm
         ON dm.id_detallemaquina = di.id_detallemaquina
@@ -250,7 +247,10 @@ export const ExitRecord = async (request: Request, response: Response) => {
         a.apellido,
         a.documento,
         a.es_monitor,
-        f.nombre AS formacion,
+        COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion,
+        p.nombre_programa,
+        f.id_formacion AS id_formacion,
+        di.motivo_visita,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora_salida,
         di.id_detallemaquina,
@@ -261,19 +261,28 @@ export const ExitRecord = async (request: Request, response: Response) => {
 
       FROM detalles_salida AS ds
 
-
-
       JOIN detalles_ingreso AS di
       ON di.id_ingreso = ds.id_ingreso
 
       JOIN aprendiz AS a
       ON a.id_aprendiz = di.id_aprendiz
 
-      LEFT JOIN aprendiz_formacion AS af
-      ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+      LEFT JOIN (
+        SELECT id_aprendiz, id_formacion
+        FROM (
+          SELECT id_aprendiz, id_formacion,
+                 ROW_NUMBER() OVER (PARTITION BY id_aprendiz ORDER BY id_formacion DESC) as rn
+          FROM aprendiz_formacion
+          WHERE estado = 'activo'
+        ) sub
+        WHERE rn = 1
+      ) af_fallback ON af_fallback.id_aprendiz = di.id_aprendiz AND di.id_formacion IS NULL
 
       LEFT JOIN formaciones AS f
-      ON f.id_formacion = af.id_formacion
+      ON f.id_formacion = COALESCE(di.id_formacion, af_fallback.id_formacion)
+
+      LEFT JOIN programa AS p
+      ON p.id_programa = f.id_programa
 
       LEFT JOIN detalles_maquinas AS dm
       ON dm.id_detallemaquina = di.id_detallemaquina

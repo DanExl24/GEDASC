@@ -302,12 +302,10 @@ import {
   getAdminAprendices,
   getAdminMachinesByAprendiz,
   getAdminTrack,
-  toggleAdminMonitor,
   type AdminAprendizRow,
   type AdminMachineRecord,
   type AdminTrackRow,
 } from '@/Services/adminAprendices'
-import { useNotifications } from '@/composables/useNotifications'
 
 type SummaryCard = {
   label: string
@@ -332,7 +330,6 @@ type AprendizWithActivity = AdminAprendizRow & {
 }
 
 const auth = useAuthStore()
-const { addNotification } = useNotifications()
 const search = ref('')
 const inactiveDaysInput = ref('')
 const isLoading = ref(false)
@@ -583,20 +580,7 @@ const openMachinesModal = async (aprendiz: AprendizWithActivity) => {
   }
 }
 
-const toggleMonitor = async (aprendiz: AprendizWithActivity) => {
-  if (!auth.token) return
-  const originalState = aprendiz.es_monitor
-  const newState = !originalState
-  // optimistic update
-  aprendiz.es_monitor = newState
 
-  try {
-    await toggleAdminMonitor(auth.token, aprendiz.id_aprendiz, newState)
-  } catch (error) {
-    console.error(error)
-    aprendiz.es_monitor = originalState // rollback on error
-  }
-}
 
 const openAsociacionesModal = (aprendiz?: AprendizWithActivity) => {
   asociacionesModal.value?.open(aprendiz)

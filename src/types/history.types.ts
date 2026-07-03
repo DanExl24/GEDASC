@@ -7,6 +7,9 @@ export interface HistorialAprendiz {
   apellido: string
   documento: string
   formacion: string
+  nombre_programa?: string
+  id_formacion?: number
+  motivo_visita?: string
   hora_ingreso: string | null
   hora_salida: string | null
   id_detallemaquina: number | null

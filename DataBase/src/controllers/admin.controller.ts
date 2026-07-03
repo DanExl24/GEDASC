@@ -116,7 +116,7 @@ export const deleteIngresoController = async (req: Request, res: Response) => {
       })
     }
 
-    const { id, verification, date, observation } = validation.data
+    const { id, verification, date } = validation.data
 
     const record = await service.getIngressEgressRecordForDelete(id, date)
 
@@ -195,7 +195,7 @@ export const deleteSalidaController = async (req: Request, res: Response) => {
       })
     }
 
-    const { id, verification, date, observation } = validation.data
+    const { id, verification, date } = validation.data
 
     const record = await service.getIngressEgressRecordForDelete(id, date)
 
@@ -486,15 +486,18 @@ export const getFormacionesAprendizController = async (req: Request, res: Respon
     const { id_aprendiz } = req.params
 
     const { rows: formacionesAsignadas } = await pool.query(
-      `SELECT f.id_formacion, f.nombre, f.nivel, af.estado, af.fecha_inicio
+      `SELECT f.id_formacion, p.nombre_programa AS nombre, p.nivel, af.estado, af.fecha_inicio
        FROM aprendiz_formacion af
        JOIN formaciones f ON f.id_formacion = af.id_formacion
+       JOIN programa p ON p.id_programa = f.id_programa
        WHERE af.id_aprendiz = $1`,
       [id_aprendiz]
     )
 
     const { rows: todasFormaciones } = await pool.query(
-      'SELECT id_formacion, nombre, nivel FROM formaciones'
+      `SELECT f.id_formacion, p.nombre_programa AS nombre, p.nivel 
+       FROM formaciones f
+       JOIN programa p ON p.id_programa = f.id_programa`
     )
 
     res.json({
@@ -519,6 +522,57 @@ export const asignarFormacionController = async (req: Request, res: Response) =>
       return res.status(400).json({ success: false, message: "id_aprendiz e id_formacion son obligatorios" })
     }
 
+    // RN-038: Verificar superposición de horarios antes de asignar
+    // 1. Obtener el horario de la formación que se quiere asignar
+    const targetSchedule = await pool.query(`
+      SELECT h.hora_inicio, h.hora_fin, hd.dia_semana
+      FROM formaciones f
+      JOIN horario h ON h.id_horario = f.id_horario
+      JOIN horario_dia hd ON hd.id_horario = h.id_horario
+      WHERE f.id_formacion = $1 AND f.estado = 'activa'
+    `, [id_formacion])
+
+    if (targetSchedule.rowCount === 0) {
+      return res.status(400).json({ success: false, message: "La formación no tiene un horario activo asignado" })
+    }
+
+    // 2. Obtener los horarios de todas las formaciones activas del aprendiz
+    const existingSchedules = await pool.query(`
+      SELECT f.id_formacion, p.nombre_programa, h.hora_inicio, h.hora_fin, hd.dia_semana
+      FROM aprendiz_formacion af
+      JOIN formaciones f ON f.id_formacion = af.id_formacion
+      JOIN programa p ON p.id_programa = f.id_programa
+      JOIN horario h ON h.id_horario = f.id_horario
+      JOIN horario_dia hd ON hd.id_horario = h.id_horario
+      WHERE af.id_aprendiz = $1 AND af.estado = 'activo' AND f.estado = 'activa'
+        AND af.id_formacion != $2
+    `, [id_aprendiz, id_formacion])
+
+    // 3. Comparar cada día/hora de la nueva formación contra las existentes
+    const targetDays = targetSchedule.rows
+    const existingDays = existingSchedules.rows
+
+    for (const newSlot of targetDays) {
+      for (const existingSlot of existingDays) {
+        // Solo comparar si comparten el mismo día de la semana
+        if (newSlot.dia_semana === existingSlot.dia_semana) {
+          // Verificar superposición temporal: A.inicio < B.fin AND A.fin > B.inicio
+          const newStart = newSlot.hora_inicio
+          const newEnd = newSlot.hora_fin
+          const existStart = existingSlot.hora_inicio
+          const existEnd = existingSlot.hora_fin
+
+          if (newStart < existEnd && newEnd > existStart) {
+            return res.status(409).json({
+              success: false,
+              message: `No se puede asignar: el horario se cruza con la formación "${existingSlot.nombre_programa}" (Ficha: ${existingSlot.id_formacion}) el día ${existingSlot.dia_semana} de ${existingSlot.hora_inicio} a ${existingSlot.hora_fin}.`
+            })
+          }
+        }
+      }
+    }
+
+    // 4. Sin superposición: proceder con la asignación
     await pool.query(
       `INSERT INTO aprendiz_formacion (id_aprendiz, id_formacion, estado)
        VALUES ($1, $2, 'activo')
@@ -549,5 +603,288 @@ export const desvincularFormacionController = async (req: Request, res: Response
   } catch (error) {
     console.error(error)
     res.status(500).json({ success: false, message: "Error al desvincular formación" })
+  }
+}
+
+export const getProgramasController = async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM programa ORDER BY nombre_programa ASC')
+    res.json({ success: true, data: rows })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al obtener programas' })
+  }
+}
+
+export const createProgramaController = async (req: Request, res: Response) => {
+  try {
+    const { nombre_programa, version, nivel, estado } = req.body
+    if (!nombre_programa || !version || !nivel) {
+      return res.status(400).json({ success: false, message: 'Campos requeridos faltantes' })
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO programa (nombre_programa, version, nivel, estado)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [nombre_programa, version, nivel, estado || 'activo']
+    )
+    res.json({ success: true, data: rows[0] })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al crear programa' })
+  }
+}
+
+export const updateProgramaController = async (req: Request, res: Response) => {
+  try {
+    const { id_programa } = req.params
+    const { nombre_programa, version, nivel, estado } = req.body
+    if (!nombre_programa || !version || !nivel) {
+      return res.status(400).json({ success: false, message: 'Campos requeridos faltantes' })
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE programa
+       SET nombre_programa = $1,
+           version = $2,
+           nivel = $3,
+           estado = $4
+       WHERE id_programa = $5
+       RETURNING *`,
+      [nombre_programa, version, nivel, estado || 'activo', id_programa]
+    )
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Programa no encontrado' })
+    }
+    res.json({ success: true, data: rows[0] })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al actualizar programa' })
+  }
+}
+
+export const getHorariosController = async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        h.id_horario, 
+        TO_CHAR(h.hora_inicio, 'HH24:MI') AS hora_inicio, 
+        TO_CHAR(h.hora_fin, 'HH24:MI') AS hora_fin, 
+        h.jornada,
+        COALESCE(
+          (SELECT string_agg(hd.dia_semana, ', ') 
+           FROM horario_dia hd 
+           WHERE hd.id_horario = h.id_horario), 
+          ''
+        ) AS dias_semana
+      FROM horario h
+      ORDER BY h.id_horario ASC
+    `)
+    res.json({ success: true, data: rows })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al obtener horarios' })
+  }
+}
+
+const detectJornada = (horaInicio: string, horaFin: string): string => {
+  if (!horaInicio) return 'Mañana';
+  
+  const [hStart, mStart] = horaInicio.split(':').map(Number);
+  const startMin = hStart * 60 + mStart;
+  
+  // Mañana: antes de las 12:00 PM (720 min)
+  if (startMin < 720) {
+    return 'Mañana';
+  }
+  // Tarde: entre las 12:00 PM y las 6:00 PM (720 min y 1080 min)
+  if (startMin >= 720 && startMin < 1080) {
+    return 'Tarde';
+  }
+  // Noche: después de las 6:00 PM (1080 min)
+  return 'Noche';
+}
+
+export const createHorarioController = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { hora_inicio, hora_fin, dias_semana } = req.body
+    if (!hora_inicio || !hora_fin || !Array.isArray(dias_semana) || dias_semana.length === 0) {
+      await client.query('ROLLBACK')
+      return res.status(400).json({ success: false, message: 'Campos requeridos faltantes o inválidos' })
+    }
+    
+    const calculatedJornada = detectJornada(hora_inicio, hora_fin)
+    
+    const { rows } = await client.query(
+      `INSERT INTO horario (hora_inicio, hora_fin, jornada)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [hora_inicio, hora_fin, calculatedJornada]
+    )
+    const id_horario = rows[0].id_horario
+
+    for (const dia of dias_semana) {
+      await client.query(
+        `INSERT INTO horario_dia (id_horario, dia_semana)
+         VALUES ($1, $2)`,
+        [id_horario, dia]
+      )
+    }
+
+    await client.query('COMMIT')
+    res.json({ success: true, data: { ...rows[0], dias_semana: dias_semana.join(', ') } })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al crear horario' })
+  } finally {
+    client.release()
+  }
+}
+
+export const getAllFormacionesController = async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        f.id_formacion, 
+        p.nombre_programa AS nombre, 
+        p.nivel, 
+        f.estado,
+        TO_CHAR(f.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio,
+        TO_CHAR(f.fecha_fin, 'YYYY-MM-DD') AS fecha_fin,
+        f.id_programa,
+        p.nombre_programa,
+        f.id_horario,
+        TO_CHAR(h.hora_inicio, 'HH24:MI') AS hora_inicio,
+        TO_CHAR(h.hora_fin, 'HH24:MI') AS hora_fin,
+        h.jornada,
+        (SELECT string_agg(hd.dia_semana, ', ') FROM horario_dia hd WHERE hd.id_horario = h.id_horario) AS dias_semana
+      FROM formaciones f
+      JOIN programa p ON p.id_programa = f.id_programa
+      JOIN horario h ON h.id_horario = f.id_horario
+      ORDER BY f.id_formacion ASC
+    `)
+    res.json({ success: true, data: rows })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al obtener formaciones' })
+  }
+}
+
+export const createFormacionController = async (req: Request, res: Response) => {
+  try {
+    const { id_formacion, id_programa, id_horario, fecha_inicio, fecha_fin, estado } = req.body
+    if (!id_formacion || !id_programa || !id_horario) {
+      return res.status(400).json({ success: false, message: 'Campos requeridos id_formacion, id_programa, e id_horario faltantes' })
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO formaciones (id_formacion, id_programa, id_horario, fecha_inicio, fecha_fin, estado)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        id_formacion, 
+        id_programa, 
+        id_horario, 
+        fecha_inicio || new Date(), 
+        fecha_fin || new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000), 
+        estado || 'activa'
+      ]
+    )
+    res.json({ success: true, data: rows[0] })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al crear formación' })
+  }
+}
+
+export const updateFormacionController = async (req: Request, res: Response) => {
+  try {
+    const { id_formacion: old_id_formacion } = req.params
+    const { id_formacion: new_id_formacion, id_programa, id_horario, fecha_inicio, fecha_fin, estado } = req.body
+    if (!id_programa || !id_horario) {
+      return res.status(400).json({ success: false, message: 'Campos requeridos id_programa e id_horario faltantes' })
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE formaciones
+       SET id_formacion = COALESCE($1, id_formacion),
+           id_programa = $2,
+           id_horario = $3,
+           fecha_inicio = COALESCE($4, fecha_inicio),
+           fecha_fin = COALESCE($5, fecha_fin),
+           estado = COALESCE($6, estado)
+       WHERE id_formacion = $7
+       RETURNING *`,
+      [
+        new_id_formacion || null,
+        id_programa,
+        id_horario,
+        fecha_inicio || null,
+        fecha_fin || null,
+        estado || null,
+        old_id_formacion
+      ]
+    )
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Formación no encontrada' })
+    }
+    res.json({ success: true, data: rows[0] })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al actualizar formación' })
+  }
+}
+
+export const deleteFormacionController = async (req: Request, res: Response) => {
+  try {
+    const { id_formacion } = req.params
+    const { rowCount } = await pool.query('DELETE FROM formaciones WHERE id_formacion = $1', [id_formacion])
+    if (rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Formación no encontrada' })
+    }
+    res.json({ success: true, message: 'Formación eliminada correctamente' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al eliminar formación' })
+  }
+}
+
+export const getFormacionAprendicesController = async (req: Request, res: Response) => {
+  try {
+    const { id_formacion } = req.params
+
+    const { rows: vinculados } = await pool.query(
+      `SELECT a.id_aprendiz, a.documento, a.nombre, a.apellido, af.estado, af.fecha_inicio
+       FROM aprendiz_formacion af
+       JOIN aprendiz a ON a.id_aprendiz = af.id_aprendiz
+       WHERE af.id_formacion = $1 AND af.estado = 'activo'
+       ORDER BY a.nombre ASC`,
+      [id_formacion]
+    )
+
+    const { rows: noVinculados } = await pool.query(
+      `SELECT a.id_aprendiz, a.documento, a.nombre, a.apellido
+       FROM aprendiz a
+       WHERE a.id_aprendiz NOT IN (
+         SELECT af.id_aprendiz 
+         FROM aprendiz_formacion af 
+         WHERE af.id_formacion = $1 AND af.estado = 'activo'
+       )
+       ORDER BY a.nombre ASC`,
+      [id_formacion]
+    )
+
+    res.json({
+      success: true,
+      data: {
+        vinculados,
+        noVinculados
+      }
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al obtener aprendices de la formación' })
   }
 }

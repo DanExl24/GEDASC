@@ -98,7 +98,7 @@ export const getPropietario = async (req: Request, res: Response) => {
         a.id_aprendiz AS id_propietario,
         a.nombre,
         a.apellido,
-        f.nombre AS formacion,
+        COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
         dm.firma_ingreso AS firma
 
@@ -110,10 +110,22 @@ export const getPropietario = async (req: Request, res: Response) => {
       JOIN aprendiz a
         ON a.id_aprendiz = di.id_aprendiz
 
-      LEFT JOIN aprendiz_formacion af
-        ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+      LEFT JOIN (
+        SELECT id_aprendiz, id_formacion
+        FROM (
+          SELECT id_aprendiz, id_formacion,
+                 ROW_NUMBER() OVER (PARTITION BY id_aprendiz ORDER BY id_formacion DESC) as rn
+          FROM aprendiz_formacion
+          WHERE estado = 'activo'
+        ) sub
+        WHERE rn = 1
+      ) af_fallback ON af_fallback.id_aprendiz = di.id_aprendiz AND di.id_formacion IS NULL
+
       LEFT JOIN formaciones f
-        ON f.id_formacion = af.id_formacion
+        ON f.id_formacion = COALESCE(di.id_formacion, af_fallback.id_formacion)
+
+      LEFT JOIN programa p
+        ON p.id_programa = f.id_programa
 
       WHERE dm.id_detallemaquina = $1
 

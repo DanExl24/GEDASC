@@ -351,7 +351,7 @@ const getBorrowedVehicles = async (filters: AdminFilters = {}) => {
 const getAllMachinesByAprendiz = async (
   client: PoolClient,
   id_aprendiz?: string,
-  filters: AdminFilters = {}
+  _filters: AdminFilters = {}
 ): Promise<MaquinaDetalleUI[]> => {
   if (!id_aprendiz) {
     return []
@@ -535,10 +535,8 @@ const InconsistentExit = async () => {
       ON ds.id_ingreso = di.id_ingreso
     INNER JOIN aprendiz AS a
       ON a.id_aprendiz = di.id_aprendiz
-    LEFT JOIN aprendiz_formacion AS af
-      ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
     LEFT JOIN formaciones AS f
-      ON f.id_formacion = af.id_formacion
+      ON f.id_formacion = di.id_formacion
     WHERE di.hora_ingreso < CURRENT_DATE
       AND ds.hora_salida IS NULL
   `)

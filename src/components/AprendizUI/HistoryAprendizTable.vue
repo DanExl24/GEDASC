@@ -20,7 +20,13 @@
         <td>{{ aprendiz.nombre }}</td>
         <td>{{ aprendiz.apellido }}</td>
         <td>{{ aprendiz.documento }}</td>
-        <td>{{ aprendiz.formacion }}</td>
+        <td>
+          <div class="flex flex-col items-center gap-0.5 text-center">
+            <span class="font-bold text-slate-900 text-xs">{{ aprendiz.nombre_programa || 'Sin formación' }}</span>
+            <span v-if="aprendiz.id_formacion" class="text-[11px] text-purple-700 font-bold">Ficha: {{ aprendiz.id_formacion }}</span>
+            <span v-if="aprendiz.motivo_visita" class="text-[10px] text-slate-400 font-medium italic mt-0.5">Motivo: {{ aprendiz.motivo_visita }}</span>
+          </div>
+        </td>
         <td>{{ aprendiz.hora_ingreso || '-' }}</td>
         <td>
           <JornadaBadge

@@ -160,6 +160,14 @@
         ref="modalReentry"
         @confirm="handleReentryConfirm"
       />
+      <ModalSelectFormation
+        ref="modalSelectFormationRef"
+        @confirm="handleFormationSelected"
+      />
+      <ModalVisitReason
+        ref="modalVisitReasonRef"
+        @confirm="handleVisitReasonConfirmed"
+      />
     </main>
   </div>
 </template>
@@ -175,10 +183,13 @@ import ModalRegisterManual from '@/components/AprendizUI/Modals/ModalRegisterMan
 import ModalConfirm from '@/components/AprendizUI/Modals/ModalConfirm.vue'
 import ModalMachineDetails from '@/components/AprendizUI/Modals/ModalMachineDetails.vue'
 import ModalReentryReason from '@/components/AprendizUI/Modals/ModalReentryReason.vue'
+import ModalSelectFormation from '@/components/AprendizUI/Modals/ModalSelectFormation.vue'
+import ModalVisitReason from '@/components/AprendizUI/Modals/ModalVisitReason.vue'
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
 import { DetectEntry } from '@/Services/DetectEntrys'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
+import type { Aprendiz } from '@/types/aprendiz.types'
 import { useAprendiz } from '@/composables/useAprendiz'
 import { useExitAprendiz } from '@/composables/useExitAprendiz'
 import AprendizTable from '@/components/AprendizUI/AprendizTable.vue'
@@ -210,9 +221,25 @@ const tempScannedCode = ref('')
 const modalConfirmMonitor = ref<InstanceType<typeof ModalConfirm> | null>(null)
 const modalMachineDetails = ref<InstanceType<typeof ModalMachineDetails> | null>(null)
 const modalReentry = ref<InstanceType<typeof ModalReentryReason> | null>(null)
-const tempReentryReason = ref('')
+const modalSelectFormationRef = ref<InstanceType<typeof ModalSelectFormation> | null>(null)
+const modalVisitReasonRef = ref<InstanceType<typeof ModalVisitReason> | null>(null)
+
 const isTempMonitor = ref(false)
 const currentAprendizId = ref<number | null>(null)
+
+// Flow Context Variables
+const tempIsReentry = ref(false)
+const tempIsMonitor = ref(false)
+const tempMatchingFormations = ref<any[]>([])
+const tempAllActiveFormations = ref<any[]>([])
+
+const selectedTipoSesion = ref<'formacion' | 'monitoria'>('formacion')
+const selectedIdFormacion = ref<number | undefined>(undefined)
+const selectedMotivoVisita = ref<string | undefined>(undefined)
+
+const tipoSesionResolved = ref(false)
+const reentryReasonResolved = ref(false)
+const reentryReasonText = ref('')
 
 const pendingMachineCount = computed(
   () => entryData.value.filter((aprendiz) => aprendiz.id_detallemaquina == null && !aprendiz.hora_salida).length,
@@ -221,38 +248,102 @@ const registeredMachineCount = computed(
   () => entryData.value.filter((aprendiz) => aprendiz.id_detallemaquina != null && !aprendiz.hora_salida).length,
 )
 
-const registrarIngresoMonitor = async (tipoSesion: 'formacion' | 'monitoria') => {
+const evaluateNextStep = async () => {
+  // Step 1: Monitor Check
+  if (tempIsMonitor.value && !tipoSesionResolved.value) {
+    modalConfirmMonitor.value?.open()
+    return
+  }
+
+  // Step 2: Schedule & Formation Check
+  if (selectedTipoSesion.value === 'formacion') {
+    if (selectedIdFormacion.value === undefined && selectedMotivoVisita.value === undefined) {
+      if (tempMatchingFormations.value.length === 0) {
+        // Outside schedule: prompt for reason for visit
+        modalVisitReasonRef.value?.open()
+        return
+      } else if (tempMatchingFormations.value.length === 1) {
+        // Match exactly 1
+        selectedIdFormacion.value = tempMatchingFormations.value[0].id_formacion
+      } else {
+        // Overlap: prompt selection
+        modalSelectFormationRef.value?.open(tempMatchingFormations.value)
+        return
+      }
+    }
+  }
+
+  // Step 3: Reentry Check
+  if (tempIsReentry.value && !reentryReasonResolved.value) {
+    modalReentry.value?.open()
+    return
+  }
+
+  // Step 4: Finalize
+  await finalizeEntry()
+}
+
+const finalizeEntry = async () => {
   try {
-    const validacion = await AñadirIngresoAprendiz(tempScannedCode.value, tipoSesion, tempReentryReason.value || undefined)
+    const validacion = await AñadirIngresoAprendiz(
+      tempScannedCode.value,
+      selectedTipoSesion.value,
+      reentryReasonText.value || undefined,
+      selectedIdFormacion.value,
+      selectedMotivoVisita.value
+    )
     if (validacion) {
-      addNotification('Ingreso Registrado (' + (tipoSesion === 'monitoria' ? 'Monitoría' : 'Formación') + ')', 'success')
+      addNotification('Ingreso Registrado', 'success')
+      await HistorialIngresoAprendiz()
+      await HistorialSalidaAprendiz()
     }
   } finally {
     tempScannedCode.value = ''
-    tempReentryReason.value = ''
+    tempIsReentry.value = false
+    tempIsMonitor.value = false
+    tempMatchingFormations.value = []
+    tempAllActiveFormations.value = []
+    selectedTipoSesion.value = 'formacion'
+    selectedIdFormacion.value = undefined
+    selectedMotivoVisita.value = undefined
+    tipoSesionResolved.value = false
+    reentryReasonResolved.value = false
+    reentryReasonText.value = ''
     scannerModal.value?.closeScanner()
   }
 }
 
+const registrarIngresoMonitor = async (tipoSesion: 'formacion' | 'monitoria') => {
+  selectedTipoSesion.value = tipoSesion
+  tipoSesionResolved.value = true
+  modalConfirmMonitor.value?.close()
+  await evaluateNextStep()
+}
+
 const handleReentryConfirm = async (reason: string) => {
-  tempReentryReason.value = reason
-  if (isTempMonitor.value) {
-    modalConfirmMonitor.value?.open()
-  } else {
-    const validacion = await AñadirIngresoAprendiz(tempScannedCode.value, 'formacion', reason)
-    if (validacion) {
-      addNotification('Ingreso Registrado con Reingreso', 'success')
-    }
-    tempScannedCode.value = ''
-    scannerModal.value?.closeScanner()
-  }
+  reentryReasonText.value = reason
+  reentryReasonResolved.value = true
+  modalReentry.value?.close()
+  await evaluateNextStep()
+}
+
+const handleFormationSelected = async (idFormacion: number) => {
+  selectedIdFormacion.value = idFormacion
+  await evaluateNextStep()
+}
+
+const handleVisitReasonConfirmed = async (reason: string) => {
+  selectedMotivoVisita.value = reason
+  await evaluateNextStep()
 }
 
 const handleMachineRetired = async () => {
   if (tempScannedCode.value) {
+    // If retiring machine, they are exiting, so no schedule checks needed
     const validacion = await AñadirIngresoAprendiz(tempScannedCode.value)
     if (validacion) {
       addNotification('Salida Registrada (con Retiro de Equipo)', 'success')
+      await HistorialSalidaAprendiz()
     }
     tempScannedCode.value = ''
   }
@@ -260,7 +351,7 @@ const handleMachineRetired = async () => {
   scannerModal.value?.closeScanner()
 }
 
-const handleManualSalida = async (aprendiz: any) => {
+const handleManualSalida = async (aprendiz: Aprendiz) => {
   const code = aprendiz.documento
   if (!code) return
 
@@ -301,63 +392,52 @@ const handleScanner = async (code: string) => {
     error: 'Error en la verificación'
   }
 
-  try {
-    if (res.status === 'no_existe' || res.status === 'error') {
-      const msg = messages[res.status] || 'Error al verificar'
-      scannerModal.value?.setResultMessage(msg)
-      addNotification(msg, 'warning')
-      scannerModal.value?.closeScanner()
-      return
-    }
+  if (res.status === 'no_existe' || res.status === 'error') {
+    const msg = messages[res.status] || 'Error al verificar'
+    scannerModal.value?.setResultMessage(msg)
+    addNotification(msg, 'warning')
+    scannerModal.value?.closeScanner()
+    return
+  }
 
-    // 1️⃣ CASO: Sesión Activa -> REGISTRAR SALIDA
-    if (res.activeSession) {
-      if (res.hasMachine) {
-        tempScannedCode.value = code
-        currentAprendizId.value = res.id_aprendiz || null
-        await nextTick()
-        if (currentAprendizId.value && res.id_detallemaquina) {
-          await modalMachineDetails.value?.load(res.id_detallemaquina)
-          modalMachineDetails.value?.open()
-        }
-        return
-      }
-
-      const validacion = await AñadirIngresoAprendiz(code)
-      if (validacion) {
-        addNotification('Salida Registrada', 'success')
-        await HistorialSalidaAprendiz()
+  // 1️⃣ CASO: Sesión Activa -> REGISTRAR SALIDA
+  if (res.activeSession) {
+    if (res.hasMachine) {
+      tempScannedCode.value = code
+      currentAprendizId.value = res.id_aprendiz || null
+      await nextTick()
+      if (currentAprendizId.value && res.id_detallemaquina) {
+        await modalMachineDetails.value?.load(res.id_detallemaquina)
+        modalMachineDetails.value?.open()
       }
       return
     }
 
-    // 2️⃣ CASO: Sin Sesión Activa -> REGISTRAR INGRESO
-    tempScannedCode.value = code
-    isTempMonitor.value = res.es_monitor || false
-    tempReentryReason.value = ''
-
-    if (res.isReentry) {
-      modalReentry.value?.open()
-      return
-    }
-
-    if (res.es_monitor) {
-      modalConfirmMonitor.value?.open()
-      return
-    }
-
-    const validacion = await AñadirIngresoAprendiz(code, 'formacion')
+    const validacion = await AñadirIngresoAprendiz(code)
     if (validacion) {
-      addNotification('Ingreso Registrado', 'success')
+      addNotification('Salida Registrada', 'success')
       await HistorialSalidaAprendiz()
     }
-  } finally {
-    // Si no requiere modal adicional (monitor o firma de máquina), cerrar el escáner
-    const requiresAction = (res.activeSession && res.hasMachine) || (!res.activeSession && res.es_monitor);
-    if (!requiresAction) {
-      scannerModal.value?.closeScanner()
-    }
+    scannerModal.value?.closeScanner()
+    return
   }
+
+  // 2️⃣ CASO: Sin Sesión Activa -> REGISTRAR INGRESO
+  tempScannedCode.value = code
+  tempIsMonitor.value = res.es_monitor || false
+  tempIsReentry.value = res.isReentry || false
+  tempMatchingFormations.value = res.schedule?.matchingFormations || []
+  tempAllActiveFormations.value = res.schedule?.allActiveFormations || []
+
+  // Reset flow
+  selectedTipoSesion.value = 'formacion'
+  selectedIdFormacion.value = undefined
+  selectedMotivoVisita.value = undefined
+  tipoSesionResolved.value = false
+  reentryReasonResolved.value = false
+  reentryReasonText.value = ''
+
+  await evaluateNextStep()
 }
 
 

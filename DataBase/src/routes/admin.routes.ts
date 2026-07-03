@@ -26,7 +26,17 @@ import {
   toggleMonitorController,
   getFormacionesAprendizController,
   asignarFormacionController,
-  desvincularFormacionController
+  desvincularFormacionController,
+  getProgramasController,
+  createProgramaController,
+  updateProgramaController,
+  getHorariosController,
+  createHorarioController,
+  getAllFormacionesController,
+  createFormacionController,
+  updateFormacionController,
+  deleteFormacionController,
+  getFormacionAprendicesController
 } from '../controllers/admin.controller'
 
 import { authMiddleware } from '../middlewares/admin.middleware'
@@ -64,4 +74,19 @@ router.get('/statsQuarter', getStatsTrimestral)
 router.get('/statsYear', getStatsAnual)
 
 router.get('/statsExits',getAdminStatsController)
+
+// Academic program, schedule & formation management routes
+router.get('/programas', getProgramasController)
+router.post('/programas', createProgramaController)
+router.put('/programas/:id_programa', updateProgramaController)
+
+router.get('/horarios', getHorariosController)
+router.post('/horarios', createHorarioController)
+
+router.get('/formaciones', getAllFormacionesController)
+router.post('/formaciones', createFormacionController)
+router.put('/formaciones/:id_formacion', updateFormacionController)
+router.delete('/formaciones/:id_formacion', deleteFormacionController)
+router.get('/formaciones/:id_formacion/aprendices', getFormacionAprendicesController)
+
 export default router

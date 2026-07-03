@@ -1,16 +1,12 @@
 import { API_URL } from '@/config/network'
-
-type ApiEnvelope<T> = {
-  success: boolean
-  data?: T
-  message?: string
-}
+import type { Formacion } from '@/types/aprendiz.types'
 
 export interface AdminAprendizRow {
   id_aprendiz: string
   nombre: string
   apellido: string
   documento: string
+  es_monitor?: boolean
   [key: string]: unknown
 }
 
@@ -139,7 +135,7 @@ export const getAdminFormacionesAprendiz = async (token: string, idAprendiz: str
     headers: buildHeaders(token)
   })
 
-  return ensureSuccess<{ asignadas: any[]; todas: any[] }>(response)
+  return ensureSuccess<{ asignadas: Formacion[]; todas: Formacion[] }>(response)
 }
 
 export const asignarFormacionAdmin = async (token: string, idAprendiz: string, idFormacion: number) => {
@@ -152,11 +148,13 @@ export const asignarFormacionAdmin = async (token: string, idAprendiz: string, i
     body: JSON.stringify({ id_formacion: idFormacion })
   })
 
+  const data = await response.json()
+
   if (!response.ok) {
-    throw new Error('Error al asignar formación')
+    throw new Error(data.message || 'Error al asignar formación')
   }
 
-  return response.json()
+  return data
 }
 
 export const desvincularFormacionAdmin = async (token: string, idAprendiz: string, idFormacion: number) => {

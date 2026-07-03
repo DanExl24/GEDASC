@@ -1,6 +1,7 @@
 const API = import.meta.env.VITE_API_URL
 
 import type { DetectRegisterStatus } from "@/types/register.types";
+import type { VerificationScheduleContext } from "@/types/aprendiz.types";
 
 export const DetectEntry = async (
   documento: string
@@ -13,6 +14,7 @@ export const DetectEntry = async (
   id_ingreso?: number
   id_aprendiz?: number
   isReentry?: boolean
+  schedule?: VerificationScheduleContext
 }> => {
 
   if (!documento) return { status: 'error' };
@@ -40,7 +42,8 @@ export const DetectEntry = async (
       id_detallemaquina: data.id_detallemaquina,
       id_ingreso: data.id_ingreso,
       id_aprendiz: data.id_aprendiz,
-      isReentry: data.isReentry
+      isReentry: data.isReentry,
+      schedule: data.schedule
     };
 
   } catch (error) {

@@ -32,11 +32,27 @@
               >
                 Doble Formación
               </span>
+              <span
+                v-if="Number(aprendiz.numero_sesion) > 1"
+                class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-inset ring-amber-700/10"
+              >
+                Sesión {{ aprendiz.numero_sesion }}
+              </span>
+              <span
+                v-if="aprendiz.motivo_visita"
+                class="inline-flex items-center rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700 ring-1 ring-inset ring-red-700/10"
+              >
+                Fuera de Horario
+              </span>
             </div>
           </div>
         </td>
         <td class="max-w-[180px] break-words text-left font-medium text-slate-800">
-          {{ aprendiz.formacion }}
+          <div class="flex flex-col gap-0.5">
+            <span class="font-bold text-slate-900 text-xs">{{ aprendiz.nombre_programa || 'Sin formación' }}</span>
+            <span v-if="aprendiz.id_formacion" class="text-[11px] text-purple-700 font-bold">Ficha: {{ aprendiz.id_formacion }}</span>
+            <span v-if="aprendiz.motivo_visita" class="text-[10px] text-slate-400 font-medium italic mt-0.5">Motivo: {{ aprendiz.motivo_visita }}</span>
+          </div>
         </td>
         <td>
           <span

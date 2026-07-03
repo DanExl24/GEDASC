@@ -52,11 +52,24 @@ export const TodayActivity = async (request: Request, response: Response) => {
       TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora,
       di.hora_ingreso AS fecha,
       a.documento AS documento,
-      f.nombre AS formacion
+      COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion,
+      p.nombre_programa,
+      f.id_formacion AS id_formacion,
+      di.motivo_visita
     FROM detalles_ingreso di
     JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
-    LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
-    LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
+    LEFT JOIN (
+      SELECT id_aprendiz, id_formacion
+      FROM (
+        SELECT id_aprendiz, id_formacion,
+               ROW_NUMBER() OVER (PARTITION BY id_aprendiz ORDER BY id_formacion DESC) as rn
+        FROM aprendiz_formacion
+        WHERE estado = 'activo'
+      ) sub
+      WHERE rn = 1
+    ) af_fallback ON af_fallback.id_aprendiz = di.id_aprendiz AND di.id_formacion IS NULL
+    LEFT JOIN formaciones f ON f.id_formacion = COALESCE(di.id_formacion, af_fallback.id_formacion)
+    LEFT JOIN programa p ON p.id_programa = f.id_programa
     WHERE ${filtersMap.date.TODAY}
 
     UNION ALL
@@ -68,12 +81,25 @@ export const TodayActivity = async (request: Request, response: Response) => {
       TO_CHAR(ds.hora_salida, 'HH12:MI AM') AS hora,
       ds.hora_salida AS fecha,
       a.documento AS documento,
-      f.nombre AS formacion
+      COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion,
+      p.nombre_programa,
+      f.id_formacion AS id_formacion,
+      di.motivo_visita
     FROM detalles_salida ds
     JOIN detalles_ingreso AS di ON di.id_ingreso = ds.id_ingreso
     JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
-    LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
-    LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
+    LEFT JOIN (
+      SELECT id_aprendiz, id_formacion
+      FROM (
+        SELECT id_aprendiz, id_formacion,
+               ROW_NUMBER() OVER (PARTITION BY id_aprendiz ORDER BY id_formacion DESC) as rn
+        FROM aprendiz_formacion
+        WHERE estado = 'activo'
+      ) sub
+      WHERE rn = 1
+    ) af_fallback ON af_fallback.id_aprendiz = di.id_aprendiz AND di.id_formacion IS NULL
+    LEFT JOIN formaciones f ON f.id_formacion = COALESCE(di.id_formacion, af_fallback.id_formacion)
+    LEFT JOIN programa p ON p.id_programa = f.id_programa
     WHERE ds.hora_salida >= CURRENT_DATE
       AND ds.hora_salida < CURRENT_DATE + INTERVAL '1 day'
 

@@ -80,6 +80,18 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
+      path : '/admin-horarios',
+      name : 'AdminHorariosView',
+      component : () => import('../views/AdminHorariosView.vue'),
+      meta: { requiresAuth: true, role: 'ADMIN' }
+    },
+    {
+      path : '/admin-programas',
+      name : 'AdminProgramasView',
+      component : () => import('../views/AdminProgramasView.vue'),
+      meta: { requiresAuth: true, role: 'ADMIN' }
+    },
+    {
       path : '/mobile-view',
       name : 'MobileView',
       component : () => import('../mobile/Mobile.vue'),

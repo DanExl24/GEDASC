@@ -44,13 +44,11 @@ import BaseText from '@/components/Text/BaseText.vue';
 import BaseButton from '@/components/Buttons/BaseButton.vue';
 import { useManualForm } from '@/composables/useManualForm';
 import { DetectEntry } from '@/Services/DetectEntrys';
-import { useAprendiz } from '@/composables/useAprendiz';
 import { useMessage } from '@/composables/useMessage';
 import { useNotifications } from '@/composables/useNotifications';
 const {addNotification} = useNotifications()
-const { AñadirIngresoAprendiz } = useAprendiz()
 const {message, setMessage} = useMessage()
-const { formManual, validateForm, setManualForm } = useManualForm()
+const { formManual, validateForm } = useManualForm()
 const emit = defineEmits<{
   (e: 'submit-manual', documento: string): void
 }>()

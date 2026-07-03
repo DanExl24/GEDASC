@@ -168,12 +168,14 @@ import {
   getAdminFormacionesAprendiz,
   asignarFormacionAdmin,
   desvincularFormacionAdmin,
-  toggleAdminMonitor
+  toggleAdminMonitor,
+  type AdminAprendizRow
 } from '@/Services/adminAprendices'
 import { useNotifications } from '@/composables/useNotifications'
+import type { Formacion } from '@/types/aprendiz.types'
 
 const props = defineProps<{
-  aprendices: any[]
+  aprendices: AdminAprendizRow[]
   token: string
 }>()
 
@@ -186,11 +188,11 @@ const { addNotification } = useNotifications()
 const baseModalRef = ref()
 const searchQuery = ref('')
 const showDropdown = ref(false)
-const selectedAp = ref<any | null>(null)
+const selectedAp = ref<AdminAprendizRow | null>(null)
 
 // Formaciones
-const assigned = ref<any[]>([])
-const allFormations = ref<any[]>([])
+const assigned = ref<Formacion[]>([])
+const allFormations = ref<Formacion[]>([])
 const loadingFormations = ref(false)
 const errorFormations = ref('')
 const newFormationId = ref<number | string>('')
@@ -217,7 +219,7 @@ const unassigned = computed(() => {
 })
 
 // Abrir/Cerrar Modal
-const open = (aprendiz?: any) => {
+const open = (aprendiz?: AdminAprendizRow) => {
   baseModalRef.value?.openModal()
   searchQuery.value = ''
   selectedAp.value = null
@@ -232,7 +234,7 @@ const close = () => {
 }
 
 // Seleccionar un aprendiz
-const selectAprendiz = async (aprendiz: any) => {
+const selectAprendiz = async (aprendiz: AdminAprendizRow) => {
   selectedAp.value = aprendiz
   searchQuery.value = `${aprendiz.nombre} ${aprendiz.apellido}`
   showDropdown.value = false
@@ -290,9 +292,9 @@ const vincular = async () => {
     newFormationId.value = ''
     await loadFormations()
     emit('update')
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    addNotification('No se pudo vincular la formación', 'warning')
+    addNotification(error.message || 'No se pudo vincular la formación', 'warning')
   }
 }
 

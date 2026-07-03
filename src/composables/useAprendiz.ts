@@ -25,7 +25,13 @@ export const useAprendiz = () => {
     }
   }
 
-  const AnadirIngresoAprendiz = async (code: string, tipoSesion?: 'formacion' | 'monitoria', motivoReingreso?: string) => {
+  const AnadirIngresoAprendiz = async (
+    code: string, 
+    tipoSesion?: 'formacion' | 'monitoria', 
+    motivoReingreso?: string,
+    idFormacion?: number,
+    motivoVisita?: string
+  ) => {
     if (!code) return
 
     try {
@@ -34,7 +40,9 @@ export const useAprendiz = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           tipo_sesion: tipoSesion || 'formacion',
-          motivo_reingreso: motivoReingreso || null
+          motivo_reingreso: motivoReingreso || null,
+          id_formacion: idFormacion || null,
+          motivo_visita: motivoVisita || null
         })
       })
       const data = await response.json()
