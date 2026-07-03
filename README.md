@@ -161,4 +161,5 @@ Implementado
 
 ## 🚀 Próxima versión: 2.0
 
-### Leer archivo documentacion/nuevaImplementacion/documentacion-v2.md
+## Ir a la rama GEDASC-V2
+- Leer archivo documentacion/nuevaImplementacion/documentacion-v2.md
