@@ -25,11 +25,13 @@ export interface FormacionCompleta {
   fecha_fin: string
   id_programa: number
   nombre_programa: string
+  version: string
   id_horario: number
   hora_inicio: string
   hora_fin: string
   jornada: string
   dias_semana: string
+  total_aprendices?: number
 }
 
 type ApiEnvelope<T> = {

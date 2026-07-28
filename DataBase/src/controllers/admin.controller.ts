@@ -701,7 +701,7 @@ export const getHorariosController = async (req: Request, res: Response) => {
   }
 }
 
-const detectJornada = (horaInicio: string, horaFin: string): string => {
+const detectJornada = (horaInicio: string, _horaFin: string): string => {
   if (!horaInicio) return 'Mañana';
   
   const [hStart, mStart] = horaInicio.split(':').map(Number);
@@ -764,17 +764,19 @@ export const getAllFormacionesController = async (req: Request, res: Response) =
       SELECT 
         f.id_formacion, 
         p.nombre_programa AS nombre, 
+        p.nombre_programa,
+        p.version,
         p.nivel, 
         f.estado,
         TO_CHAR(f.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio,
         TO_CHAR(f.fecha_fin, 'YYYY-MM-DD') AS fecha_fin,
         f.id_programa,
-        p.nombre_programa,
         f.id_horario,
-        TO_CHAR(h.hora_inicio, 'HH24:MI') AS hora_inicio,
-        TO_CHAR(h.hora_fin, 'HH24:MI') AS hora_fin,
+        TO_CHAR(h.hora_inicio, 'HH12:MI AM') AS hora_inicio,
+        TO_CHAR(h.hora_fin, 'HH12:MI AM') AS hora_fin,
         h.jornada,
-        (SELECT string_agg(hd.dia_semana, ', ') FROM horario_dia hd WHERE hd.id_horario = h.id_horario) AS dias_semana
+        (SELECT string_agg(hd.dia_semana, ', ') FROM horario_dia hd WHERE hd.id_horario = h.id_horario) AS dias_semana,
+        (SELECT COUNT(*) FROM aprendiz_formacion af WHERE af.id_formacion = f.id_formacion AND af.estado = 'activo') AS total_aprendices
       FROM formaciones f
       JOIN programa p ON p.id_programa = f.id_programa
       JOIN horario h ON h.id_horario = f.id_horario

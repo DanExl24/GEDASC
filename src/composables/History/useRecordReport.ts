@@ -1,7 +1,5 @@
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, ref, onMounted } from 'vue'
 import { optionsDates } from '@/constants/optionsDates'
-import { optionsProgram } from '@/constants/optionsProgram'
-import { ref } from 'vue'
 import type {
   RecordReportFilters,
   ReportCard,
@@ -55,10 +53,42 @@ const reportCards: ReportCard[] = [
       'border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]',
     badgeClass: 'bg-slate-200 text-slate-900',
   },
+  {
+    id: 'aprendices',
+    eyebrow: 'Catálogo Maestro',
+    title: 'Maestro de Aprendices',
+    description:
+      'Exporta la base de datos completa de aprendices, su condición de monitor y sus formaciones.',
+    badge: 'APR',
+    accentClass:
+      'border-purple-200 bg-[linear-gradient(180deg,#ffffff_0%,#faf5ff_100%)]',
+    badgeClass: 'bg-purple-600 text-white',
+  },
+  {
+    id: 'formaciones',
+    eyebrow: 'Catálogo Maestro',
+    title: 'Maestro de Formaciones',
+    description:
+      'Exporta la lista de fichas, programas de formación académica y jornadas asociadas.',
+    badge: 'FRM',
+    accentClass:
+      'border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)]',
+    badgeClass: 'bg-amber-500 text-white',
+  },
+  {
+    id: 'horarios',
+    eyebrow: 'Catálogo Maestro',
+    title: 'Maestro de Horarios',
+    description:
+      'Exporta la configuración de jornadas, horarios de inicio, fin y días hábiles asignados.',
+    badge: 'HOR',
+    accentClass:
+      'border-blue-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)]',
+    badgeClass: 'bg-blue-600 text-white',
+  },
 ]
 
 import { API_URL } from '@/config/network'
-import { onMounted } from 'vue'
 
 const entryStatusOptions = [
   { label: 'Todos los estados', value: '' },
@@ -86,7 +116,7 @@ const loadDynamicOptions = async () => {
       const data = await res.json()
       programOptionsRef.value = [
         { label: 'Todos los programas', value: '' },
-        ...(data.programas || []).map((p: any) => ({
+        ...(data.programas || []).map((p: { id_programa: number; nombre_programa: string }) => ({
           label: p.nombre_programa,
           value: p.nombre_programa
         }))
@@ -94,7 +124,7 @@ const loadDynamicOptions = async () => {
 
       fichaOptionsRef.value = [
         { label: 'Todas las fichas', value: '' },
-        ...(data.fichas || []).map((f: any) => ({
+        ...(data.fichas || []).map((f: { id_formacion: number; nombre_programa: string }) => ({
           label: `Ficha ${f.id_formacion} ${f.nombre_programa ? `- ${f.nombre_programa}` : ''}`,
           value: String(f.id_formacion)
         }))
@@ -232,6 +262,13 @@ export const useRecordReport = () => {
 
       return fields
     },
+    aprendices: () => [
+      createBaseDocumentField(),
+    ],
+    formaciones: () => [
+      createBaseProgramField(),
+    ],
+    horarios: () => [],
   }
 
   const reportFields = computed<ReportFieldConfig[]>(
@@ -279,6 +316,7 @@ export const useRecordReport = () => {
   const resetCurrentReportFilters = () => {
     filters.value.date = 'TODAY'
     filters.value.program = ''
+    filters.value.ficha = ''
     filters.value.searchRegister = ''
     filters.value.entryStatus = ''
     filters.value.assetView = 'computers'

@@ -1,4 +1,4 @@
-export type ReportType = 'entries' | 'exits' | 'history' | 'assets'
+export type ReportType = 'entries' | 'exits' | 'history' | 'assets' | 'aprendices' | 'formaciones' | 'horarios'
 
 export type ReportFieldType = 'select' | 'search'
 

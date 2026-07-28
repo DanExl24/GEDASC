@@ -518,9 +518,11 @@ import ExitButton from '@/components/UI/ExitButton.vue'
 import BaseModal from '@/components/Modals/BaseModal.vue'
 import BaseField from '@/components/Forms/BaseField.vue'
 import BaseSelect from '@/components/Forms/BaseSelect.vue'
-
 import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
+
+const auth = useAuthStore()
+const { addNotification } = useNotifications()
 import {
   getProgramas,
   createPrograma,
@@ -539,9 +541,6 @@ import {
   asignarFormacionAdmin,
   desvincularFormacionAdmin
 } from '@/Services/adminAprendices'
-
-const auth = useAuthStore()
-const { addNotification } = useNotifications()
 
 // State
 const activeTab = ref<'formaciones' | 'horarios' | 'programas'>('formaciones')

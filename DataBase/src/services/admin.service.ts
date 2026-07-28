@@ -127,12 +127,30 @@ const deleteSalida = async (id_aprendiz: string, date?: string) => {
 const getAllAprendices = async (filters: AdminFilters = {}) => {
   const { where, params } = buildAdminWhere({
     ...filters,
-    searchColumns: ['nombre', 'apellido', 'documento'],
+    searchColumns: ['a.nombre', 'a.apellido', 'a.documento'],
     defaultDates: []
   })
 
   const { rows } = await pool.query(
-    `SELECT * FROM aprendiz ${where}`,
+    `SELECT 
+      a.id_aprendiz,
+      a.documento,
+      a.nombre,
+      a.apellido,
+      a.es_monitor,
+      a.estado,
+      COALESCE(STRING_AGG(DISTINCT p.nombre_programa, ', '), 'Sin programa') AS programa,
+      COALESCE(STRING_AGG(DISTINCT f.id_formacion::text, ', '), 'Sin ficha') AS formacion,
+      COALESCE(STRING_AGG(DISTINCT h.jornada, ', '), 'Sin jornada') AS jornada,
+      (SELECT COUNT(*) FROM aprendiz_formacion apf WHERE apf.id_aprendiz = a.id_aprendiz AND apf.estado = 'activo') AS total_formaciones
+     FROM aprendiz a
+     LEFT JOIN aprendiz_formacion af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
+     LEFT JOIN formaciones f ON f.id_formacion = af.id_formacion
+     LEFT JOIN programa p ON p.id_programa = f.id_programa
+     LEFT JOIN horario h ON h.id_horario = f.id_horario
+     ${where}
+     GROUP BY a.id_aprendiz, a.documento, a.nombre, a.apellido, a.es_monitor, a.estado
+     ORDER BY a.nombre ASC`,
     params
   )
 

@@ -189,7 +189,7 @@ import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
 import { DetectEntry } from '@/Services/DetectEntrys'
 import { SearchAprendiz } from '@/Services/SearchAprendiz'
-import type { Aprendiz } from '@/types/aprendiz.types'
+import type { Aprendiz, ActiveSchedule } from '@/types/aprendiz.types'
 import { useAprendiz } from '@/composables/useAprendiz'
 import { useExitAprendiz } from '@/composables/useExitAprendiz'
 import AprendizTable from '@/components/AprendizUI/AprendizTable.vue'
@@ -224,14 +224,13 @@ const modalReentry = ref<InstanceType<typeof ModalReentryReason> | null>(null)
 const modalSelectFormationRef = ref<InstanceType<typeof ModalSelectFormation> | null>(null)
 const modalVisitReasonRef = ref<InstanceType<typeof ModalVisitReason> | null>(null)
 
-const isTempMonitor = ref(false)
 const currentAprendizId = ref<number | null>(null)
 
 // Flow Context Variables
 const tempIsReentry = ref(false)
 const tempIsMonitor = ref(false)
-const tempMatchingFormations = ref<any[]>([])
-const tempAllActiveFormations = ref<any[]>([])
+const tempMatchingFormations = ref<ActiveSchedule[]>([])
+const tempAllActiveFormations = ref<ActiveSchedule[]>([])
 
 const selectedTipoSesion = ref<'formacion' | 'monitoria'>('formacion')
 const selectedIdFormacion = ref<number | undefined>(undefined)
@@ -264,7 +263,7 @@ const evaluateNextStep = async () => {
         return
       } else if (tempMatchingFormations.value.length === 1) {
         // Match exactly 1
-        selectedIdFormacion.value = tempMatchingFormations.value[0].id_formacion
+        selectedIdFormacion.value = tempMatchingFormations.value[0]?.id_formacion
       } else {
         // Overlap: prompt selection
         modalSelectFormationRef.value?.open(tempMatchingFormations.value)
