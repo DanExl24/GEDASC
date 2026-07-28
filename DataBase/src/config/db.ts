@@ -9,3 +9,8 @@ export const pool = new Pool({
   database: process.env.DB_NAME || 'GEDASC'
 });
 
+// Forzar la zona horaria en cada cliente del pool
+pool.on('connect', (client) => {
+  client.query("SET TIME ZONE 'America/Bogota'");
+});
+

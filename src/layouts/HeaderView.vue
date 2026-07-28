@@ -23,6 +23,17 @@
 
       <!-- DERECHA -->
         <section class="flex items-center gap-3">
+          <!-- Botón de Simulación de Hora para Admin -->
+          <button
+            v-if="auth.isAuthenticated && auth.isAdmin"
+            type="button"
+            @click="modalSimulador?.open()"
+            class="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 shadow-sm transition hover:bg-amber-100"
+            title="Cambiar hora de pruebas"
+          >
+            ⏱️ Simular Hora
+          </button>
+
           <div class="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2 shadow-sm">
 
             <!-- puntico decorativo -->
@@ -30,7 +41,7 @@
 
             <!-- hora -->
             <span class="font-mono text-sm font-semibold text-slate-700 tracking-wide">
-              <ThisTime />
+              <ThisTime ref="thisTimeRef" />
             </span>
 
           </div>
@@ -47,16 +58,31 @@
     </div>
     </div>
     <div class="h-1 w-full bg-[linear-gradient(90deg,#0b7a0b_0%,#1ca64a_35%,#ffffff_100%)]"></div>
+
+    <ModalSimularHora ref="modalSimulador" @updated="handleTimeUpdated" />
   </header>
 </template>
+
 <script setup lang="ts">
-// dependencias
+import { ref } from 'vue'
 import senaLogo from '@/assets/Logos/logo-del-sena-verde.jpg'
-import ThisTime from '@/components/UI/ThisTime.vue';
+import ThisTime from '@/components/UI/ThisTime.vue'
+import ModalSimularHora from '@/components/Modals/ModalSimularHora.vue'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const modalSimulador = ref()
+const thisTimeRef = ref()
+
+const handleTimeUpdated = () => {
+  // Forzar actualización inmediata del reloj en el header
+  if (thisTimeRef.value && typeof thisTimeRef.value.getTime === 'function') {
+    thisTimeRef.value.getTime()
+  } else {
+    window.location.reload()
+  }
+}
 
 const handleLogout = async () => {
   auth.logout()

@@ -529,7 +529,7 @@ const InconsistentExit = async () => {
       a.nombre AS nombreAprendiz,
       a.apellido AS apellidoAprendiz,
       a.documento AS documento,
-      f.nombre AS nombreFormacion
+      COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS nombreFormacion
     FROM detalles_ingreso AS di
     LEFT JOIN detalles_salida ds
       ON ds.id_ingreso = di.id_ingreso
@@ -537,6 +537,8 @@ const InconsistentExit = async () => {
       ON a.id_aprendiz = di.id_aprendiz
     LEFT JOIN formaciones AS f
       ON f.id_formacion = di.id_formacion
+    LEFT JOIN programa AS p
+      ON p.id_programa = f.id_programa
     WHERE di.hora_ingreso < CURRENT_DATE
       AND ds.hora_salida IS NULL
   `)

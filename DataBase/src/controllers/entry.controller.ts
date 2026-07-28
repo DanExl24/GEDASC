@@ -130,13 +130,15 @@ export const DetectEntry = async (request: Request, response: Response) => {
     const id_aprendiz = aprendiz.rows[0].id_aprendiz;
     const es_monitor = aprendiz.rows[0].es_monitor;
 
-    // 2️⃣ Verificar si tiene sesión activa (ingreso sin salida)
+    // 2️⃣ Verificar si tiene sesión activa HOY (ingreso sin salida el día de hoy)
     const activeSessionQuery = await pool.query(`
       SELECT di.id_ingreso, di.id_detallemaquina, dm.estado_equipo
       FROM detalles_ingreso di
       LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
       LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina
-      WHERE di.id_aprendiz = $1 AND ds.hora_salida IS NULL
+      WHERE di.id_aprendiz = $1 
+        AND ds.hora_salida IS NULL
+        AND di.hora_ingreso >= CURRENT_DATE
       ORDER BY di.hora_ingreso DESC
       LIMIT 1
     `, [id_aprendiz]);
@@ -317,9 +319,7 @@ export const EntryRecord = async (request: Request, response: Response) => {
     const result = await pool.query(text, values)
 
     if (result.rowCount === 0) {
-      return response.status(404).json({
-        message: "No se encontraron registros hoy"
-      });
+      return response.status(200).json([]);
     }
 
     return response.status(200).json(result.rows);

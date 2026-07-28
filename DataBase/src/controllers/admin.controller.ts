@@ -3,6 +3,8 @@ import { AdminService } from '../services/admin.service'
 import { CTAResponse } from '../types/contract.type'
 import { pool } from '../config/db'
 import { filtersMap } from '../utils/filtersMap'
+import { setSimulatedTime, getSimulatedTimeState } from '../utils/timeSimulation'
+
 const service = AdminService()
 type DateFilter = keyof typeof filtersMap.date
 const ok = <T>(data: T, meta?: CTAResponse<T>["meta"]): CTAResponse<T> => ({
@@ -11,6 +13,18 @@ const ok = <T>(data: T, meta?: CTAResponse<T>["meta"]): CTAResponse<T> => ({
   meta
 })
 
+/* =========================
+   SIMULACIÓN DE TIEMPO (PRUEBAS ADMIN)
+========================= */
+export const setSimulationTimeController = async (req: Request, res: Response) => {
+  const { time } = req.body // time puede ser "08:30", "14:00", "21:00" o null/empty para reset
+  const result = setSimulatedTime(time || null)
+  return res.json({ success: true, ...result, ...getSimulatedTimeState() })
+}
+
+export const getSimulationTimeController = async (_req: Request, res: Response) => {
+  return res.json({ success: true, ...getSimulatedTimeState() })
+}
 
 
 /* =========================

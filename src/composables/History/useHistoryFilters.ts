@@ -7,20 +7,38 @@ const API = API_URL
 export const useHistoryFilters = () => {
   const historial = ref<HistorialAprendiz[]>([])
   const queryAprendices = ref('')
+  const programasOpciones = ref<{ id_programa: number; nombre_programa: string }[]>([])
+  const fichasOpciones = ref<{ id_formacion: number; nombre_programa: string }[]>([])
+
   const filters = reactive<HistoryFilters>({
     Date: 'TODAY',
-    Program: 'ADSO',
+    Program: '',
+    Ficha: '',
   })
 
   const machineRegisteredCount = computed(
     () => historial.value.filter((item) => item.id_detallemaquina != null).length,
   )
 
+  const loadFilterOptions = async () => {
+    try {
+      const response = await fetch(`${API}/api/historico/opcionesFiltros`)
+      if (response.ok) {
+        const data = await response.json()
+        programasOpciones.value = data.programas || []
+        fichasOpciones.value = data.fichas || []
+      }
+    } catch (error) {
+      console.error('Error al cargar opciones de filtro:', error)
+    }
+  }
+
   const buildFiltersQuery = () => {
     const params = new URLSearchParams()
 
     if (filters.Date) params.append('date', filters.Date)
     if (filters.Program) params.append('program', filters.Program)
+    if (filters.Ficha) params.append('ficha', filters.Ficha)
     if (queryAprendices.value) params.append('search', queryAprendices.value)
 
     const query = params.toString()
@@ -47,18 +65,14 @@ export const useHistoryFilters = () => {
   }
 
   onMounted(() => {
+    loadFilterOptions()
     getHistorialByFilters()
   })
 
   watch(
-    () => [filters.Date, filters.Program, queryAprendices.value],
+    () => [filters.Date, filters.Program, filters.Ficha, queryAprendices.value],
     () => {
-      if (filters.Date || filters.Program || queryAprendices.value) {
-        getHistorialByFilters()
-        return
-      }
-
-      getHistorial()
+      getHistorialByFilters()
     },
   )
 
@@ -67,6 +81,8 @@ export const useHistoryFilters = () => {
     queryAprendices,
     filters,
     machineRegisteredCount,
+    programasOpciones,
+    fichasOpciones,
     getHistorial,
     getHistorialByFilters,
   }

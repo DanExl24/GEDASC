@@ -12,15 +12,21 @@ import { pool } from '../config/db'
  *       200:
  *         description: Hora actual en formato ISO
  */
-export const realTimeNow = async (request: Request, response : Response) => {
-  try {
-    const newTime = await pool.query("SELECT NOW() AS current_time")
-    response.status(200).json({time:newTime.rows[0].current_time})
-  } catch (error){
-    response.status(400).json({message:'Error al obtener la hora'})
-    console.log(error)
-  }
+import { getSystemNow, getSimulatedTimeState } from '../utils/timeSimulation'
 
+export const realTimeNow = async (request: Request, response: Response) => {
+  try {
+    const simState = getSimulatedTimeState()
+    if (simState.isSimulated) {
+      return response.status(200).json({ time: getSystemNow().toISOString(), isSimulated: true })
+    }
+
+    const newTime = await pool.query("SELECT NOW() AS current_time")
+    return response.status(200).json({ time: newTime.rows[0].current_time, isSimulated: false })
+  } catch (error) {
+    console.log(error)
+    return response.status(400).json({ message: 'Error al obtener la hora' })
+  }
 }
 
 /**

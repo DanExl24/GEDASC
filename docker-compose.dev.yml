@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      - TZ=America/Bogota
+      - PGTZ=America/Bogota
+    env_file:
+      - ./DataBase/.env_postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./DataBase/init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - gedasc_network
+
+  backend:
+    build:
+      context: ./DataBase
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=America/Bogota
+    env_file:
+      - ./DataBase/.env
+    volumes:
+      - ./DataBase/src:/app/src
+      - ./DataBase/prisma:/app/prisma
+    depends_on:
+      - postgres
+    networks:
+      - gedasc_network
+
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    networks:
+      - gedasc_network
+
+volumes:
+  postgres_data:
+
+networks:
+  gedasc_network:

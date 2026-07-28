@@ -76,26 +76,46 @@ export const HistoryRecord = async (request: Request, response: Response) => {
  */
 export const DateRecord = async (request: Request, response: Response) => {
   try {
-    const { date, program,search } = request.query as {
+    const { date, program, ficha, search } = request.query as {
       date?: keyof typeof filtersMap.date
-      program?: keyof typeof filtersMap.program
-      search? : string
+      program?: string
+      ficha?: string
+      search?: string
     }
 
     const conditions: string[] = []
+    const values: (string | number)[] = []
 
     if (date && filtersMap.date[date]) {
       conditions.push(filtersMap.date[date])
     }
 
-    if (program && filtersMap.program[program]) {
-      conditions.push(filtersMap.program[program])
+    // Filtro por Programa (ID o Nombre de programa)
+    if (program) {
+      const parsedProgId = parseInt(program, 10)
+      if (!isNaN(parsedProgId)) {
+        values.push(parsedProgId)
+        conditions.push(`p.id_programa = $${values.length}`)
+      } else {
+        values.push(`%${program.trim()}%`)
+        conditions.push(`p.nombre_programa ILIKE $${values.length}`)
+      }
     }
 
-    const values: string[] = []
+    // Filtro por Ficha / Formación (ID de formación)
+    if (ficha) {
+      const parsedFichaId = parseInt(ficha, 10)
+      if (!isNaN(parsedFichaId)) {
+        values.push(parsedFichaId)
+        conditions.push(`COALESCE(di.id_formacion, af_fallback.id_formacion) = $${values.length}`)
+      } else {
+        values.push(`%${ficha.trim()}%`)
+        conditions.push(`COALESCE(di.id_formacion::text, af_fallback.id_formacion::text) ILIKE $${values.length}`)
+      }
+    }
 
     if (search) {
-      values.push(`%${search}%`)
+      values.push(`%${search.trim()}%`)
       conditions.push(`
         (
           a.nombre ILIKE $${values.length} OR
@@ -115,6 +135,7 @@ export const DateRecord = async (request: Request, response: Response) => {
         a.nombre,
         a.apellido,
         a.documento,
+        a.es_monitor,
         COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion,
         p.nombre_programa,
         f.id_formacion AS id_formacion,
@@ -123,7 +144,18 @@ export const DateRecord = async (request: Request, response: Response) => {
         TO_CHAR(ds.hora_salida, 'DD Mon HH12:MI AM') AS hora_salida,
         di.id_detallemaquina,
         di.tipo_sesion,
-        di.id_ingreso
+        di.id_ingreso,
+        (SELECT COUNT(*) FROM aprendiz_formacion apf WHERE apf.id_aprendiz = a.id_aprendiz AND apf.estado = 'activo') AS total_formaciones,
+        (
+          SELECT COALESCE(json_agg(json_build_object(
+            'id_formacion', f_sub.id_formacion,
+            'nombre_programa', p_sub.nombre_programa
+          )), '[]'::json)
+          FROM aprendiz_formacion af_sub
+          JOIN formaciones f_sub ON f_sub.id_formacion = af_sub.id_formacion
+          LEFT JOIN programa p_sub ON p_sub.id_programa = f_sub.id_programa
+          WHERE af_sub.id_aprendiz = a.id_aprendiz AND af_sub.estado = 'activo'
+        ) AS todas_formaciones
       FROM detalles_ingreso AS di
       JOIN aprendiz AS a ON a.id_aprendiz = di.id_aprendiz
       LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
@@ -141,7 +173,7 @@ export const DateRecord = async (request: Request, response: Response) => {
       LEFT JOIN programa p ON p.id_programa = f.id_programa
       ${whereClause}
       ORDER BY di.hora_ingreso DESC
-    `,values)
+    `, values)
 
     response.json(result.rows)
 
@@ -173,24 +205,45 @@ export const DateRecord = async (request: Request, response: Response) => {
  */
 export const DataRegister = async (request: Request, response: Response) => {
   try {
-    const { date, program, search, reportType, entryStatus } = request.body as {
+    const { date, program, ficha, search, reportType, entryStatus } = request.body as {
       date?: keyof typeof filtersMap.date
-      program?: keyof typeof filtersMap.program
+      program?: string
+      ficha?: string
       search?: string
       reportType?: 'entries' | 'exits' | 'history' | 'assets',
       entryStatus? : 'WITH_MACHINE' | 'WITHOUT_MACHINE'
     }
     console.log("Tipo de vista", reportType)
     const conditions: string[] = []
-    const values: string[] = []
+    const values: (string | number)[] = []
 
-    // 📅 filtros
+    // 📅 filtros de fecha
     if (date && filtersMap.date[date]) {
       conditions.push(filtersMap.date[date])
     }
 
-    if (program && filtersMap.program[program]) {
-      conditions.push(filtersMap.program[program])
+    // 🎓 Filtro por Programa
+    if (program) {
+      const parsedProgId = parseInt(program, 10)
+      if (!isNaN(parsedProgId)) {
+        values.push(parsedProgId)
+        conditions.push(`p.id_programa = $${values.length}`)
+      } else {
+        values.push(`%${program.trim()}%`)
+        conditions.push(`p.nombre_programa ILIKE $${values.length}`)
+      }
+    }
+
+    // 🏷️ Filtro por Ficha / Formación
+    if (ficha) {
+      const parsedFichaId = parseInt(ficha, 10)
+      if (!isNaN(parsedFichaId)) {
+        values.push(parsedFichaId)
+        conditions.push(`COALESCE(di.id_formacion, af_fallback.id_formacion) = $${values.length}`)
+      } else {
+        values.push(`%${ficha.trim()}%`)
+        conditions.push(`COALESCE(di.id_formacion::text, af_fallback.id_formacion::text) ILIKE $${values.length}`)
+      }
     }
 
     // 🔍 búsqueda
@@ -355,9 +408,10 @@ export const DataRegister = async (request: Request, response: Response) => {
  */
 export const DataMachine = async (request: Request, response: Response) => {
   try {
-    const { date, program, search, tipoMaquina } = request.body as {
+    const { date, program, ficha, search, tipoMaquina } = request.body as {
       date?: keyof typeof filtersMap.date
-      program?: keyof typeof filtersMap.program
+      program?: string
+      ficha?: string
       search?: string
       tipoMaquina?: 'pc' | 'vh',
     }
@@ -367,15 +421,35 @@ export const DataMachine = async (request: Request, response: Response) => {
     }
 
     const conditions: string[] = []
-    const values: string[] = []
+    const values: (string | number)[] = []
 
-    // filtros estáticos
+    // filtros estáticos de fecha
     if (date && filtersMap.date[date]) {
       conditions.push(filtersMap.date[date])
     }
 
-    if (program && filtersMap.program[program]) {
-      conditions.push(filtersMap.program[program])
+    // 🎓 Filtro por Programa
+    if (program) {
+      const parsedProgId = parseInt(program, 10)
+      if (!isNaN(parsedProgId)) {
+        values.push(parsedProgId)
+        conditions.push(`p.id_programa = $${values.length}`)
+      } else {
+        values.push(`%${program.trim()}%`)
+        conditions.push(`p.nombre_programa ILIKE $${values.length}`)
+      }
+    }
+
+    // 🏷️ Filtro por Ficha / Formación
+    if (ficha) {
+      const parsedFichaId = parseInt(ficha, 10)
+      if (!isNaN(parsedFichaId)) {
+        values.push(parsedFichaId)
+        conditions.push(`COALESCE(di.id_formacion, af_fallback.id_formacion) = $${values.length}`)
+      } else {
+        values.push(`%${ficha.trim()}%`)
+        conditions.push(`COALESCE(di.id_formacion::text, af_fallback.id_formacion::text) ILIKE $${values.length}`)
+      }
     }
 
     // búsqueda
@@ -664,5 +738,40 @@ export const SearchMachine = async (request: Request, response: Response) => {
       error
     })
 
+  }
+}
+
+/**
+ * @swagger
+ * /api/historico/opcionesFiltros:
+ *   get:
+ *     summary: Obtener lista dinámica de programas y fichas/formaciones para los filtros
+ *     tags: [Historico]
+ *     responses:
+ *       200:
+ *         description: Lista de programas y fichas disponibles
+ */
+export const GetOptionsFormaciones = async (_req: Request, res: Response) => {
+  try {
+    const resultProgramas = await pool.query(`
+      SELECT DISTINCT p.id_programa, p.nombre_programa
+      FROM programa p
+      ORDER BY p.nombre_programa ASC
+    `)
+
+    const resultFichas = await pool.query(`
+      SELECT DISTINCT f.id_formacion, p.nombre_programa
+      FROM formaciones f
+      LEFT JOIN programa p ON p.id_programa = f.id_programa
+      ORDER BY f.id_formacion ASC
+    `)
+
+    return res.status(200).json({
+      programas: resultProgramas.rows,
+      fichas: resultFichas.rows
+    })
+  } catch (error) {
+    console.error('Error al obtener opciones de filtro:', error)
+    return res.status(500).json({ message: 'Error interno del servidor' })
   }
 }

@@ -6,17 +6,44 @@
     />
 
     <section class="sticky top-[89px] z-20 border-b border-emerald-100 bg-white/95 backdrop-blur-sm shadow-[0_12px_30px_rgba(15,107,63,0.06)]">
-      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1fr_1fr_1.6fr_auto] lg:items-end lg:px-8">
+      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.5fr_auto] lg:items-end lg:px-8">
+        <!-- Selector Dinámico de Programa -->
         <div class="rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Programa</p>
-          <BaseSelect
-            v-model:model-value="filters.Program"
-            :options="optionsProgram"
-            placeholder="Programa de formacion"
-            select-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-          />
+          <select
+            v-model="filters.Program"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+          >
+            <option value="">Todos los programas</option>
+            <option
+              v-for="prog in programasOpciones"
+              :key="prog.id_programa"
+              :value="prog.nombre_programa"
+            >
+              {{ prog.nombre_programa }}
+            </option>
+          </select>
         </div>
 
+        <!-- Selector Dinámico de Ficha / Formación -->
+        <div class="rounded-[18px] border border-slate-200 bg-white p-3">
+          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Ficha / Formación</p>
+          <select
+            v-model="filters.Ficha"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+          >
+            <option value="">Todas las fichas</option>
+            <option
+              v-for="ficha in fichasOpciones"
+              :key="ficha.id_formacion"
+              :value="ficha.id_formacion"
+            >
+              Ficha {{ ficha.id_formacion }} {{ ficha.nombre_programa ? `- ${ficha.nombre_programa}` : '' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Selector de Fecha -->
         <div class="rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Fecha</p>
           <BaseSelect
@@ -110,7 +137,7 @@ import { useHistoryFilters } from '@/composables/History/useHistoryFilters'
 import { useHistoryMachineDetail } from '@/composables/History/useHistoryMachineDetail'
 
 const modalDetalleMaquina = ref()
-const { historial, queryAprendices, filters, machineRegisteredCount } =
+const { historial, queryAprendices, filters, machineRegisteredCount, programasOpciones, fichasOpciones } =
   useHistoryFilters()
 const { maquinaDetalle, openDetalleMaquina } = useHistoryMachineDetail()
 

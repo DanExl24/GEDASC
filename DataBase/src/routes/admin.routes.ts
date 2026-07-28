@@ -36,8 +36,13 @@ import {
   createFormacionController,
   updateFormacionController,
   deleteFormacionController,
-  getFormacionAprendicesController
+  getFormacionAprendicesController,
+  setSimulationTimeController,
+  getSimulationTimeController
 } from '../controllers/admin.controller'
+
+router.post('/simularHora', setSimulationTimeController)
+router.get('/simularHora', getSimulationTimeController)
 
 import { authMiddleware } from '../middlewares/admin.middleware'
 import { requireRole } from '../middlewares/admin.middleware'

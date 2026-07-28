@@ -57,22 +57,58 @@ const reportCards: ReportCard[] = [
   },
 ]
 
+import { API_URL } from '@/config/network'
+import { onMounted } from 'vue'
+
 const entryStatusOptions = [
   { label: 'Todos los estados', value: '' },
   { label: 'Con maquina registrada', value: 'WITH_MACHINE' },
   { label: 'Sin maquina registrada', value: 'WITHOUT_MACHINE' },
 ]
 
-
 const assetViewOptions = [
   { label: 'Computadores', value: 'computers' },
   { label: 'Vehiculos', value: 'vehicles' },
 ]
 
+const programOptionsRef = ref<{ label: string; value: string }[]>([
+  { label: 'Todos los programas', value: '' }
+])
+
+const fichaOptionsRef = ref<{ label: string; value: string }[]>([
+  { label: 'Todas las fichas', value: '' }
+])
+
+const loadDynamicOptions = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/historico/opcionesFiltros`)
+    if (res.ok) {
+      const data = await res.json()
+      programOptionsRef.value = [
+        { label: 'Todos los programas', value: '' },
+        ...(data.programas || []).map((p: any) => ({
+          label: p.nombre_programa,
+          value: p.nombre_programa
+        }))
+      ]
+
+      fichaOptionsRef.value = [
+        { label: 'Todas las fichas', value: '' },
+        ...(data.fichas || []).map((f: any) => ({
+          label: `Ficha ${f.id_formacion} ${f.nombre_programa ? `- ${f.nombre_programa}` : ''}`,
+          value: String(f.id_formacion)
+        }))
+      ]
+    }
+  } catch (error) {
+    console.error('Error al obtener opciones dinámicas:', error)
+  }
+}
 
 const createInitialFilters = (): RecordReportFilters => ({
   date: 'TODAY',
   program: '',
+  ficha: '',
   searchRegister: '',
   entryStatus: '',
   assetView: 'computers'
@@ -109,8 +145,16 @@ const createBaseProgramField = () =>
   createSelectField(
     'program',
     'Programa',
-    'Programa de formacion',
-    optionsProgram,
+    'Todos los programas',
+    programOptionsRef.value,
+  )
+
+const createBaseFichaField = () =>
+  createSelectField(
+    'ficha',
+    'Ficha / Formación',
+    'Todas las fichas',
+    fichaOptionsRef.value,
   )
 
 const createBaseDocumentField = () =>
@@ -121,18 +165,20 @@ const createBaseDocumentField = () =>
   )
 
 export const useRecordReport = () => {
+  onMounted(() => {
+    loadDynamicOptions()
+  })
 
-const filters = ref<RecordReportFilters>(createInitialFilters())
+  const filters = ref<RecordReportFilters>(createInitialFilters())
   const selectedReport = reactive<{ type: ReportType }>({
     type: 'entries',
   })
-
-
 
   const reportFieldBuilders: Record<ReportType, () => ReportFieldConfig[]> = {
     entries: () => [
       createBaseDateField(),
       createBaseProgramField(),
+      createBaseFichaField(),
       createBaseDocumentField(),
       createSelectField(
         'entryStatus',
@@ -144,6 +190,7 @@ const filters = ref<RecordReportFilters>(createInitialFilters())
     exits: () => [
       createBaseDateField(),
       createBaseProgramField(),
+      createBaseFichaField(),
       createBaseDocumentField(),
       createSelectField(
         'entryStatus',
@@ -155,11 +202,12 @@ const filters = ref<RecordReportFilters>(createInitialFilters())
     history: () => [
       createBaseDateField(),
       createBaseProgramField(),
+      createBaseFichaField(),
       createBaseDocumentField(),
       createSelectField(
         'entryStatus',
-        'Relacion con maquina',
-        'Relacion con maquina',
+        'Filtro por equipo',
+        'Filtro por equipo',
         entryStatusOptions,
       ),
     ],

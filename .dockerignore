@@ -1,0 +1,17 @@
+node_modules
+
+*.md 
+
+dist
+
+.env
+
+.git
+
+*.txt
+
+*.sql
+
+Dockerfile
+
+.dockerignore

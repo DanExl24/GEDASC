@@ -28,6 +28,7 @@ export interface ReportCard {
 export interface RecordReportFilters {
   date: string
   program: string
+  ficha: string
   searchRegister: string
   entryStatus: string
   assetView: string

@@ -163,7 +163,7 @@ import ExitButton from '@/components/UI/ExitButton.vue'
 import RecordReportFilterForm from '@/components/AprendizUI/Forms/RecordReportFilterForm.vue'
 import { useRecordReport } from '@/composables/History/useRecordReport'
 import recordPaper from '@/assets/Icons/RecordPaper.png'
-import sendComputer from '@/assets/Icons/sendComputer.png'
+import sendComputer from '@/assets/Icons/SendComputer.png'
 import { useExportPdf } from '@/Services/exports/usePdfExport'
 import { exportToExcel } from '@/Services/exports/useExcelExport'
 import { useNotifications } from '@/composables/useNotifications';

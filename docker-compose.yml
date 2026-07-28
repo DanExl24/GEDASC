@@ -1,0 +1,41 @@
+services:          # define cada contenedor
+  backend:
+    build:
+      context: ./Database     # configuración del servicio
+    ports: 
+      - "3000:3000"
+    environment:
+      - TZ=America/Bogota
+    env_file:
+      - ./DataBase/.env
+    depends_on:
+      - postgres
+    networks:
+      - gedasc_network
+  postgres:
+    image: postgres:16
+    environment:
+      - TZ=America/Bogota
+      - PGTZ=America/Bogota
+    env_file:
+      - ./Database/.env_postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+      - ./DataBase/init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - gedasc_network
+  frontend:
+    build:
+      context: ./
+    ports:
+      - "80:80"
+    networks:
+      - gedasc_network
+
+
+volumes:
+  postgres_data: 
+
+
+networks:          # redes entre contenedores (opcional)
+  gedasc_network:
