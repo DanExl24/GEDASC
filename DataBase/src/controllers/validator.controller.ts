@@ -1,9 +1,16 @@
 import type { Request, Response } from 'express'
 import { pool } from '../config/db'
 
+interface AuthRequest extends Request {
+  user?: {
+    id?: string | number
+    id_usuario?: string | number
+  }
+}
+
 export const ActivarValidador = async (req: Request, res: Response) => {
   const { device_id, nombre_dispositivo, forzarDesactivacion } = req.body
-  const user = (req as any).user
+  const user = (req as AuthRequest).user
 
   if (!device_id) {
     return res.status(400).json({ message: "ID de dispositivo obligatorio" })

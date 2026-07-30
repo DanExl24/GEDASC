@@ -3,9 +3,17 @@ import { API_URL } from '@/config/network'
 import { useAuthStore } from '@/stores/auth'
 import { registrarDispositivoMovil } from '@/composables/sockets/InitSocketsEvent'
 
+export interface ValidadorInfo {
+  device_id?: string
+  nombre_dispositivo?: string
+  usuario?: string
+  fecha_registro?: string
+  ultimo_ping?: string
+}
+
 const esValidadorActivo = ref<boolean>(false)
 const cargandoValidador = ref<boolean>(false)
-const validadorExistenteInfo = ref<any>(null)
+const validadorExistenteInfo = ref<ValidadorInfo | null>(null)
 
 export const getDeviceId = (): string => {
   let id = localStorage.getItem('gedasc_device_id')
