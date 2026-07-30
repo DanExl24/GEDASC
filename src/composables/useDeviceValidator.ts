@@ -37,6 +37,12 @@ export const getDeviceName = (): string => {
   return deviceName
 }
 
+interface NavigatorWithUserAgentData extends Navigator {
+  userAgentData?: {
+    mobile?: boolean
+  }
+}
+
 export const isRealMobileDevice = computed(() => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
 
@@ -48,7 +54,8 @@ export const isRealMobileDevice = computed(() => {
 
   // Validar si el agente pertenece a un SO móvil real (Android, iPhone, iPad, etc.)
   const isMobileOS = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
-  const isMobileUAData = (navigator as any).userAgentData?.mobile === true
+  const nav = navigator as NavigatorWithUserAgentData
+  const isMobileUAData = nav.userAgentData?.mobile === true
 
   return isMobileOS || isMobileUAData
 })
