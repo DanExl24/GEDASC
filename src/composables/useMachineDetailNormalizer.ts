@@ -32,6 +32,7 @@ export const normalizeMachineItem = (rawItem: RawMachineItem): MaquinaItem => {
     aprendices: {
       actual: {
         id: rawItem.aprendices?.actual?.id ?? null,
+        documento: rawItem.aprendices?.actual?.documento ?? null,
       },
       owner: {
         id: rawItem.aprendices?.owner?.id ?? null,

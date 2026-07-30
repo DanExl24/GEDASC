@@ -23,6 +23,7 @@ export type RawMachineItem = {
   aprendices?: {
     actual?: {
       id?: string | null
+      documento?: string | null
     }
     owner?: {
       id?: string | null
@@ -53,6 +54,7 @@ export type MaquinaItem = {
   aprendices: {
     actual: {
       id: string | null
+      documento?: string | null
     }
     owner: {
       id: string | null

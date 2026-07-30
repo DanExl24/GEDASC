@@ -124,6 +124,7 @@
       v-if="aprendizMachine"
       ref="modalMachineDetails"
       :id_aprendiz="aprendizMachine.id_aprendiz"
+      :documento_aprendiz="aprendizMachine.documento"
       @add-more-machines="openMachine(aprendizMachine)"
     />
 

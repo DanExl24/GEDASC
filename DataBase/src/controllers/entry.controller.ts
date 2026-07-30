@@ -890,6 +890,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
         dm.id_detallemaquina,
         dm.id_ingreso,
         di.id_aprendiz,
+        a_act.documento AS aprendiz_documento,
         c.marca AS pc_marca,
         c.serial AS pc_serial,
 
@@ -915,6 +916,9 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
       LEFT JOIN detalles_ingreso AS di
         ON di.id_ingreso = dm.id_ingreso OR di.id_detallemaquina = dm.id_detallemaquina
+
+      LEFT JOIN aprendiz a_act
+        ON a_act.id_aprendiz = di.id_aprendiz
 
       LEFT JOIN computadores c
         ON dm.id_computador = c.id_computador
@@ -1014,6 +1018,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
         aprendices: {
           actual: {
             id: data.id_aprendiz ?? null,
+            documento: data.aprendiz_documento ?? null,
           },
           owner: {
             id: itemOwnerId,

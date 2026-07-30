@@ -76,22 +76,27 @@
           <img :src="item.firma_salida" class="max-h-28 rounded-lg border bg-white p-1" alt="Firma de salida" />
         </div>
 
-        <!-- BOTON REGISTRAR RETIRO DE ESTE ACTIVO ESPECÍFICO -->
+        <!-- BOTON REGISTRAR RETIRO DE ESTE ACTIVO ESPECÍFICO (VÍA MÓVIL) -->
         <div v-if="item.estado_equipo !== 'retirado' && activeRetiroId !== item.id_detallemaquina" class="flex justify-end pt-1">
           <BaseButtonOpen
-            text="Registrar retiro de equipo"
+            text="📱 Solicitar firma de retiro en móvil"
             variant="green"
             class-button="min-h-0 text-xs px-3 py-1.5 font-bold"
-            @click="activeRetiroId = item.id_detallemaquina"
+            @click="solicitarFirmaMovil(item)"
           />
         </div>
 
-        <!-- CANVAS FIRMA RETIRO PARA ESTE ACTIVO ESPECÍFICO -->
-        <div v-if="activeRetiroId === item.id_detallemaquina" class="rounded-xl border border-dashed border-emerald-200 bg-emerald-50 p-3">
-          <h4 class="font-semibold text-slate-900 text-sm">Firma de salida requerida</h4>
-          <p class="mb-2 text-xs text-slate-500">Capture la firma del aprendiz para retirar este equipo</p>
-          <SignaturePad @update:signature="(sig) => registrarFirmaSalidaItem(item.id_detallemaquina, sig)" />
-          <button type="button" class="mt-2 text-xs font-semibold text-slate-500 hover:underline" @click="activeRetiroId = null">Cancelar</button>
+        <!-- ESTADO ESPERANDO FIRMA DEL MÓVIL PARA ESTE ACTIVO ESPECÍFICO -->
+        <div v-if="activeRetiroId === item.id_detallemaquina" class="rounded-xl border border-dashed border-amber-300 bg-amber-50/80 p-3 text-center">
+          <div class="flex items-center justify-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-1">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            Esperando firma desde dispositivo móvil...
+          </div>
+          <p class="text-xs text-slate-600 mb-2">Pida al aprendiz que firme la salida en el dispositivo móvil.</p>
+          <button type="button" class="text-xs font-semibold text-rose-600 hover:underline" @click="cancelarSolicitudFirma(item)">Cancelar solicitud</button>
         </div>
       </div>
     </div>
@@ -99,17 +104,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import BaseModal from '@/components/Modals/BaseModal.vue'
 import BaseText from '@/components/Text/BaseText.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
-import SignaturePad from '@/components/Library/SignaturePad.vue'
 import { useMachineService } from '@/composables/API/useMachineService'
 import { useMachineDetailStatus } from '@/composables/useMachineDetailStatus'
 import { normalizeVehicleType } from '@/utils/vehicleType'
 import { formatDateTime } from '@/utils/formatDate'
-import type { MaquinaDetalleUI } from '@/types/machineDetails.types'
+import type { MaquinaDetalleUI, MaquinaItem } from '@/types/machineDetails.types'
 import { API_URL } from '@/config/network'
+import { connectSocket } from '@/socket'
+
+const props = defineProps<{
+  id_aprendiz?: number | string
+  documento_aprendiz?: string
+}>()
 
 const emit = defineEmits<{
   (e: 'retired'): void
@@ -118,6 +128,7 @@ const emit = defineEmits<{
 }>()
 
 const { getDetalleMaquina } = useMachineService()
+const socket = connectSocket()
 
 const maquinaDetalle = ref<MaquinaDetalleUI | null>(null)
 const modalRef = ref()
@@ -128,6 +139,44 @@ const { showOwner, estadoUI } = useMachineDetailStatus({
   get estado() {
     return maquinaDetalle.value?.estado ?? 'NORMAL'
   }
+})
+
+/* =========================
+   SOCKET SIGNATURE HANDLERS
+========================= */
+
+const solicitarFirmaMovil = (item: MaquinaItem) => {
+  activeRetiroId.value = item.id_detallemaquina
+  const doc = props.documento_aprendiz || item.aprendices?.actual?.documento
+
+  if (doc) {
+    socket.emit('abrirFirmaEnMovil', { documento: doc })
+  } else {
+    console.warn('No se encontró documento del aprendiz para enviar firma a móvil')
+  }
+}
+
+const cancelarSolicitudFirma = (item: MaquinaItem) => {
+  activeRetiroId.value = null
+  const doc = props.documento_aprendiz || item.aprendices?.actual?.documento
+  if (doc) {
+    socket.emit('cerrarFirmaEnMovil', { documento: doc })
+  }
+}
+
+const handleFirmaRegistrada = async ({ documento, firma }: { documento: string; firma: string }) => {
+  if (activeRetiroId.value) {
+    const idDetalle = activeRetiroId.value
+    await registrarFirmaSalidaItem(idDetalle, firma)
+  }
+}
+
+onMounted(() => {
+  socket.on('firmaRegistrada', handleFirmaRegistrada)
+})
+
+onUnmounted(() => {
+  socket.off('firmaRegistrada', handleFirmaRegistrada)
 })
 
 /* =========================
