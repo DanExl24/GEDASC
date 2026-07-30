@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { pool } from '../config/db'
+import bcrypt from 'bcryptjs'
 
 interface AuthRequest extends Request {
   user?: {
@@ -72,20 +73,47 @@ export const ActivarValidador = async (req: Request, res: Response) => {
 }
 
 export const DesactivarValidador = async (req: Request, res: Response) => {
-  const { device_id } = req.body
+  const { device_id, password } = req.body
+  const user = (req as AuthRequest).user
 
   if (!device_id) {
     return res.status(400).json({ message: "ID de dispositivo obligatorio" })
   }
 
+  if (!password) {
+    return res.status(400).json({ message: "La contraseña de confirmación es obligatoria" })
+  }
+
+  const userId = user?.id || user?.id_usuario
+
   try {
+    // 1. Obtener la contraseña encriptada del usuario autenticado
+    if (!userId) {
+      return res.status(401).json({ message: "Usuario no autenticado" })
+    }
+
+    const userQuery = await pool.query(`SELECT password FROM usuarios WHERE id_usuario = $1`, [userId])
+
+    if (!userQuery.rowCount || userQuery.rowCount === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado" })
+    }
+
+    const dbPassword = userQuery.rows[0].password
+
+    // 2. Verificar la contraseña con bcrypt
+    const isPasswordValid = await bcrypt.compare(password, dbPassword)
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Contraseña incorrecta. No se pudo desvincular el dispositivo." })
+    }
+
+    // 3. Desactivar el validador
     await pool.query(
       `UPDATE validadores_firma SET activo = FALSE WHERE device_id = $1`,
       [device_id]
     )
 
     return res.status(200).json({
-      message: 'Dispositivo desautorizado correctamente',
+      message: 'Dispositivo desvinculado correctamente',
       activo: false
     })
   } catch (error) {

@@ -94,6 +94,11 @@
       ifNo="No, Cancelar"
       @confirm="handleActivarValidador(true)"
     />
+
+    <ModalDesvincularValidador
+      ref="modalDesvincularValidador"
+      @confirm="processDesactivacion"
+    />
   </header>
 </template>
 
@@ -103,6 +108,7 @@ import senaLogo from '@/assets/Logos/logo-del-sena-verde.jpg'
 import ThisTime from '@/components/UI/ThisTime.vue'
 import ModalSimularHora from '@/components/Modals/ModalSimularHora.vue'
 import ModalConfirm from '@/components/AprendizUI/Modals/ModalConfirm.vue'
+import ModalDesvincularValidador from '@/components/Modals/ModalDesvincularValidador.vue'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 import { useDeviceValidator } from '@/composables/useDeviceValidator'
@@ -110,6 +116,7 @@ import { useDeviceValidator } from '@/composables/useDeviceValidator'
 const auth = useAuthStore()
 const modalSimulador = ref()
 const modalReemplazarValidador = ref()
+const modalDesvincularValidador = ref()
 const thisTimeRef = ref()
 const conflictMessage = ref('')
 
@@ -143,8 +150,17 @@ const handleActivarValidador = async (forzar = false) => {
   }
 }
 
-const handleDesactivarValidador = async () => {
-  await desactivarValidador()
+const handleDesactivarValidador = () => {
+  modalDesvincularValidador.value?.open()
+}
+
+const processDesactivacion = async (password: string) => {
+  const result = await desactivarValidador(password)
+  if (!result.ok) {
+    modalDesvincularValidador.value?.setError(result.message || 'Contraseña incorrecta')
+  } else {
+    modalDesvincularValidador.value?.close()
+  }
 }
 
 const handleTimeUpdated = () => {

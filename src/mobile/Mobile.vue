@@ -87,6 +87,11 @@
       ifNo="No, Cancelar"
       @confirm="handleActivarValidador(true)"
     />
+
+    <ModalDesvincularValidador
+      ref="modalDesvincularValidador"
+      @confirm="processDesactivacion"
+    />
   </div>
 </template>
 
@@ -97,6 +102,7 @@ import BaseModal from '@/components/Modals/BaseModal.vue'
 import HeaderView from '@/layouts/HeaderView.vue'
 import SignaturePad from '@/components/Library/SignaturePad.vue'
 import ModalConfirm from '@/components/AprendizUI/Modals/ModalConfirm.vue'
+import ModalDesvincularValidador from '@/components/Modals/ModalDesvincularValidador.vue'
 import { useMachineSocket } from '@/composables/sockets/useMachineSockets'
 import { useDeviceValidator } from '@/composables/useDeviceValidator'
 import {
@@ -112,6 +118,7 @@ const route = useRoute()
 const { emitirFirmaRegistrada } = useMachineSocket()
 const modalFirma = ref<InstanceType<typeof BaseModal> | null>(null)
 const modalReemplazarValidador = ref()
+const modalDesvincularValidador = ref()
 const conflictMessage = ref('')
 
 const {
@@ -146,8 +153,17 @@ const handleActivarValidador = async (forzar = false) => {
   }
 }
 
-const handleDesactivarValidador = async () => {
-  await desactivarValidador()
+const handleDesactivarValidador = () => {
+  modalDesvincularValidador.value?.open()
+}
+
+const processDesactivacion = async (password: string) => {
+  const result = await desactivarValidador(password)
+  if (!result.ok) {
+    modalDesvincularValidador.value?.setError(result.message || 'Contraseña incorrecta')
+  } else {
+    modalDesvincularValidador.value?.close()
+  }
 }
 
 const irASistemaResponsive = () => {

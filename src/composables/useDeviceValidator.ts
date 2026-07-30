@@ -131,24 +131,27 @@ export const useDeviceValidator = () => {
     }
   }
 
-  const desactivarValidador = async () => {
+  const desactivarValidador = async (password: string) => {
     cargandoValidador.value = true
     try {
       const response = await fetch(`${API_URL}/api/validador/desactivar`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ device_id: deviceId })
+        body: JSON.stringify({ device_id: deviceId, password })
       })
+
+      const data = await response.json()
 
       if (response.ok) {
         esValidadorActivo.value = false
         registrarDispositivoMovil()
-        return true
+        return { ok: true, data }
       }
-      return false
+
+      return { ok: false, message: data.message || 'No se pudo desvincular el dispositivo.' }
     } catch (error) {
       console.error('[useDeviceValidator] Error al desactivar validador:', error)
-      return false
+      return { ok: false, message: 'Error de conexión al servidor' }
     } finally {
       cargandoValidador.value = false
     }
