@@ -2,6 +2,7 @@ import { connectSocket } from '@/socket'
 import { ref } from 'vue'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
+import { getDeviceId } from '@/composables/useDeviceValidator'
 
 const socket = connectSocket()
 export const documentoAprendiz = ref<string | undefined>()
@@ -12,10 +13,13 @@ let initialized = false
 
 export const registrarDispositivoMovil = () => {
   const auth = useAuthStore()
+  const deviceId = getDeviceId()
   const deviceKey = localStorage.getItem('mobileDeviceKey') || ''
   socket.emit('registrar', {
     tipo: 'movil',
     token: auth.token,
+    deviceId,
+    device_id: deviceId,
     deviceKey
   })
 }

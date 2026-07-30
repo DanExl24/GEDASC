@@ -31,6 +31,19 @@ export const initDbSchema = async () => {
       WHERE id_computador IS NOT NULL AND id_vehiculo IS NOT NULL;
     `)
 
+    // 4. Crear tabla validadores_firma si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS validadores_firma (
+        id_validador SERIAL PRIMARY KEY,
+        device_id VARCHAR(255) NOT NULL UNIQUE,
+        id_usuario INTEGER REFERENCES usuarios(id_usuario),
+        nombre_dispositivo VARCHAR(255),
+        activo BOOLEAN DEFAULT TRUE,
+        fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ultimo_ping TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `)
+
     console.log('[DBInit] Esquema de base de datos verificado e incializado correctamente.')
   } catch (error) {
     console.error('[DBInit] Error durante la inicialización del esquema de BD:', error)

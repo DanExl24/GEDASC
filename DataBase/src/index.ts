@@ -17,6 +17,7 @@ import  StatsRecord  from './routes/stats.routes';
 import adminFunction from './routes/admin.routes'
 import auth from './routes/auth.routes'
 import jornada from './routes/jornada.routes'
+import validatorRoutes from './routes/validator.routes'
 // sockets
 import initSockets from "./sockets/index"
 
@@ -59,6 +60,7 @@ app.use('/api/estadisticas', StatsRecord)
 app.use('/api/admin',adminFunction)
 app.use('/api/auth',auth)
 app.use('/api/jornadaTime',jornada)
+app.use('/api/validador', validatorRoutes)
 
 // error handler (debe ir después de las rutas)
 import { errorMiddleware } from './middlewares/error.middleware'

@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
+import { pool } from "../config/db";
 
 const MOBILE_DEVICE_KEY = process.env.MOBILE_DEVICE_KEY || "GEDASC_PORTERIA_KEY_2026";
 
@@ -10,44 +11,43 @@ export default function initSockets(io: Server) {
     // =========================
     // REGISTRO DE DISPOSITIVO
     // =========================
-    socket.on("registrar", ({ tipo, token, deviceKey }) => {
+    socket.on("registrar", async ({ tipo, token, deviceId, device_id, deviceKey }) => {
       socket.data.tipo = tipo;
+      const targetDeviceId = deviceId || device_id || null;
 
       if (tipo === "movil") {
-        let isTokenValid = false;
-        let isKeyValid = false;
+        let isAuthorized = false;
 
-        // 1. Validar Token JWT del Celador/Admin
-        if (token) {
+        if (targetDeviceId) {
           try {
-            const secret = process.env.JWT_SECRET;
-            if (secret) {
-              const decoded = jwt.verify(token, secret) as any;
-              if (decoded && (decoded.rol === "CELADOR" || decoded.rol === "ADMIN" || decoded.rol === "SUPERADMIN")) {
-                isTokenValid = true;
-              }
+            const check = await pool.query(
+              `SELECT 1 FROM validadores_firma WHERE device_id = $1 AND activo = TRUE`,
+              [targetDeviceId]
+            );
+            if (check.rowCount && check.rowCount > 0) {
+              isAuthorized = true;
             }
-          } catch (e) {
-            console.warn("Token inválido en registro de socket móvil:", e);
+          } catch (err) {
+            console.error("Error al verificar validador en BD:", err);
           }
         }
 
-        // 2. Validar Clave de Dispositivo
-        const cleanDeviceKey = deviceKey ? String(deviceKey).trim() : "";
-        if (cleanDeviceKey === MOBILE_DEVICE_KEY) {
-          isKeyValid = true;
+        // Respaldo de clave secreta en caso de migración
+        if (!isAuthorized && deviceKey && String(deviceKey).trim() === MOBILE_DEVICE_KEY) {
+          isAuthorized = true;
         }
 
-        if (isTokenValid && isKeyValid) {
+        if (isAuthorized) {
           socket.data.authorized = true;
-          console.log(`✅ Socket móvil AUTORIZADO (${socket.id})`);
+          socket.data.deviceId = targetDeviceId;
+          console.log(`✅ Socket móvil AUTORIZADO (${socket.id}) - Device: ${targetDeviceId}`);
           socket.emit("autorizacionMovil", { status: "ok", message: "Dispositivo autorizado para firma digital." });
         } else {
           socket.data.authorized = false;
-          console.warn(`❌ Socket móvil DENEGADO (${socket.id}). TokenValido: ${isTokenValid}, ClaveValida: ${isKeyValid}`);
+          console.warn(`❌ Socket móvil DENEGADO (${socket.id}) - Device: ${targetDeviceId}`);
           socket.emit("autorizacionMovil", {
             status: "denied",
-            message: "Dispositivo o sesión no autorizada para captura de firma."
+            message: "Este dispositivo no está registrado como validador de firmas activo."
           });
         }
       } else {
