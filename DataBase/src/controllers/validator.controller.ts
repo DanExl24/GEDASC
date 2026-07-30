@@ -21,7 +21,7 @@ export const ActivarValidador = async (req: Request, res: Response) => {
   try {
     // 1. Consultar si existe otro dispositivo activo actualmente
     const activeCheck = await pool.query(
-      `SELECT vf.*, u.nombre AS usuario_nombre, u.correo AS usuario_correo
+      `SELECT vf.*, u.email AS usuario_email
        FROM validadores_firma vf
        LEFT JOIN usuarios u ON u.id_usuario = vf.id_usuario
        WHERE vf.activo = TRUE
@@ -37,7 +37,7 @@ export const ActivarValidador = async (req: Request, res: Response) => {
           validadorActual: {
             device_id: activeDevice.device_id,
             nombre_dispositivo: activeDevice.nombre_dispositivo,
-            usuario: activeDevice.usuario_nombre || activeDevice.usuario_correo,
+            usuario: activeDevice.usuario_email || 'Celador',
             fecha_registro: activeDevice.fecha_registro
           }
         })
@@ -97,7 +97,7 @@ export const DesactivarValidador = async (req: Request, res: Response) => {
 export const ObtenerEstadoValidador = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT vf.*, u.nombre AS usuario_nombre, u.correo AS usuario_correo
+      `SELECT vf.*, u.email AS usuario_email
        FROM validadores_firma vf
        LEFT JOIN usuarios u ON u.id_usuario = vf.id_usuario
        WHERE vf.activo = TRUE
@@ -118,7 +118,7 @@ export const ObtenerEstadoValidador = async (req: Request, res: Response) => {
       validador: {
         device_id: validador.device_id,
         nombre_dispositivo: validador.nombre_dispositivo,
-        usuario: validador.usuario_nombre || validador.usuario_correo,
+        usuario: validador.usuario_email || 'Celador',
         fecha_registro: validador.fecha_registro,
         ultimo_ping: validador.ultimo_ping
       }

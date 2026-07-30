@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JFn3Pr8WUA2nS2aw1IQaOnc84nBXArYdWOFoOwmpYkxq3PZTAqR6Y3PiTaaSraK
+\restrict cfgvpMvBoyVNc8ke8YAwvX4pNvYTfDicznGwHkd10jfbNqT4DdDgnGGjdiB0Nq6
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -1335,5 +1335,5 @@ ALTER TABLE ONLY public.usuarios
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JFn3Pr8WUA2nS2aw1IQaOnc84nBXArYdWOFoOwmpYkxq3PZTAqR6Y3PiTaaSraK
+\unrestrict cfgvpMvBoyVNc8ke8YAwvX4pNvYTfDicznGwHkd10jfbNqT4DdDgnGGjdiB0Nq6
 
