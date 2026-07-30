@@ -27,12 +27,14 @@
           :options="optionsVehicle"
         />
         <BaseField
+          v-if="!isBicycle"
           v-model="formMachine.modeloMaquina"
           label="Marca de la máquina"
           place-holder="Marca"
           type="text"
         />
         <BaseField
+          v-if="!isBicycle"
           v-model="formMachine.placaSerial"
           :max-length="formMachine.TipoMaquina === 'vh' ? 7 : 100"
           label="Placa o serial"
@@ -153,6 +155,7 @@ const {
   maquinaRegistrada,
   validateMachineForm,
   errorMachine,
+  isBicycle,
   registerOtherMachine,
   endFlowMachine,
   resetMachineForm

@@ -1,10 +1,49 @@
 import type {
   EstadoMaquina,
   MaquinaDetalleUI,
+  MaquinaItem,
   RawMachineDetailResult,
+  RawMachineItem,
 } from '@/types/machineDetails.types'
 
+export const normalizeMachineItem = (rawItem: RawMachineItem): MaquinaItem => {
+  const pcMarca = rawItem.pc?.marca ?? rawItem.pc?.modelo ?? null
+  const vhMarca = rawItem.vh?.marca ?? rawItem.vh?.modelo ?? null
+
+  return {
+    id_detallemaquina: rawItem.id_detallemaquina ?? null,
+    pc: rawItem.pc
+      ? {
+          marca: pcMarca,
+          serial: rawItem.pc.serial ?? null,
+        }
+      : null,
+    vh: rawItem.vh
+      ? {
+          tipo_vehiculo: rawItem.vh.tipo_vehiculo ?? null,
+          marca: vhMarca,
+          placa: rawItem.vh.placa ?? null,
+        }
+      : null,
+    firma: rawItem.firma ?? null,
+    firma_salida: rawItem.firma_salida ?? null,
+    estado_equipo: rawItem.estado_equipo ?? null,
+    hora_retiro_equipo: rawItem.hora_retiro_equipo ?? null,
+    aprendices: {
+      actual: {
+        id: rawItem.aprendices?.actual?.id ?? null,
+      },
+      owner: {
+        id: rawItem.aprendices?.owner?.id ?? null,
+        name: rawItem.aprendices?.owner?.name ?? null,
+      },
+    },
+  }
+}
+
 export const createEmptyMachineDetail = (): MaquinaDetalleUI => ({
+  items: [],
+  estado: 'NORMAL',
   pc: null,
   vh: null,
   firma: null,
@@ -12,7 +51,6 @@ export const createEmptyMachineDetail = (): MaquinaDetalleUI => ({
   estado_equipo: null,
   hora_retiro_equipo: null,
   id_detallemaquina: null,
-  estado: 'NORMAL',
   aprendices: {
     actual: { id: null },
     owner: { id: null, name: null },
@@ -23,37 +61,27 @@ export const normalizeMachineDetail = (
   raw: RawMachineDetailResult | null | undefined,
   estado: EstadoMaquina = 'NORMAL',
 ): MaquinaDetalleUI => {
-  const pcMarca = raw?.pc?.marca ?? raw?.pc?.modelo ?? null
-  const vhMarca = raw?.vh?.marca ?? raw?.vh?.modelo ?? null
+  if (!raw) {
+    return createEmptyMachineDetail()
+  }
+
+  const rawItems: RawMachineItem[] = raw.items && raw.items.length > 0 ? raw.items : [raw]
+  const items = rawItems.map(normalizeMachineItem)
+  const firstItem = items[0]
 
   return {
-    pc: raw?.pc
-      ? {
-          marca: pcMarca,
-          serial: raw.pc.serial ?? null,
-        }
-      : null,
-    vh: raw?.vh
-      ? {
-          tipo_vehiculo: raw.vh.tipo_vehiculo ?? null,
-          marca: vhMarca,
-          placa: raw.vh.placa ?? null,
-        }
-      : null,
-    firma: raw?.firma ?? null,
-    firma_salida: raw?.firma_salida ?? null,
-    estado_equipo: raw?.estado_equipo ?? null,
-    hora_retiro_equipo: raw?.hora_retiro_equipo ?? null,
-    id_detallemaquina: raw?.id_detallemaquina ?? null,
+    items,
     estado,
-    aprendices: {
-      actual: {
-        id: raw?.aprendices?.actual?.id ?? null,
-      },
-      owner: {
-        id: raw?.aprendices?.owner?.id ?? null,
-        name: raw?.aprendices?.owner?.name ?? null,
-      },
+    pc: firstItem?.pc ?? null,
+    vh: firstItem?.vh ?? null,
+    firma: firstItem?.firma ?? null,
+    firma_salida: firstItem?.firma_salida ?? null,
+    estado_equipo: firstItem?.estado_equipo ?? null,
+    hora_retiro_equipo: firstItem?.hora_retiro_equipo ?? null,
+    id_detallemaquina: firstItem?.id_detallemaquina ?? null,
+    aprendices: firstItem?.aprendices ?? {
+      actual: { id: null },
+      owner: { id: null, name: null },
     },
   }
 }

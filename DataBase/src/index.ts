@@ -64,8 +64,11 @@ app.use('/api/jornadaTime',jornada)
 import { errorMiddleware } from './middlewares/error.middleware'
 app.use(errorMiddleware)
 
+import { initDbSchema } from './config/dbInit'
+
 // 🚀 servidor
 const PORT = process.env.PORT || 3000
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+  await initDbSchema()
   console.log(`Servidor + sockets en http://localhost:${PORT}`)
 })

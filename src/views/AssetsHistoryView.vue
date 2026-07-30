@@ -6,8 +6,9 @@
     />
 
     <section class="sticky top-[89px] z-20 border-b border-emerald-100 bg-white/95 backdrop-blur-sm shadow-[0_12px_30px_rgba(15,107,63,0.06)]">
-      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1.2fr_0.95fr_1.45fr_auto] lg:items-end lg:px-8">
-        <article class="rounded-[18px] border border-slate-200 bg-white p-3">
+      <div class="mx-auto flex w-full max-w-7xl flex-wrap items-end gap-3 px-4 py-3 lg:flex-nowrap lg:px-8">
+        <!-- Vista activa -->
+        <article class="min-w-[200px] flex-[1.2] rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Vista activa</p>
           <div class="grid grid-cols-2 gap-2 rounded-[16px] bg-slate-100 p-1.5">
             <button
@@ -29,7 +30,8 @@
           </div>
         </article>
 
-        <article class="rounded-[18px] border border-slate-200 bg-white p-3">
+        <!-- Fecha -->
+        <article class="min-w-[130px] flex-[0.8] rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Fecha</p>
           <BaseSelect
             v-model:model-value="filters.Date"
@@ -39,7 +41,19 @@
           />
         </article>
 
-        <article class="min-w-0 rounded-[18px] border border-slate-200 bg-white p-3">
+        <!-- Tipo Vehículo: solo en vista vehicles -->
+        <article v-if="selectedView === 'vehicles'" class="min-w-[130px] flex-[0.8] rounded-[18px] border border-slate-200 bg-white p-3">
+          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Tipo Vehículo</p>
+          <BaseSelect
+            v-model:model-value="filters.vehicleType"
+            :options="vehicleTypeOptions"
+            placeholder="Todos los tipos"
+            select-class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-quicksand text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+          />
+        </article>
+
+        <!-- Búsqueda activa -->
+        <article class="min-w-0 flex-[1.5] rounded-[18px] border border-slate-200 bg-white p-3">
           <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Busqueda activa</p>
           <SearchBar
             v-model="filters.searchValue"
@@ -53,9 +67,10 @@
 
         <ExitButton
           to="/"
-          button-class="flex h-11 w-11 items-center justify-center self-center rounded-2xl border border-emerald-200 bg-white shadow-none transition-transform duration-300 hover:scale-105"
+          button-class="flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-2xl border border-emerald-200 bg-white shadow-none transition-transform duration-300 hover:scale-105"
         />
       </div>
+
     </section>
 
     <main class="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 lg:px-8 lg:py-5">
@@ -160,7 +175,14 @@ import SearchBar from '@/components/UI/SearchBar.vue'
 import BaseSelect from '@/components/Forms/BaseSelect.vue'
 
 import { optionsDates } from '@/constants/optionsDates'
+import { optionsVehicle } from '@/constants/optionsVehicle'
 import { useAssetsHistory } from '@/composables/History/useAssetsHistory'
+
+// Opciones para el select de tipo de vehículo
+const vehicleTypeOptions = [
+  { label: 'Todos los tipos', value: '' },
+  ...optionsVehicle,
+]
 
 const route = useRoute()
 const router = useRouter()

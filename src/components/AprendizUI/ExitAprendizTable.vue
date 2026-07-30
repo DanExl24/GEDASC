@@ -69,7 +69,7 @@
             :hour="aprendiz.hora_ingreso"
           />
         </td>
-        <td class="font-medium text-slate-850">{{ aprendiz.hora_salida }}</td>
+        <td class="font-medium text-slate-850">{{ formatDateTime(aprendiz.hora_salida) }}</td>
         <td>
           <div class="flex items-center justify-center">
             <BaseButtonOpen
@@ -152,6 +152,7 @@ import BaseModal from '@/components/Modals/BaseModal.vue'
 import ModalMachineDetails from '@/components/AprendizUI/Modals/ModalMachineDetails.vue'
 import JornadaBadge from '@/components/UI/JornadaBadge.vue'
 import type { Aprendiz } from '@/types/aprendiz.types'
+import { formatDateTime } from '@/utils/formatDate'
 
 const aprendizMachine = ref<Aprendiz | null>(null)
 const modalMachineDetails = ref()

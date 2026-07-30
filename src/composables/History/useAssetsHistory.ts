@@ -23,6 +23,10 @@ const createEmptyOwner = (): AssetOwnerDetail => ({
   formacion: '',
   hora_ingreso: null,
   firma: null,
+  id_formacion: null,
+  horario_inicio: null,
+  horario_fin: null,
+  horario_jornada: null,
 })
 
 const matchesSearch = (value: string | number | null | undefined, search: string) =>
@@ -39,6 +43,7 @@ export const useAssetsHistory = (
     Date: 'TODAY',
     filterType: '',
     searchValue: '',
+    vehicleType: '',
   })
 
   const computerHistory = ref<ComputerHistoryRow[]>([])
@@ -95,11 +100,19 @@ export const useAssetsHistory = (
   })
 
   const filteredVehicleHistory = computed<VehicleHistoryRow[]>(() => {
-    if (!searchTerm.value) {
-      return vehicleHistory.value
+    let result = vehicleHistory.value
+
+    if (filters.vehicleType) {
+      result = result.filter(
+        (row) => row.tipo_vehiculo.toUpperCase() === filters.vehicleType.toUpperCase()
+      )
     }
 
-    return vehicleHistory.value.filter((row) =>
+    if (!searchTerm.value) {
+      return result
+    }
+
+    return result.filter((row) =>
       [
         row.placa,
         row.documento,
@@ -217,6 +230,7 @@ export const useAssetsHistory = (
         Date: 'TODAY',
         filterType: '',
         searchValue: '',
+        vehicleType: '',
       }
 
       const [computers, vehicles] = await Promise.all([
@@ -253,6 +267,7 @@ export const useAssetsHistory = (
 
   watch(selectedView, (view) => {
     filters.searchValue = ''
+    filters.vehicleType = ''
 
     if (route.query.view !== view) {
       router.replace({

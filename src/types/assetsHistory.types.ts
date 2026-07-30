@@ -7,6 +7,10 @@ export interface AssetOwnerDetail {
   formacion: string
   hora_ingreso: string | null
   firma: string | null
+  id_formacion: number | null
+  horario_inicio: string | null
+  horario_fin: string | null
+  horario_jornada: string | null
 }
 
 export interface AssetHistoryBaseRow {
@@ -32,6 +36,7 @@ export interface AssetHistoryFilters {
   Date: string
   filterType: string
   searchValue: string
+  vehicleType: string
 }
 
 export interface AssetSummaryCard {

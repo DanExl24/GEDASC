@@ -1,4 +1,4 @@
-import { API_URL } from '@/config/network'
+import { fetchWithAuth } from '@/Services/httpClient'
 
 export interface AdminQuarterStat {
   trimestre: number
@@ -50,21 +50,6 @@ const normalizeYearStats = (data: unknown): AdminYearStat[] => {
     .filter((item): item is AdminYearStat => item !== null)
 }
 
-const fetchWithAuth = async <T>(path: string, token: string): Promise<T> => {
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-
-  const payload = await response.json() as ApiEnvelope<T>
-
-  if (!response.ok || !payload.success || payload.data === undefined) {
-    throw new Error(payload.message || 'No fue posible obtener estadisticas administrativas')
-  }
-
-  return payload.data
-}
 
 export const getAdminDashboardStats = async (token: string) => {
   const [quarterData, yearData] = await Promise.all([

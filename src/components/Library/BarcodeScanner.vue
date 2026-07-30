@@ -1,6 +1,6 @@
 <template>
   <!-- Componente tipo modal que contendra el escaner -->
-    <BaseModal @close="closeScanner" ref="modal" class="text-center" title="ESCANEAR APRENDICES" text="Empieza a escanear">
+    <BaseModal @close="closeScanner" ref="modal" class="text-center" :title="title || 'ESCANEAR APRENDICES'" text="Empieza a escanear">
       <div class="overflow-hidden h-[400px] relative rounded-lg" ref="scannerContainer"></div>
       <p class="my-10 absolute bottom-0 w-full font-quicksand text-lg text-black font-bold " ref="result">{{ resultText }}</p>
     </BaseModal>
@@ -106,10 +106,9 @@ const emit = defineEmits<{
 
 // props del componente
 withDefaults(defineProps<{
-  classScanner? : string
-}>(),{
-
-})
+  classScanner?: string
+  title?: string
+}>(), {})
 
 const setResultMessage = (message: string) => {
   resultText.value = message

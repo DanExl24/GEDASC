@@ -597,8 +597,13 @@ export const AddMachine = async (request: Request, response: Response) => {
     } = request.body;
 
     // 🔤 normalización
-    const placaNormalizada = placaSerial?.toUpperCase().trim();
-    const modeloNormalizado = modelo?.toUpperCase().trim();
+    const isBicycle = tipoMaquina === 'vh' && tipoVehiculo?.toUpperCase().trim() === 'BICICLETA';
+    const placaNormalizada = isBicycle
+      ? (placaSerial?.toUpperCase().trim() || 'BICI')
+      : placaSerial?.toUpperCase().trim();
+    const modeloNormalizado = isBicycle
+      ? (modelo?.toUpperCase().trim() || 'BICICLETA')
+      : modelo?.toUpperCase().trim();
 
     //  validaciones básicas
     if (!id_aprendiz) {
@@ -727,13 +732,14 @@ export const AddMachine = async (request: Request, response: Response) => {
 
     //  insertar detalle máquina
     const resultDetallesMaquina = await client.query(
-      `INSERT INTO detalles_maquinas(id_computador, id_vehiculo, firma_ingreso)
-       VALUES ($1, $2, $3)
+      `INSERT INTO detalles_maquinas(id_computador, id_vehiculo, firma_ingreso, id_ingreso)
+       VALUES ($1, $2, $3, $4)
        RETURNING id_detallemaquina`,
       [
         tipoMaquina === 'pc' ? idMaquina : null,
         tipoMaquina === 'vh' ? idMaquina : null,
-        firma
+        firma,
+        id_ingreso
       ]
     );
 
@@ -791,21 +797,25 @@ export const UpdateMachine = async (request: Request, response: Response) => {
   const { id_aprendiz } = request.params
 
   const detalle = await pool.query(
-    `SELECT id_detallemaquina
-     FROM detalles_ingreso
-     WHERE id_aprendiz = $1
-     AND hora_ingreso >= CURRENT_DATE
-     AND hora_ingreso < CURRENT_DATE + INTERVAL '1 day'`,
+    `SELECT di.id_ingreso
+     FROM detalles_ingreso di
+     LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+     WHERE di.id_aprendiz = $1
+     AND di.hora_ingreso >= CURRENT_DATE
+     AND di.hora_ingreso < CURRENT_DATE + INTERVAL '1 day'
+     AND ds.hora_salida IS NULL
+     ORDER BY di.hora_ingreso DESC
+     LIMIT 1`,
     [id_aprendiz]
   )
 
   if (detalle.rowCount === 0) {
     return response.status(404).json({
-      message: "No existe ingreso hoy"
+      message: "No existe ingreso activo hoy"
     })
   }
 
-  const id_detallemaquina = detalle.rows[0].id_detallemaquina
+  const id_ingreso = detalle.rows[0].id_ingreso
 
   if (tipoMaquina == 'pc') {
 
@@ -817,10 +827,9 @@ export const UpdateMachine = async (request: Request, response: Response) => {
     const id_computador = computador.rows[0].id_computador
 
     await pool.query(
-      `UPDATE detalles_maquinas
-       SET id_computador = $1, firma_ingreso = $2
-       WHERE id_detallemaquina = $3`,
-      [id_computador, firma, id_detallemaquina]
+      `INSERT INTO detalles_maquinas (id_computador, firma_ingreso, id_ingreso)
+       VALUES ($1, $2, $3)`,
+      [id_computador, firma, id_ingreso]
     )
 
   } else if (tipoMaquina == 'vh') {
@@ -833,10 +842,9 @@ export const UpdateMachine = async (request: Request, response: Response) => {
     const id_vehiculo = vehiculo.rows[0].id_vehiculo
 
     await pool.query(
-      `UPDATE detalles_maquinas
-       SET id_vehiculo = $1, firma_ingreso = $2
-       WHERE id_detallemaquina = $3`,
-      [id_vehiculo, firma, id_detallemaquina]
+      `INSERT INTO detalles_maquinas (id_vehiculo, firma_ingreso, id_ingreso)
+       VALUES ($1, $2, $3)`,
+      [id_vehiculo, firma, id_ingreso]
     )
   }
 
@@ -879,6 +887,8 @@ export const SearchMachine = async (request: Request, response: Response) => {
   try {
     const query = `
       SELECT
+        dm.id_detallemaquina,
+        dm.id_ingreso,
         di.id_aprendiz,
         c.marca AS pc_marca,
         c.serial AS pc_serial,
@@ -903,7 +913,8 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
       FROM detalles_maquinas dm
 
-      JOIN detalles_ingreso AS di ON di.id_detallemaquina = dm.id_detallemaquina
+      LEFT JOIN detalles_ingreso AS di
+        ON di.id_ingreso = dm.id_ingreso OR di.id_detallemaquina = dm.id_detallemaquina
 
       LEFT JOIN computadores c
         ON dm.id_computador = c.id_computador
@@ -935,28 +946,45 @@ export const SearchMachine = async (request: Request, response: Response) => {
         AND av_np.id_vehiculo = dm.id_vehiculo
         AND av_np.principal = false
 
-      WHERE dm.id_detallemaquina = $1
+      WHERE dm.id_ingreso = (
+        SELECT COALESCE(dm_sub.id_ingreso, di_sub.id_ingreso)
+        FROM detalles_maquinas dm_sub
+        LEFT JOIN detalles_ingreso di_sub ON di_sub.id_detallemaquina = dm_sub.id_detallemaquina
+        WHERE dm_sub.id_detallemaquina = $1::integer
+        LIMIT 1
+      )
+      OR dm.id_detallemaquina = $1::integer
+      OR di.id_ingreso = (
+        SELECT di_act.id_ingreso
+        FROM detalles_ingreso di_act
+        LEFT JOIN detalles_salida ds ON ds.id_ingreso = di_act.id_ingreso
+        WHERE di_act.id_aprendiz = $1::integer
+          AND di_act.hora_ingreso >= CURRENT_DATE
+          AND ds.hora_salida IS NULL
+        ORDER BY di_act.hora_ingreso DESC
+        LIMIT 1
+      )
+      ORDER BY dm.id_detallemaquina ASC
     `
 
     const result = await pool.query(query, [id_detallemaquina])
 
     if (result.rows.length === 0) {
       return response.status(404).json({
-        message: "No se encontró ese detalle de máquina"
+        message: "No se encontraron máquinas para este registro"
       })
     }
 
-    const data = result.rows[0]
-
-    const ownerId = data.owner_pc_id ?? data.owner_vh_id ?? null
-    const ownerName = data.owner_pc_name ?? data.owner_vh_name ?? null
+    const first = result.rows[0]
+    const ownerId = first.owner_pc_id ?? first.owner_vh_id ?? null
+    const ownerName = first.owner_pc_name ?? first.owner_vh_name ?? null
 
     const isBorrowed =
-      ownerId != null && String(ownerId) !== String(data.id_aprendiz)
+      ownerId != null && String(ownerId) !== String(first.id_aprendiz)
 
     const isNonPrincipal =
       !isBorrowed &&
-      (data.non_principal_pc != null || data.non_principal_vh != null)
+      (first.non_principal_pc != null || first.non_principal_vh != null)
 
     const estado = isBorrowed
       ? 'PRESTADA'
@@ -964,38 +992,43 @@ export const SearchMachine = async (request: Request, response: Response) => {
         ? 'NO_PRINCIPAL'
         : 'NORMAL'
 
-    const maquinas = {
-      id_detallemaquina: parseInt(id_detallemaquina as string, 10),
-      pc: data.pc_marca ? {
-        marca: data.pc_marca,
-        serial: data.pc_serial,
-      } : null,
+    const items = result.rows.map((data) => {
+      const itemOwnerId = data.owner_pc_id ?? data.owner_vh_id ?? null
+      const itemOwnerName = data.owner_pc_name ?? data.owner_vh_name ?? null
 
-      vh: data.vh_modelo ? {
-        tipo_vehiculo: data.tipo_vehiculo,
-        marca: data.vh_modelo,
-        placa: data.vh_placa,
-      } : null,
-
-      firma: data.firma_ingreso,
-      firma_salida: data.firma_salida,
-      estado_equipo: data.estado_equipo,
-      hora_retiro_equipo: data.hora_retiro_equipo,
-
-      aprendices: {
-        actual: {
-          id: data.id_aprendiz ?? null,
+      return {
+        id_detallemaquina: data.id_detallemaquina,
+        pc: data.pc_marca ? {
+          marca: data.pc_marca,
+          serial: data.pc_serial,
+        } : null,
+        vh: data.vh_modelo ? {
+          tipo_vehiculo: data.tipo_vehiculo,
+          marca: data.vh_modelo,
+          placa: data.vh_placa,
+        } : null,
+        firma: data.firma_ingreso,
+        firma_salida: data.firma_salida,
+        estado_equipo: data.estado_equipo,
+        hora_retiro_equipo: data.hora_retiro_equipo,
+        aprendices: {
+          actual: {
+            id: data.id_aprendiz ?? null,
+          },
+          owner: {
+            id: itemOwnerId,
+            name: itemOwnerName,
+          },
         },
-        owner: {
-          id: ownerId,
-          name: ownerName,
-        },
-      },
-    }
+      }
+    })
 
     return response.status(200).json({
       estado,
-      result: maquinas
+      result: {
+        ...items[0],
+        items
+      }
     })
 
   } catch (error) {

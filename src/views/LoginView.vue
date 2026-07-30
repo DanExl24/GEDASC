@@ -81,13 +81,26 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import formLogin from '@/components/AprendizUI/Forms/formLogin.vue'
-import router from '@/router';
+import router from '@/router'
+import { useNotifications } from '@/composables/useNotifications'
+
+const route = useRoute()
+const { addNotification } = useNotifications()
+
+onMounted(() => {
+  if (route.query.reason === 'expired') {
+    addNotification('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning')
+  } else if (route.query.reason === 'unauthorized') {
+    addNotification('Sesión no autorizada o caducada. Inicia sesión para continuar.', 'error')
+  }
+})
+
 const handleSuccess = () => {
-router.push('/dashboard')
+  router.push('/dashboard')
 }
-
-
 </script>
 
 <style scoped>

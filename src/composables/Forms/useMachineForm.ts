@@ -56,11 +56,22 @@ export const useMachineForm = () => {
     submittedMachine.value = false
   }
 
+  const isBicycle = computed(
+    () => formMachine.TipoMaquina === 'vh' && formMachine.tipoVehiculo.toUpperCase() === 'BICICLETA'
+  )
+
   const validateMachineForm = () => {
     if (!formMachine.TipoMaquina) return 'Debe seleccionar el tipo de maquina'
     if (formMachine.TipoMaquina === 'vh' && !formMachine.tipoVehiculo) return 'Debe seleccionar tipo de vehiculo'
-    if (!formMachine.modeloMaquina) return 'Todos los campos son obligatorios'
-    if (!formMachine.placaSerial) return 'Todos los campos son obligatorios'
+
+    if (isBicycle.value) {
+      if (!formMachine.modeloMaquina) formMachine.modeloMaquina = 'BICICLETA'
+      if (!formMachine.placaSerial) formMachine.placaSerial = 'BICI'
+    } else {
+      if (!formMachine.modeloMaquina) return 'Todos los campos son obligatorios'
+      if (!formMachine.placaSerial) return 'Todos los campos son obligatorios'
+    }
+
     if (!aprendizMachine.value?.firma) return 'Debe ingresar una firma'
     return ''
   }
@@ -95,6 +106,17 @@ export const useMachineForm = () => {
     setMessage('', 'error')
   })
 
+  // AUTOCOMPLETADO BICICLETA
+  watch(
+    () => ({ tipo: formMachine.TipoMaquina, vh: formMachine.tipoVehiculo }),
+    (val) => {
+      if (val.tipo === 'vh' && val.vh.toUpperCase() === 'BICICLETA') {
+        formMachine.modeloMaquina = 'BICICLETA'
+        formMachine.placaSerial = 'BICI'
+      }
+    }
+  )
+
   //  NORMALIZACIÓN
   watch(() => formMachine.modeloMaquina, (v) => {
     if (!v) return
@@ -127,6 +149,7 @@ export const useMachineForm = () => {
     submittedMachine,
     aprendizMachine,
     principalMachine,
+    isBicycle,
     registerOtherMachine,
     endFlowMachine
   }

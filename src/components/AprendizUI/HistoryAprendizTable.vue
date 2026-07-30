@@ -77,7 +77,7 @@
             :hour="aprendiz.hora_ingreso"
           />
         </td>
-        <td>{{ aprendiz.hora_salida || '-' }}</td>
+        <td>{{ formatDateTime(aprendiz.hora_salida) || '-' }}</td>
         <td>
           <div class="flex items-center justify-center">
             <BaseText
@@ -109,6 +109,7 @@ import BaseText from '@/components/Text/BaseText.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 import JornadaBadge from '@/components/UI/JornadaBadge.vue'
 import type { HistorialAprendiz } from '@/types/history.types'
+import { formatDateTime } from '@/utils/formatDate'
 
 defineProps<{
   historial: HistorialAprendiz[]

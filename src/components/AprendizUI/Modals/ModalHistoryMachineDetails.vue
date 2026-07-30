@@ -24,7 +24,7 @@
         />
       </div>
       <p v-if="detail.hora_retiro_equipo" class="text-xs text-slate-500">
-        Retirado en: {{ detail.hora_retiro_equipo }}
+        Retirado en: {{ formatDateTime(detail.hora_retiro_equipo) }}
       </p>
     </div>
 
@@ -59,11 +59,11 @@
             <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ detail.pc.serial }}</p>
           </div>
           <div
-            v-if="showOwner && detail.aprendices.owner.name"
+            v-if="showOwner && detail.aprendices?.owner?.name"
             class="rounded-xl bg-rose-50 px-3 py-2"
           >
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-rose-400">Propietario</p>
-            <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ detail.aprendices.owner.name }}</p>
+            <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ detail.aprendices?.owner?.name }}</p>
           </div>
         </div>
       </article>
@@ -102,11 +102,11 @@
             <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ detail.vh.placa }}</p>
           </div>
           <div
-            v-if="showOwner && detail.aprendices.owner.name"
+            v-if="showOwner && detail.aprendices?.owner?.name"
             class="rounded-xl bg-rose-50 px-3 py-2"
           >
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-rose-400">Propietario</p>
-            <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ detail.aprendices.owner.name }}</p>
+            <p class="mt-0.5 text-sm font-semibold text-slate-900">{{ detail.aprendices?.owner?.name }}</p>
           </div>
         </div>
       </article>
@@ -166,6 +166,7 @@ import BaseModal from '@/components/Modals/BaseModal.vue'
 import BaseText from '@/components/Text/BaseText.vue'
 import { useMachineDetailStatus } from '@/composables/useMachineDetailStatus'
 import { normalizeVehicleType } from '@/utils/vehicleType'
+import { formatDateTime } from '@/utils/formatDate'
 import type { MaquinaDetalleUI } from '@/types/machineDetails.types'
 
 const modalRef = ref()

@@ -15,8 +15,8 @@
             </h1>
           </div>
 
-          <!-- Selector de Pestañas: Reportes Sencillos vs Avanzados -->
-          <div class="flex gap-1.5 rounded-2xl bg-slate-100 p-1.5 border border-slate-200">
+          <!-- Selector de Pestañas: Reportes Sencillos vs Avanzados (Solo Admin) -->
+          <div v-if="auth.isAdmin" class="flex gap-1.5 rounded-2xl bg-slate-100 p-1.5 border border-slate-200">
             <button
               type="button"
               :class="moduleTab === 'sencillos' ? 'bg-white text-emerald-950 shadow-sm font-bold border border-emerald-200' : 'text-slate-600 hover:text-slate-900 font-semibold'"
@@ -180,7 +180,7 @@
       </template>
 
       <!-- 2. REPORTES AVANZADOS TAB -->
-      <template v-else-if="moduleTab === 'avanzados'">
+      <template v-else-if="moduleTab === 'avanzados' && auth.isAdmin">
         <AdvancedReportsSection />
       </template>
     </main>

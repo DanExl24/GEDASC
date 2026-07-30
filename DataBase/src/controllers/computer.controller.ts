@@ -99,8 +99,12 @@ export const getPropietario = async (req: Request, res: Response) => {
         a.nombre,
         a.apellido,
         COALESCE(p.nombre_programa, di.motivo_visita, 'Sin formación') AS formacion,
+        COALESCE(di.id_formacion, af_fallback.id_formacion) AS id_formacion,
         TO_CHAR(di.hora_ingreso, 'HH12:MI AM') AS hora_ingreso,
-        dm.firma_ingreso AS firma
+        dm.firma_ingreso AS firma,
+        TO_CHAR(h.hora_inicio, 'HH12:MI AM') AS horario_inicio,
+        TO_CHAR(h.hora_fin, 'HH12:MI AM') AS horario_fin,
+        h.jornada AS horario_jornada
 
       FROM detalles_maquinas dm
 
@@ -126,6 +130,9 @@ export const getPropietario = async (req: Request, res: Response) => {
 
       LEFT JOIN programa p
         ON p.id_programa = f.id_programa
+
+      LEFT JOIN horario h
+        ON h.id_horario = f.id_horario
 
       WHERE dm.id_detallemaquina = $1
 

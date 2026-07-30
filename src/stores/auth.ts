@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia'
+import { isTokenExpired } from '@/Services/httpClient'
+
 type User = {
   id: string
   email: string
@@ -38,7 +40,15 @@ export const useAuthStore = defineStore('auth', {
       const t = localStorage.getItem('token')
       const u = localStorage.getItem('user')
 
-      if (t) this.token = t
+      if (t) {
+        // Si el token ya expiró al cargar la app, limpiar inmediatamente.
+        // La redirección la gestiona el guard del router después de montar la app.
+        if (isTokenExpired(t)) {
+          this.logout()
+          return
+        }
+        this.token = t
+      }
       if (u) this.user = JSON.parse(u)
     }
   }

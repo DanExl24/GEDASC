@@ -23,6 +23,7 @@ export interface ReportCard {
   badge: string
   accentClass: string
   badgeClass: string
+  adminOnly?: boolean
 }
 
 export interface RecordReportFilters {
@@ -32,6 +33,7 @@ export interface RecordReportFilters {
   searchRegister: string
   entryStatus: string
   assetView: string
+  vehicleType: string
 }
 
 export type ReportFieldKey = keyof RecordReportFilters

@@ -31,9 +31,9 @@
     <BaseText :text="message.message" :type="message.type" text-class="text-sm font-medium" />
 
     <BaseButton
-      text="Añadir ingreso"
+      :text="mode === 'salidas' ? 'Registrar salida' : 'Añadir ingreso'"
       type="submit"
-      button-class="mt-2 rounded-2xl !bg-emerald-700 shadow-[0_14px_30px_rgba(15,107,63,0.18)]"
+      :button-class="mode === 'salidas' ? 'mt-2 rounded-2xl !bg-slate-900 shadow-md' : 'mt-2 rounded-2xl !bg-emerald-700 shadow-[0_14px_30px_rgba(15,107,63,0.18)]'"
     />
   </BaseForm>
 </template>
@@ -46,6 +46,12 @@ import { useManualForm } from '@/composables/useManualForm';
 import { DetectEntry } from '@/Services/DetectEntrys';
 import { useMessage } from '@/composables/useMessage';
 import { useNotifications } from '@/composables/useNotifications';
+withDefaults(defineProps<{
+  mode?: 'ingresos' | 'salidas'
+}>(), {
+  mode: 'ingresos'
+})
+
 const {addNotification} = useNotifications()
 const {message, setMessage} = useMessage()
 const { formManual, validateForm } = useManualForm()

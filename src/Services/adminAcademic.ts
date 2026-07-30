@@ -1,4 +1,4 @@
-import { API_URL } from '@/config/network'
+import { fetchWithAuth } from '@/Services/httpClient'
 
 export interface Programa {
   id_programa: number
@@ -34,38 +34,6 @@ export interface FormacionCompleta {
   total_aprendices?: number
 }
 
-type ApiEnvelope<T> = {
-  success: boolean
-  data?: T
-  message?: string
-}
-
-const fetchWithAuth = async <T>(
-  path: string, 
-  token: string, 
-  method = 'GET', 
-  body?: unknown
-): Promise<T> => {
-  const options: RequestInit = {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  }
-  if (body) {
-    options.body = JSON.stringify(body)
-  }
-
-  const response = await fetch(`${API_URL}${path}`, options)
-  const payload = await response.json() as ApiEnvelope<T>
-
-  if (!response.ok || !payload.success) {
-    throw new Error(payload.message || 'Error en la petición al servidor')
-  }
-
-  return payload.data as T
-}
 
 export const getProgramas = (token: string): Promise<Programa[]> => {
   return fetchWithAuth<Programa[]>('/api/admin/programas', token)

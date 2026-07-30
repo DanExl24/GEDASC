@@ -1,4 +1,5 @@
 import { computed, reactive, watch, ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import { optionsDates } from '@/constants/optionsDates'
 import type {
   RecordReportFilters,
@@ -55,6 +56,7 @@ const reportCards: ReportCard[] = [
   },
   {
     id: 'aprendices',
+    adminOnly: true,
     eyebrow: 'Catálogo Maestro',
     title: 'Maestro de Aprendices',
     description:
@@ -66,6 +68,7 @@ const reportCards: ReportCard[] = [
   },
   {
     id: 'formaciones',
+    adminOnly: true,
     eyebrow: 'Catálogo Maestro',
     title: 'Maestro de Formaciones',
     description:
@@ -77,6 +80,7 @@ const reportCards: ReportCard[] = [
   },
   {
     id: 'horarios',
+    adminOnly: true,
     eyebrow: 'Catálogo Maestro',
     title: 'Maestro de Horarios',
     description:
@@ -141,7 +145,8 @@ const createInitialFilters = (): RecordReportFilters => ({
   ficha: '',
   searchRegister: '',
   entryStatus: '',
-  assetView: 'computers'
+  assetView: 'computers',
+  vehicleType: '',
 })
 
 const createSelectField = (
@@ -204,7 +209,7 @@ export const useRecordReport = () => {
     type: 'entries',
   })
 
-  const reportFieldBuilders: Record<ReportType, () => ReportFieldConfig[]> = {
+  const reportFieldBuilders: Record<ReportType, (f?: RecordReportFilters) => ReportFieldConfig[]> = {
     entries: () => [
       createBaseDateField(),
       createBaseProgramField(),
@@ -241,7 +246,7 @@ export const useRecordReport = () => {
         entryStatusOptions,
       ),
     ],
-    assets: () => {
+    assets: (currentFilters?: RecordReportFilters) => {
       const fields: ReportFieldConfig[] = [
         createSelectField(
           'assetView',
@@ -252,13 +257,29 @@ export const useRecordReport = () => {
         createBaseDateField()
       ]
 
+      if (currentFilters?.assetView === 'vehicles') {
         fields.push(
-          createSearchField(
-            'searchRegister',
-            'Busqueda activa',
-            'Busca por documento, nombre, serial o placa...',
+          createSelectField(
+            'vehicleType',
+            'Tipo de vehículo',
+            'Todos los tipos',
+            [
+              { label: 'Todos los tipos', value: '' },
+              { label: 'MOTO', value: 'MOTO' },
+              { label: 'CARRO', value: 'CARRO' },
+              { label: 'BICICLETA', value: 'BICICLETA' },
+            ],
           ),
         )
+      }
+
+      fields.push(
+        createSearchField(
+          'searchRegister',
+          'Busqueda activa',
+          'Busca por documento, nombre, serial o placa...',
+        ),
+      )
 
       return fields
     },
@@ -271,12 +292,19 @@ export const useRecordReport = () => {
     horarios: () => [],
   }
 
+  const auth = useAuthStore()
+
+  const availableReportCards = computed<ReportCard[]>(() => {
+    if (auth.isAdmin) return reportCards
+    return reportCards.filter((card) => !card.adminOnly)
+  })
+
   const reportFields = computed<ReportFieldConfig[]>(
-    () => reportFieldBuilders[selectedReport.type](),
+    () => reportFieldBuilders[selectedReport.type](filters.value),
   )
 
   const currentReportCard = computed<ReportCard>(
-    () => reportCards.find((card) => card.id === selectedReport.type) ?? reportCards[0]!,
+    () => availableReportCards.value.find((card) => card.id === selectedReport.type) ?? availableReportCards.value[0]!,
   )
 
   const currentSummary = computed<string[]>(() => {
@@ -320,6 +348,7 @@ export const useRecordReport = () => {
     filters.value.searchRegister = ''
     filters.value.entryStatus = ''
     filters.value.assetView = 'computers'
+    filters.value.vehicleType = ''
     filters.value.searchRegister = ''
   }
 
@@ -327,6 +356,7 @@ export const useRecordReport = () => {
     () => filters.value.assetView,
     () => {
       filters.value.searchRegister = ''
+      filters.value.vehicleType = ''
     },
   )
 
@@ -358,7 +388,7 @@ watch(
 )
 
   return {
-    reportCards,
+    reportCards: availableReportCards,
     selectedReport,
     filters,
     reportFields,

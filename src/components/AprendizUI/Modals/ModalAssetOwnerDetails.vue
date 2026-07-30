@@ -16,6 +16,22 @@
         <p class="mt-1 text-sm font-semibold text-slate-900">{{ detail.formacion || 'Sin informacion' }}</p>
       </div>
 
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-[18px] border border-emerald-100 bg-emerald-50/60 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Ficha (N° Formación)</p>
+          <p class="mt-1 text-sm font-bold text-emerald-900">
+            {{ detail.id_formacion ? `Ficha ${detail.id_formacion}` : 'Sin ficha' }}
+          </p>
+        </div>
+
+        <div class="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Horario</p>
+          <p class="mt-1 text-sm font-semibold text-slate-900">
+            {{ (detail.horario_inicio && detail.horario_fin) ? `${detail.horario_inicio} - ${detail.horario_fin}` : 'Sin horario' }}
+          </p>
+        </div>
+      </div>
+
       <div class="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Jornada</p>
         <div class="mt-2">

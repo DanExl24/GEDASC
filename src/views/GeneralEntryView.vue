@@ -5,7 +5,11 @@
       eyebrow="SENA | Registro de accesos"
     />
 
-    <BarcodeScanner ref="scannerModal" @aprendiz-detectado="handleScanner" />
+    <BarcodeScanner
+      ref="scannerModal"
+      :title="activeTab === 'ingresos' ? 'ESCANEAR INGRESO DE APRENDIZ' : 'ESCANEAR SALIDA DE APRENDIZ'"
+      @aprendiz-detectado="handleScanner"
+    />
 
     <main class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 lg:px-8">
       <section class="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
@@ -83,7 +87,7 @@
         <BaseButtonOpen
           @click="open"
           :image="codebar"
-          text="Escanear aprendiz"
+          :text="activeTab === 'ingresos' ? 'Escanear aprendiz' : 'Escanear salida'"
           variant="green"
           class-button="min-w-[210px]"
           :disabled="jornada.isSystemLocked"
@@ -92,7 +96,7 @@
         <BaseButtonOpen
           @click="openManual"
           :image="add"
-          text="Registro manual"
+          :text="activeTab === 'ingresos' ? 'Ingreso manual' : 'Salida manual'"
           variant="dark"
           class-button="min-w-[210px]"
           :disabled="jornada.isSystemLocked"
@@ -131,7 +135,6 @@
           <AprendizTable
             v-if="activeTab === 'ingresos'"
             :aprendiz-data="entryData"
-            @registrar-salida="handleManualSalida"
           />
           <ExitAprendizTable
             v-else
@@ -140,7 +143,7 @@
         </div>
       </section>
 
-      <ModalRegisterManual ref="modalManual" class="debug-border" @submit-manual="handleScanner"/>
+      <ModalRegisterManual ref="modalManual" :mode="activeTab" class="debug-border" @submit-manual="handleScanner"/>
       <ModalConfirm
         ref="modalConfirmMonitor"
         title="Tipo de Ingreso"
@@ -338,47 +341,13 @@ const handleVisitReasonConfirmed = async (reason: string) => {
 
 const handleMachineRetired = async () => {
   if (tempScannedCode.value) {
-    // If retiring machine, they are exiting, so no schedule checks needed
     const validacion = await AñadirIngresoAprendiz(tempScannedCode.value)
     if (validacion) {
-      addNotification('Salida Registrada (con Retiro de Equipo)', 'success')
+      addNotification('Retiro de equipo registrado correctamente', 'success')
       await HistorialSalidaAprendiz()
     }
-    tempScannedCode.value = ''
   }
-  modalMachineDetails.value?.close()
   scannerModal.value?.closeScanner()
-}
-
-const handleManualSalida = async (aprendiz: Aprendiz) => {
-  const code = aprendiz.documento
-  if (!code) return
-
-  const res = await DetectEntry(code)
-
-  if (res.status === 'no_existe' || res.status === 'error') {
-    addNotification('Error al procesar el aprendiz', 'warning')
-    return
-  }
-
-  if (res.activeSession) {
-    if (res.hasMachine) {
-      tempScannedCode.value = code
-      currentAprendizId.value = res.id_aprendiz || null
-      await nextTick()
-      if (currentAprendizId.value && res.id_detallemaquina) {
-        await modalMachineDetails.value?.load(res.id_detallemaquina)
-        modalMachineDetails.value?.open()
-      }
-      return
-    }
-
-    const validacion = await AñadirIngresoAprendiz(code)
-    if (validacion) {
-      addNotification('Salida Registrada', 'success')
-      await HistorialSalidaAprendiz()
-    }
-  }
 }
 
 const handleScanner = async (code: string) => {
@@ -399,8 +368,45 @@ const handleScanner = async (code: string) => {
     return
   }
 
-  // 1️⃣ CASO: Sesión Activa -> REGISTRAR SALIDA
-  if (res.activeSession) {
+  // 🟢 1. MÓDULO DE INGRESOS (activeTab === 'ingresos')
+  if (activeTab.value === 'ingresos') {
+    if (res.activeSession) {
+      const msg = 'El aprendiz ya tiene un ingreso registrado para esta sesión'
+      scannerModal.value?.setResultMessage(msg)
+      addNotification(msg, 'warning')
+      scannerModal.value?.closeScanner()
+      return
+    }
+
+    // Sin Sesión Activa -> REGISTRAR INGRESO
+    tempScannedCode.value = code
+    tempIsMonitor.value = res.es_monitor || false
+    tempIsReentry.value = res.isReentry || false
+    tempMatchingFormations.value = res.schedule?.matchingFormations || []
+    tempAllActiveFormations.value = res.schedule?.allActiveFormations || []
+
+    selectedTipoSesion.value = 'formacion'
+    selectedIdFormacion.value = undefined
+    selectedMotivoVisita.value = undefined
+    tipoSesionResolved.value = false
+    reentryReasonResolved.value = false
+    reentryReasonText.value = ''
+
+    await evaluateNextStep()
+    return
+  }
+
+  // 🔴 2. MÓDULO DE SALIDAS (activeTab === 'salidas')
+  if (activeTab.value === 'salidas') {
+    if (!res.activeSession) {
+      const msg = 'El aprendiz no registra un ingreso activo para registrar salida.'
+      scannerModal.value?.setResultMessage(msg)
+      addNotification(msg, 'warning')
+      scannerModal.value?.closeScanner()
+      return
+    }
+
+    // Con Sesión Activa -> REGISTRAR SALIDA
     if (res.hasMachine) {
       tempScannedCode.value = code
       currentAprendizId.value = res.id_aprendiz || null
@@ -416,27 +422,11 @@ const handleScanner = async (code: string) => {
     if (validacion) {
       addNotification('Salida Registrada', 'success')
       await HistorialSalidaAprendiz()
+      await HistorialIngresoAprendiz()
     }
     scannerModal.value?.closeScanner()
     return
   }
-
-  // 2️⃣ CASO: Sin Sesión Activa -> REGISTRAR INGRESO
-  tempScannedCode.value = code
-  tempIsMonitor.value = res.es_monitor || false
-  tempIsReentry.value = res.isReentry || false
-  tempMatchingFormations.value = res.schedule?.matchingFormations || []
-  tempAllActiveFormations.value = res.schedule?.allActiveFormations || []
-
-  // Reset flow
-  selectedTipoSesion.value = 'formacion'
-  selectedIdFormacion.value = undefined
-  selectedMotivoVisita.value = undefined
-  tipoSesionResolved.value = false
-  reentryReasonResolved.value = false
-  reentryReasonText.value = ''
-
-  await evaluateNextStep()
 }
 
 

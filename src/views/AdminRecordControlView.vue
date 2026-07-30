@@ -256,6 +256,7 @@ import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import { optionsDates } from '@/constants/optionsDates'
 import HeaderView from '@/layouts/HeaderView.vue'
+import { formatDateTime } from '@/utils/formatDate'
 import { useNotifications } from '@/composables/useNotifications'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -304,14 +305,6 @@ const currentActionDateLabel = computed(() =>
   }).format(new Date())
 )
 
-const formatDateTime = (value: string | null) => {
-  if (!value) return '-'
-
-  return new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(new Date(value))
-}
 
 const getRecordDate = (value: string | null) => {
   if (!value) return '-'

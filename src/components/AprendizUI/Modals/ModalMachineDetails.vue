@@ -1,135 +1,98 @@
 <template>
   <BaseModal @close="close" ref="modalRef" title="Máquinas registradas">
     <div class="grid gap-4">
-      <!-- PC -->
-      <div
-        v-if="maquinaDetalle?.pc"
-        class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-      >
-        <BaseText
-          v-if="estadoUI.text"
-          :type="estadoUI.type"
-          :text="estadoUI.text"
-        />
 
-        <h3 class="font-robotoSlab text-lg font-bold text-slate-900">
-          Computador
-        </h3>
-
-        <BaseText type="success" :text="`Marca: ${maquinaDetalle.pc.marca}`" />
-        <BaseText type="success" :text="`Serial: ${maquinaDetalle.pc.serial}`" />
-        <BaseText
-          v-if="showOwner && maquinaDetalle?.aprendices.owner.name"
-          type="error"
-          :text="`PERTENECE A: ${maquinaDetalle.aprendices.owner.name}`"
-        />
-      </div>
-
-      <!-- VEHICULO -->
-      <div
-        v-if="maquinaDetalle?.vh"
-        class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-      >
-        <BaseText
-          v-if="estadoUI.text"
-          :type="estadoUI.type"
-          :text="estadoUI.text"
-        />
-
-
-
-        <h3 class="font-robotoSlab text-lg font-bold text-slate-900">
-          Vehiculo
-        </h3>
-
-        <BaseText
-          type="success"
-          :text="`Tipo: ${normalizeVehicleType(maquinaDetalle.vh.tipo_vehiculo)}`"
-        />
-        <BaseText type="success" :text="`Marca: ${maquinaDetalle.vh.marca}`" />
-        <BaseText type="success" :text="`Placa: ${maquinaDetalle.vh.placa}`" />
-        <BaseText
-          v-if="showOwner && maquinaDetalle?.aprendices.owner.name"
-          type="error"
-          :text="`PERTENECE A: ${maquinaDetalle.aprendices.owner.name}`"
-        />
-      </div>
-
-      <!-- FIRMA -->
-      <div
-        v-if="maquinaDetalle?.firma"
-        class="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4"
-      >
-        <h3 class="mb-2 font-semibold text-slate-900">
-          Firma de ingreso del aprendiz
-        </h3>
-
-        <img
-          :src="maquinaDetalle.firma"
-          class="w-48 rounded-xl border bg-white"
-          alt="Firma del aprendiz"
-        />
-      </div>
-
-      <!-- ESTADO DEL EQUIPO -->
-      <div
-        v-if="maquinaDetalle"
-        class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-      >
-        <h3 class="mb-2 font-robotoSlab text-lg font-bold text-slate-900">
-          Estado del equipo
-        </h3>
-        <BaseText
-          v-if="maquinaDetalle.estado_equipo === 'retirado'"
-          type="success"
-          text="Estado: RETIRADO DEL CENTRO"
-        />
-        <BaseText
-          v-else
-          type="error"
-          text="Estado: DENTRO DEL CENTRO"
-        />
-        <p v-if="maquinaDetalle.hora_retiro_equipo" class="mt-1 text-xs text-slate-500">
-          Retirado en: {{ maquinaDetalle.hora_retiro_equipo }}
-        </p>
-      </div>
-
-      <!-- FIRMA DE SALIDA -->
-      <div
-        v-if="maquinaDetalle?.firma_salida && maquinaDetalle?.firma_salida !== 'Sin firma de salida'"
-        class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 p-4"
-      >
-        <h3 class="mb-2 font-semibold text-slate-900">
-          Firma de salida del aprendiz
-        </h3>
-
-        <img
-          :src="maquinaDetalle.firma_salida"
-          class="w-48 rounded-xl border bg-white"
-          alt="Firma de salida"
-        />
-      </div>
-
-      <!-- BOTON REGISTRAR RETIRO -->
-      <div
-        v-if="maquinaDetalle && maquinaDetalle.estado_equipo !== 'retirado' && !mostrarFirmaRetiro"
-        class="flex justify-center p-2"
-      >
+      <!-- ENCABEZADO Y BOTON AGREGAR MÁS EQUIPOS -->
+      <div class="flex justify-between items-center rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-emerald-800">Equipos de la Sesión</p>
+          <p class="text-xs text-slate-500">
+            {{ maquinaDetalle?.items?.length || 0 }} {{ (maquinaDetalle?.items?.length || 0) === 1 ? 'equipo registrado' : 'equipos registrados' }}
+          </p>
+        </div>
         <BaseButtonOpen
-          text="Registrar retiro de equipo"
+          text="➕ Agregar más equipos/vehículos"
           variant="green"
-          @click="mostrarFirmaRetiro = true"
+          class-button="min-h-0 text-xs px-3 py-2 font-bold"
+          @click="handleAddMore"
         />
       </div>
 
-      <!-- CANVAS FIRMA RETIRO -->
+      <!-- LISTA DE EQUIPOS DE LA SESION -->
       <div
-        v-if="mostrarFirmaRetiro"
-        class="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4"
+        v-for="(item, index) in maquinaDetalle?.items"
+        :key="item.id_detallemaquina || index"
+        class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid gap-3"
       >
-        <h3 class="font-semibold text-slate-900">Firma de salida requerida</h3>
-        <p class="mb-2 text-xs text-slate-500">Capture la firma del aprendiz para retirar el equipo</p>
-        <SignaturePad @update:signature="registrarFirmaSalida" />
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <span class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+            Equipo #{{ index + 1 }}
+          </span>
+          <span
+            :class="item.estado_equipo === 'retirado' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'"
+            class="inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider"
+          >
+            {{ item.estado_equipo === 'retirado' ? 'Retirado' : 'Dentro del centro' }}
+          </span>
+        </div>
+
+        <!-- PC -->
+        <div v-if="item.pc" class="rounded-xl bg-slate-50 p-3">
+          <BaseText v-if="estadoUI.text" :type="estadoUI.type" :text="estadoUI.text" />
+          <h4 class="font-robotoSlab text-base font-bold text-slate-900">Computador</h4>
+          <BaseText type="success" :text="`Marca: ${item.pc.marca}`" />
+          <BaseText type="success" :text="`Serial: ${item.pc.serial}`" />
+          <BaseText
+            v-if="showOwner && item.aprendices.owner.name"
+            type="error"
+            :text="`PERTENECE A: ${item.aprendices.owner.name}`"
+          />
+        </div>
+
+        <!-- VEHICULO -->
+        <div v-if="item.vh" class="rounded-xl bg-slate-50 p-3">
+          <BaseText v-if="estadoUI.text" :type="estadoUI.type" :text="estadoUI.text" />
+          <h4 class="font-robotoSlab text-base font-bold text-slate-900">Vehículo</h4>
+          <BaseText type="success" :text="`Tipo: ${normalizeVehicleType(item.vh.tipo_vehiculo)}`" />
+          <BaseText type="success" :text="`Marca: ${item.vh.marca}`" />
+          <BaseText type="success" :text="`Placa: ${item.vh.placa}`" />
+          <BaseText
+            v-if="showOwner && item.aprendices.owner.name"
+            type="error"
+            :text="`PERTENECE A: ${item.aprendices.owner.name}`"
+          />
+        </div>
+
+        <!-- FIRMA INGRESO -->
+        <div v-if="item.firma" class="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 p-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-senaColor">Firma de ingreso</p>
+          <img :src="item.firma" class="mt-2 max-h-28 rounded-lg border bg-white p-1" alt="Firma de ingreso" />
+        </div>
+
+        <!-- FIRMA DE SALIDA -->
+        <div v-if="item.firma_salida && item.firma_salida !== 'Sin firma de salida'" class="rounded-xl border border-dashed border-slate-300 bg-slate-100 p-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Firma de salida</p>
+          <p v-if="item.hora_retiro_equipo" class="text-[11px] text-slate-500 mb-1">Retirado en: {{ formatDateTime(item.hora_retiro_equipo) }}</p>
+          <img :src="item.firma_salida" class="max-h-28 rounded-lg border bg-white p-1" alt="Firma de salida" />
+        </div>
+
+        <!-- BOTON REGISTRAR RETIRO DE ESTE ACTIVO ESPECÍFICO -->
+        <div v-if="item.estado_equipo !== 'retirado' && activeRetiroId !== item.id_detallemaquina" class="flex justify-end pt-1">
+          <BaseButtonOpen
+            text="Registrar retiro de equipo"
+            variant="green"
+            class-button="min-h-0 text-xs px-3 py-1.5 font-bold"
+            @click="activeRetiroId = item.id_detallemaquina"
+          />
+        </div>
+
+        <!-- CANVAS FIRMA RETIRO PARA ESTE ACTIVO ESPECÍFICO -->
+        <div v-if="activeRetiroId === item.id_detallemaquina" class="rounded-xl border border-dashed border-emerald-200 bg-emerald-50 p-3">
+          <h4 class="font-semibold text-slate-900 text-sm">Firma de salida requerida</h4>
+          <p class="mb-2 text-xs text-slate-500">Capture la firma del aprendiz para retirar este equipo</p>
+          <SignaturePad @update:signature="(sig) => registrarFirmaSalidaItem(item.id_detallemaquina, sig)" />
+          <button type="button" class="mt-2 text-xs font-semibold text-slate-500 hover:underline" @click="activeRetiroId = null">Cancelar</button>
+        </div>
       </div>
     </div>
   </BaseModal>
@@ -138,25 +101,27 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BaseModal from '@/components/Modals/BaseModal.vue'
-
-const emit = defineEmits<{
-  (e: 'retired'): void
-  (e: 'close'): void
-}>()
 import BaseText from '@/components/Text/BaseText.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 import SignaturePad from '@/components/Library/SignaturePad.vue'
 import { useMachineService } from '@/composables/API/useMachineService'
 import { useMachineDetailStatus } from '@/composables/useMachineDetailStatus'
 import { normalizeVehicleType } from '@/utils/vehicleType'
+import { formatDateTime } from '@/utils/formatDate'
 import type { MaquinaDetalleUI } from '@/types/machineDetails.types'
 import { API_URL } from '@/config/network'
+
+const emit = defineEmits<{
+  (e: 'retired'): void
+  (e: 'close'): void
+  (e: 'add-more-machines'): void
+}>()
 
 const { getDetalleMaquina } = useMachineService()
 
 const maquinaDetalle = ref<MaquinaDetalleUI | null>(null)
 const modalRef = ref()
-const mostrarFirmaRetiro = ref(false)
+const activeRetiroId = ref<number | null>(null)
 const currentID = ref<number | null>(null)
 
 const { showOwner, estadoUI } = useMachineDetailStatus({
@@ -171,16 +136,21 @@ const { showOwner, estadoUI } = useMachineDetailStatus({
 
 const load = async (ID: number) => {
   currentID.value = ID
-  mostrarFirmaRetiro.value = false
+  activeRetiroId.value = null
   maquinaDetalle.value = await getDetalleMaquina(ID)
 }
 
-const registrarFirmaSalida = async (firma: string) => {
-  if (!maquinaDetalle.value?.id_detallemaquina) return
+const handleAddMore = () => {
+  emit('add-more-machines')
+  close()
+}
+
+const registrarFirmaSalidaItem = async (idDetalle: number | null, firma: string) => {
+  if (!idDetalle) return
 
   try {
     const response = await fetch(
-      `${API_URL}/api/registroSalidas/retirarEquipo/${maquinaDetalle.value.id_detallemaquina}`,
+      `${API_URL}/api/registroSalidas/retirarEquipo/${idDetalle}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -189,10 +159,10 @@ const registrarFirmaSalida = async (firma: string) => {
     )
 
     if (response.ok) {
+      activeRetiroId.value = null
       if (currentID.value !== null) {
         await load(currentID.value)
       }
-      mostrarFirmaRetiro.value = false
       emit('retired')
     } else {
       console.error('Error al registrar retiro')

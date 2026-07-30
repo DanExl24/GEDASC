@@ -7,7 +7,7 @@
         <BaseTableHead name="Sesión" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
         <BaseTableHead name="Ingreso" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
         <BaseTableHead name="Equipos/Vehículos" head-class="bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
-        <BaseTableHead name="Acción / Estado" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
+        <BaseTableHead name="Estado" head-class="rounded-r-2xl bg-slate-900 px-4 py-4 text-center font-quicksand text-sm font-semibold uppercase tracking-[0.14em] text-slate-100" />
       </BaseColumn>
 
       <BaseColumn
@@ -97,18 +97,17 @@
         </td>
         <td>
           <div class="flex items-center justify-center">
-            <BaseButtonOpen
-              v-if="!aprendiz.hora_salida"
-              @click="emit('registrar-salida', aprendiz)"
-              text="Registrar Salida"
-              variant="ghost"
-              class-button="min-h-[36px] rounded-xl py-1.5 px-3 text-xs font-bold uppercase tracking-wider text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 shadow-sm transition cursor-pointer"
-            />
             <span
-              v-else
+              v-if="aprendiz.hora_salida"
               class="inline-flex rounded-full border border-slate-200 bg-slate-100 text-slate-500 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]"
             >
-              Salida: {{ aprendiz.hora_salida }}
+              Salida: {{ formatDateTime(aprendiz.hora_salida) }}
+            </span>
+            <span
+              v-else
+              class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]"
+            >
+              En el centro
             </span>
           </div>
         </td>
@@ -125,6 +124,7 @@
       v-if="aprendizMachine"
       ref="modalMachineDetails"
       :id_aprendiz="aprendizMachine.id_aprendiz"
+      @add-more-machines="openMachine(aprendizMachine)"
     />
 
     <!-- Modal Detalle Sesión -->
@@ -188,6 +188,7 @@ import JornadaBadge from '@/components/UI/JornadaBadge.vue'
 import type { Aprendiz } from '@/types/aprendiz.types'
 import ModalRegisterMachine from './Modals/ModalRegisterMachine.vue'
 import ModalMachineDetails from './Modals/ModalMachineDetails.vue'
+import { formatDateTime } from '@/utils/formatDate'
 
 const aprendizMachine = ref<Aprendiz | null>(null)
 const modalMachine = ref()
