@@ -118,17 +118,7 @@ const router = createRouter({
 })
 
 
-const isMobile = () => window.innerWidth <= 768;
 
-
-router.beforeEach((to, from, next) => {
-  const auth = useAuthStore()
-
-  if (isMobile() && auth.token && !to.path.startsWith("/mobile-view") && !to.meta.guestOnly) {
-    return next("/mobile-view");
-  }
-  next();
-});
 
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore()
