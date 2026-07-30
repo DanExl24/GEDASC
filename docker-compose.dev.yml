@@ -41,6 +41,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./public:/app/public
+      - ./vite.config.ts:/app/vite.config.ts
     networks:
       - gedasc_network
 
