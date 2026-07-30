@@ -1,12 +1,11 @@
 const getDynamicApiUrl = () => {
   if (typeof window !== 'undefined' && window.location) {
-    const hostname = window.location.hostname
     const envUrl = import.meta.env.VITE_API_URL
     if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
       return envUrl.replace(/\/+$/, '')
     }
-    // El backend Express corre en HTTP en el puerto 3000
-    return `http://${hostname}:3000`
+    // Retornar origin actual (e.g. https://192.168.1.15:5173) para usar el proxy de Vite
+    return window.location.origin
   }
   return 'http://localhost:3000'
 }
