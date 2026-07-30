@@ -18,13 +18,7 @@ export default defineConfig({
   },
 
   server: {
-
     host: true,
-    port: 5173,
-
-    hmr: {
-      protocol: 'wss',
-      host: '10.9.50.112'
-    }
+    port: 5173
   }
 })
