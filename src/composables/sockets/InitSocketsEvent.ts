@@ -9,6 +9,9 @@ export const documentoAprendiz = ref<string | undefined>()
 export const movilAutorizado = ref<boolean | null>(null)
 export const movilAuthMessage = ref<string>('')
 
+export const eventoCerrarFirma = ref<number>(0)
+export const eventoAbrirFirma = ref<{ documento: string; ts: number } | null>(null)
+
 let initialized = false
 
 export const registrarDispositivoMovil = () => {
@@ -38,14 +41,23 @@ export const InitSocketsEvent = () => {
     movilAuthMessage.value = message
   })
 
+  socket.on('cerrarFirma', ({ documento }) => {
+    console.log('Cerrar firma recibido en móvil:', documento)
+    eventoCerrarFirma.value++
+  })
+
   socket.on('cerrarFirmaEnMovil', ({ documento }) => {
-    console.log('Cerrar firma en móvil:', documento)
+    console.log('Cerrar firma en móvil recibido:', documento)
+    eventoCerrarFirma.value++
   })
 
   socket.on('abrirFirma', ({ documento }) => {
     if (movilAutorizado.value === true) {
       documentoAprendiz.value = documento
-      router.push(`/mobile-view/firma/${documento}`)
+      eventoAbrirFirma.value = { documento, ts: Date.now() }
+      if (router.currentRoute.value.path !== `/mobile-view/firma/${documento}`) {
+        router.push(`/mobile-view/firma/${documento}`)
+      }
     }
   })
 }

@@ -226,7 +226,14 @@ const registrarFirmaSalidaItem = async (idDetalle: number | null, firma: string)
 ========================= */
 
 const open = () => modalRef.value?.openModal()
-const close = () => modalRef.value?.closeModal()
+const close = () => {
+  const doc = props.documento_aprendiz || maquinaDetalle.value?.items?.[0]?.aprendices?.actual?.documento
+  if (doc) {
+    socket.emit('cerrarFirmaEnMovil', { documento: doc })
+  }
+  activeRetiroId.value = null
+  modalRef.value?.closeModal()
+}
 
 defineExpose({ open, close, load })
 </script>

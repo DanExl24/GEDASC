@@ -75,7 +75,7 @@
     </main>
 
     <!-- Modal de firma -->
-    <BaseModal ref="modalFirma" :title="`Firma de ${documentoAprendiz}`">
+    <BaseModal ref="modalFirma" :title="`Firma de ${documentoAprendiz}`" @close="handleCerrarModal">
       <SignaturePad @update:signature="guardarFirma" />
     </BaseModal>
 
@@ -102,6 +102,8 @@ import { useDeviceValidator } from '@/composables/useDeviceValidator'
 import {
   documentoAprendiz,
   movilAutorizado,
+  eventoAbrirFirma,
+  eventoCerrarFirma,
   registrarDispositivoMovil
 } from '@/composables/sockets/InitSocketsEvent'
 
@@ -125,6 +127,13 @@ onMounted(async () => {
   registrarDispositivoMovil()
 })
 
+const handleCerrarModal = () => {
+  modalFirma.value?.closeModal()
+  if (route.path !== '/mobile-view') {
+    router.push('/mobile-view')
+  }
+}
+
 const handleActivarValidador = async (forzar = false) => {
   const result = await activarValidador(forzar)
 
@@ -145,6 +154,16 @@ const irASistemaResponsive = () => {
   router.push('/dashboard')
 }
 
+watch(eventoAbrirFirma, (val) => {
+  if (val && val.documento && (movilAutorizado.value === true || esValidadorActivo.value === true)) {
+    modalFirma.value?.openModal()
+  }
+})
+
+watch(eventoCerrarFirma, () => {
+  handleCerrarModal()
+})
+
 watch(
   () => route.params.documento,
   (doc) => {
@@ -157,7 +176,6 @@ watch(
 
 const guardarFirma = (base64: string) => {
   emitirFirmaRegistrada(base64)
-  modalFirma.value?.closeModal()
-  router.push('/mobile-view')
+  handleCerrarModal()
 }
 </script>
