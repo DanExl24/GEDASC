@@ -23,8 +23,8 @@
 
       <!-- DERECHA -->
         <section class="flex items-center gap-3">
-          <!-- Botón de Dispositivo Validador de Firma (para celular/táctil) -->
-          <template v-if="auth.isAuthenticated && isTouchDevice">
+          <!-- Botón de Dispositivo Validador de Firma (únicamente para celulares reales) -->
+          <template v-if="auth.isAuthenticated && isRealMobileDevice">
             <button
               v-if="esValidadorActivo"
               type="button"
@@ -113,7 +113,7 @@ const thisTimeRef = ref()
 const conflictMessage = ref('')
 
 const {
-  isTouchDevice,
+  isRealMobileDevice,
   esValidadorActivo,
   consultarEstadoValidador,
   activarValidador,

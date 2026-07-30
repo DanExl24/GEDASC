@@ -37,12 +37,23 @@ export const getDeviceName = (): string => {
   return deviceName
 }
 
-export const isTouchDevice = computed(() => {
-  if (typeof window === 'undefined') return false
-  const hasTouchPoints = navigator.maxTouchPoints > 0
-  const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  return hasTouchPoints || isMobileUA
+export const isRealMobileDevice = computed(() => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+
+  const ua = navigator.userAgent || ''
+
+  // Descartar explícitamente sistemas de escritorio Windows y macOS
+  if (/Windows NT/i.test(ua)) return false
+  if (/Macintosh/i.test(ua) && !('ontouchend' in document)) return false
+
+  // Validar si el agente pertenece a un SO móvil real (Android, iPhone, iPad, etc.)
+  const isMobileOS = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+  const isMobileUAData = (navigator as any).userAgentData?.mobile === true
+
+  return isMobileOS || isMobileUAData
 })
+
+export const isTouchDevice = isRealMobileDevice
 
 export const useDeviceValidator = () => {
   const auth = useAuthStore()
@@ -138,6 +149,7 @@ export const useDeviceValidator = () => {
 
   return {
     deviceId,
+    isRealMobileDevice,
     isTouchDevice,
     esValidadorActivo,
     cargandoValidador,
