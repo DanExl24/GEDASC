@@ -27,6 +27,7 @@ type BorrowComputerPayload = {
     marca: string
   } | null
   firma_ingreso: string | null
+  firma_salida: string | null
   hora_ingreso: string | null
 }
 
@@ -46,6 +47,7 @@ type BorrowVehiclePayload = {
     modelo: string
   } | null
   firma_ingreso: string | null
+  firma_salida: string | null
   hora_ingreso: string | null
 }
 
@@ -69,6 +71,7 @@ export interface BorrowedComputerRow {
   serial: string
   marca: string
   firmaIngreso: string | null
+  firmaSalida: string | null
   horaIngreso: string | null
 }
 
@@ -83,6 +86,7 @@ export interface BorrowedVehicleRow {
   tipo: string
   modelo: string
   firmaIngreso: string | null
+  firmaSalida: string | null
   horaIngreso: string | null
 }
 
@@ -136,6 +140,7 @@ export const getAdminBorrowedAssets = async (token: string, dates?: string) => {
       serial: data.prestado?.serial || data.principal?.serial || '-',
       marca: data.prestado?.marca || data.principal?.marca || '-',
       firmaIngreso: data.firma_ingreso,
+      firmaSalida: data.firma_salida,
       horaIngreso: data.hora_ingreso
     }
   })
@@ -152,6 +157,7 @@ export const getAdminBorrowedAssets = async (token: string, dates?: string) => {
       tipo: normalizeVehicleType(data.prestado?.tipo || data.principal?.tipo || '-'),
       modelo: data.prestado?.modelo || data.principal?.modelo || '-',
       firmaIngreso: data.firma_ingreso,
+      firmaSalida: data.firma_salida,
       horaIngreso: data.hora_ingreso
     }
   })

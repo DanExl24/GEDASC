@@ -147,7 +147,8 @@
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Presta</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Recibe</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Documento</th>
-                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Tiempo</th>
+                    <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Tiempo</th>
+                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Firmas</th>
                   </template>
 
                   <template v-else>
@@ -157,7 +158,8 @@
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Presta</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Recibe</th>
                     <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Documento</th>
-                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Tiempo</th>
+                    <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Tiempo</th>
+                    <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Firmas</th>
                   </template>
                 </tr>
               </thead>
@@ -174,6 +176,16 @@
                   <td class="font-semibold text-slate-900">{{ computer.borrowerName }}</td>
                   <td :title="computer.borrowerName" class="cursor-help">{{ computer.borrowerDocument }}</td>
                   <td>{{ formatBorrowedTime(computer.horaIngreso) }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      @click="verFirmas(computer)"
+                      class="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"
+                      title="Ver firma de ingreso y salida del préstamo"
+                    >
+                      ✍️ Ver Firmas
+                    </button>
+                  </td>
                 </tr>
               </tbody>
 
@@ -190,6 +202,16 @@
                   <td class="font-semibold text-slate-900">{{ vehicle.borrowerName }}</td>
                   <td :title="vehicle.borrowerName" class="cursor-help">{{ vehicle.borrowerDocument }}</td>
                   <td>{{ formatBorrowedTime(vehicle.horaIngreso) }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      @click="verFirmas(vehicle)"
+                      class="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"
+                      title="Ver firma de ingreso y salida del préstamo"
+                    >
+                      ✍️ Ver Firmas
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -201,6 +223,67 @@
         </div>
       </section>
     </main>
+
+    <!-- MODAL DE VISUALIZACIÓN DE FIRMAS (INGRESO Y SALIDA) -->
+    <BaseModal ref="modalFirmas" :title="`Firmas de préstamo (${selectedAssetForFirmas?.borrowerName || 'Aprendiz'})`">
+      <div v-if="selectedAssetForFirmas" class="space-y-4">
+        <!-- DETALLES DEL PRÉSTAMO -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-600 grid grid-cols-2 gap-2">
+          <div>
+            <span class="font-bold uppercase tracking-wider text-slate-400 block text-[10px]">Receptor (Tiene el equipo)</span>
+            <span class="font-bold text-slate-800 text-sm">{{ selectedAssetForFirmas.borrowerName }}</span>
+            <p class="text-slate-500">Doc: {{ selectedAssetForFirmas.borrowerDocument }}</p>
+          </div>
+          <div>
+            <span class="font-bold uppercase tracking-wider text-slate-400 block text-[10px]">Propietario original</span>
+            <span class="font-bold text-slate-800 text-sm">{{ selectedAssetForFirmas.ownerName }}</span>
+            <p class="text-slate-500">Doc: {{ selectedAssetForFirmas.ownerDocument }}</p>
+          </div>
+        </div>
+
+        <!-- TARJETAS DE FIRMA -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- FIRMA INGRESO -->
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider mb-2">
+              ✓ Firma de Ingreso
+            </span>
+
+            <div v-if="selectedAssetForFirmas.firmaIngreso" class="mt-2 flex justify-center">
+              <img
+                :src="selectedAssetForFirmas.firmaIngreso"
+                alt="Firma de ingreso"
+                class="max-h-36 rounded-xl border border-emerald-200 bg-white p-2 shadow-sm"
+              />
+            </div>
+            <div v-else class="py-8 text-xs font-semibold text-slate-400 italic">
+              Sin firma de ingreso registrada
+            </div>
+          </div>
+
+          <!-- FIRMA SALIDA -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-center">
+            <span
+              :class="selectedAssetForFirmas.firmaSalida && selectedAssetForFirmas.firmaSalida !== 'Sin firma de salida' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2"
+            >
+              {{ selectedAssetForFirmas.firmaSalida && selectedAssetForFirmas.firmaSalida !== 'Sin firma de salida' ? '✓ Firma de Salida' : '⏳ Pendiente de Salida' }}
+            </span>
+
+            <div v-if="selectedAssetForFirmas.firmaSalida && selectedAssetForFirmas.firmaSalida !== 'Sin firma de salida'" class="mt-2 flex justify-center">
+              <img
+                :src="selectedAssetForFirmas.firmaSalida"
+                alt="Firma de salida"
+                class="max-h-36 rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+              />
+            </div>
+            <div v-else class="py-8 text-xs font-semibold text-slate-500 italic">
+              El equipo aún no ha sido retirado / Sin firma de salida
+            </div>
+          </div>
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -211,6 +294,7 @@ import BaseSelect from '@/components/Forms/BaseSelect.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import HeaderView from '@/layouts/HeaderView.vue'
+import BaseModal from '@/components/Modals/BaseModal.vue'
 import { optionsDates } from '@/constants/optionsDates'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -244,6 +328,14 @@ const computers = ref<BorrowedComputerRow[]>([])
 const vehicles = ref<BorrowedVehicleRow[]>([])
 const isLoading = ref(false)
 const loadError = ref('')
+
+const modalFirmas = ref()
+const selectedAssetForFirmas = ref<BorrowedComputerRow | BorrowedVehicleRow | null>(null)
+
+const verFirmas = (asset: BorrowedComputerRow | BorrowedVehicleRow) => {
+  selectedAssetForFirmas.value = asset
+  modalFirmas.value?.openModal()
+}
 
 const matchesSearch = (value: string | number | null | undefined, term: string) =>
   String(value ?? '').toLowerCase().includes(term)

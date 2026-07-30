@@ -53,6 +53,7 @@ type AdminBorrowedComputerRow = {
       marca: string | null
     } | null
     firma_ingreso: string | null
+    firma_salida: string | null
     hora_ingreso: string | null
   }
 }
@@ -75,6 +76,7 @@ type AdminBorrowedVehicleRow = {
       modelo: string | null
     } | null
     firma_ingreso: string | null
+    firma_salida: string | null
     hora_ingreso: string | null
   }
 }
@@ -200,6 +202,7 @@ export const getGlobalBorrowedComputers = async (
       c2.marca AS prestado_marca,
 
       dm.firma_ingreso,
+      dm.firma_salida,
       di.hora_ingreso
     FROM detalles_maquinas dm
     INNER JOIN detalles_ingreso di
@@ -254,6 +257,7 @@ export const getGlobalBorrowedComputers = async (
           }
         : null,
       firma_ingreso: row.firma_ingreso ?? null,
+      firma_salida: row.firma_salida ?? null,
       hora_ingreso: row.hora_ingreso ?? null
     }
   }))
@@ -287,6 +291,7 @@ export const getGlobalBorrowedVehicles = async (
       v2.modelo AS prestado_modelo,
 
       dm.firma_ingreso,
+      dm.firma_salida,
       di.hora_ingreso
     FROM detalles_maquinas dm
     INNER JOIN detalles_ingreso di
@@ -343,6 +348,7 @@ export const getGlobalBorrowedVehicles = async (
           }
         : null,
       firma_ingreso: row.firma_ingreso ?? null,
+      firma_salida: row.firma_salida ?? null,
       hora_ingreso: row.hora_ingreso ?? null
     }
   }))
