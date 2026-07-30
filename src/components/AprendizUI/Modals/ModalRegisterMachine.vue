@@ -14,13 +14,23 @@ import { ref } from 'vue';
 import RegisterMachineForm from '../Forms/RegisterMachineForm.vue';
 import type { Aprendiz } from '@/types/aprendiz.types';
 import BaseModal from '@/components/Modals/BaseModal.vue';
+import { connectSocket } from '@/socket';
+
+const socket = connectSocket()
 const modalRef = ref()
+
+const props = defineProps<{
+  aprendiz: Aprendiz
+}>()
 
 const open = () => {
   modalRef.value?.openModal()
 }
 
 const close = () => {
+  if (props.aprendiz?.documento) {
+    socket.emit('cerrarFirmaEnMovil', { documento: props.aprendiz.documento })
+  }
   modalRef.value?.closeModal()
 }
 
@@ -28,10 +38,4 @@ defineExpose({
   open,
   close
 })
-
-const props = defineProps<{
-  aprendiz: Aprendiz
-}>()
-
-
 </script>
