@@ -1,7 +1,14 @@
 const getDynamicApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+
   if (typeof window !== 'undefined' && window.location) {
-    const hostname = window.location.hostname
-    return `http://${hostname}:3000`
+    const { protocol, hostname } = window.location
+    if (protocol === 'https:') {
+      return `https://api-${hostname}`
+    }
+    return `${protocol}//${hostname}:3000`
   }
   return 'http://localhost:3000'
 }
