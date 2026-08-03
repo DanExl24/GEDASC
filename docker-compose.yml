@@ -1,9 +1,8 @@
-services:          # define cada contenedor
+services:
   backend:
+    container_name: gedasc-backend
     build:
-      context: ./Database     # configuración del servicio
-    ports: 
-      - "3000:3000"
+      context: ./DataBase
     environment:
       - TZ=America/Bogota
     env_file:
@@ -11,31 +10,41 @@ services:          # define cada contenedor
     depends_on:
       - postgres
     networks:
-      - gedasc_network
+      - gedasc-internal
+      - proxy-network
+    restart: always
+
   postgres:
+    container_name: gedasc-postgres
     image: postgres:16
     environment:
       - TZ=America/Bogota
       - PGTZ=America/Bogota
     env_file:
-      - ./Database/.env_postgres
+      - ./DataBase/.env_postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data 
+      - postgres_data:/var/lib/postgresql/data
       - ./DataBase/init_scripts:/docker-entrypoint-initdb.d
     networks:
-      - gedasc_network
+      - gedasc-internal
+    restart: always
+
   frontend:
+    container_name: gedasc-frontend
     build:
       context: ./
-    ports:
-      - "80:80"
+      args:
+        VITE_API_URL: https://api-gedasc.adsoproject.dev
     networks:
-      - gedasc_network
-
+      - gedasc-internal
+      - proxy-network
+    restart: always
 
 volumes:
-  postgres_data: 
+  postgres_data:
 
-
-networks:          # redes entre contenedores (opcional)
-  gedasc_network:
+networks:
+  gedasc-internal:
+    driver: bridge
+  proxy-network:
+    external: true

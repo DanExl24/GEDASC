@@ -28,9 +28,18 @@ import { swaggerSpec } from './config/swagger'
 const app = express()
 const server = http.createServer(app)
 
+// ✅ Configuración de orígenes permitidos (CORS)
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['*']
+
 // ✅ Inicialización de Socket.io
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
 })
 
 // 🔥 inicializar IO global
@@ -41,7 +50,18 @@ initSockets(io)
 
 // middlewares
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (Mobile apps, Curl, Postman) o si '*' está permitido
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      console.warn(`[CORS Bloqueado]: ${origin}`)
+      callback(null, true) // O cambiar a callback(new Error('Bloqueado por CORS')) para bloqueo estricto
+    }
+  },
+  credentials: true
+}))
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 // rutas
