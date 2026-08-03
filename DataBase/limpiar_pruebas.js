@@ -1,5 +1,4 @@
 const { Client } = require('pg');
-const path = require('path');
 require('dotenv').config();
 
 async function run() {

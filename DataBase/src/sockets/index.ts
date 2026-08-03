@@ -1,5 +1,4 @@
 import { Server } from "socket.io";
-import jwt from "jsonwebtoken";
 import { pool } from "../config/db";
 
 const MOBILE_DEVICE_KEY = process.env.MOBILE_DEVICE_KEY || "GEDASC_PORTERIA_KEY_2026";
@@ -11,7 +10,7 @@ export default function initSockets(io: Server) {
     // =========================
     // REGISTRO DE DISPOSITIVO
     // =========================
-    socket.on("registrar", async ({ tipo, token, deviceId, device_id, deviceKey }) => {
+    socket.on("registrar", async ({ tipo, token: _token, deviceId, device_id, deviceKey }) => {
       socket.data.tipo = tipo;
       const targetDeviceId = deviceId || device_id || null;
 

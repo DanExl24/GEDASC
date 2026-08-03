@@ -10,12 +10,6 @@ export interface AdminYearStat {
   total: number
 }
 
-type ApiEnvelope<T> = {
-  success: boolean
-  data?: T
-  message?: string
-}
-
 const normalizeQuarterStats = (data: unknown): AdminQuarterStat[] => {
   if (!Array.isArray(data)) return []
 
