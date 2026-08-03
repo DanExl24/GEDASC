@@ -1,0 +1,30 @@
+name: Continuous Deployment (CD) - GEDASC
+
+on:
+  push:
+    branches:
+      - GEDASC-V2
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd ~/GEDASC
+            git fetch origin GEDASC-V2
+            git reset --hard origin/GEDASC-V2
+            docker compose up -d --build
+            docker network connect proxy-network nginx-proxy-manager || true
+            docker image prune -f
