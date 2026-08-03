@@ -15,14 +15,14 @@ async function run() {
 
   try {
     console.log('Restoring unique constraint on aprendiz_formacion(id_aprendiz, id_formacion)...');
-    
+
     // Agregar constraint único
     await client.query(`
-      ALTER TABLE aprendiz_formacion 
-      ADD CONSTRAINT unique_id_aprendiz_id_formacion 
+      ALTER TABLE aprendiz_formacion
+      ADD CONSTRAINT unique_id_aprendiz_id_formacion
       UNIQUE (id_aprendiz, id_formacion);
     `);
-    
+
     console.log('Unique constraint restored successfully!');
   } catch (err) {
     console.error('Failed to restore constraint:', err);

@@ -14,7 +14,7 @@ _El proyecto está compuesto por un frontend y un backend conectados a una base 
 ```py
 GEDASC/
 │
-├── Database/   # Backend
+├── database/   # Backend
 ├── src/        # Frontend
 └── README.md
 ```
@@ -56,7 +56,7 @@ npm run dev
 
 ## Backend
 
-Ubicado en la carpeta _Database_
+Ubicado en la carpeta _database_
 
 ```bash
 npm install

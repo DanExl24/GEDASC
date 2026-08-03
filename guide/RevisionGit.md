@@ -25,7 +25,7 @@ roles[\[3\]](https://github.com/DanExl24/GEDASC#:~:text=Versi%C3%B3n%201).
 
 El árbol de directorios incluye dos áreas principales:
 
-- `DataBase/`: contiene el backend en TypeScript. Dentro de `src` hay
+- `database/`: contiene el backend en TypeScript. Dentro de `src` hay
   subcarpetas como `config` (configuración de base de datos),
   `controllers` (lógica de negocio), `middlewares` (autenticación y
   control de acceso), `routes` (definiciones de rutas), `sockets`
@@ -45,10 +45,10 @@ repositorio y presentan riesgos de seguridad.
 
 ### Configuración de la base de datos y variables de entorno
 
-El archivo `DataBase/src/config/db.ts` crea un `Pool` de PostgreSQL con
+El archivo `database/src/config/db.ts` crea un `Pool` de PostgreSQL con
 valores codificados: usuario `postgres`, contraseña vacía, host
 `localhost`, puerto `5432` y base de datos
-`GEDACS`[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/config/db.ts#L2-L10).
+`GEDACS`[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/config/db.ts#L2-L10).
 Esta práctica funciona en desarrollo pero es insegura en producción; lo
 ideal es leer estas credenciales de variables de entorno y excluirlas
 del control de versiones. El `README` sugiere editar estos parámetros
@@ -59,13 +59,13 @@ o claves de servicio.
 
 ### Servidor y configuración básica
 
-El archivo principal `DataBase/src/index.ts` importa módulos, configura
+El archivo principal `database/src/index.ts` importa módulos, configura
 CORS y crea una instancia de Express y de `socket.io`. Utiliza
 `dotenv.config()` para cargar variables de entorno, define rutas
 (`/api/auth`, `/api/admin`, `/api/entry`, etc.) y delega la lógica a los
 controladores. Además inicializa los sockets para características como
 la firma digital y el escáner de códigos QR, y escucha en el puerto
-`3000`[\[5\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/index.ts#L21-L111).
+`3000`[\[5\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/index.ts#L21-L111).
 Esta estructura modular facilita la separación de responsabilidades,
 pero la presencia de sockets en el mismo proceso puede generar cuellos
 de botella si no se dimensiona adecuadamente.
@@ -77,7 +77,7 @@ para iniciar sesión y crear tokens JWT. En `auth.controller.ts` se
 observa que al iniciar sesión se recupera el usuario por correo y se
 compara la contraseña en texto plano directamente con la almacenada en
 la base de
-datos[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/auth.controller.ts#L5-L45).
+datos[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/auth.controller.ts#L5-L45).
 Esto indica que las contraseñas se almacenan sin hashing, lo cual es una
 vulnerabilidad crítica. Aunque se utiliza `jsonwebtoken` para generar
 tokens firmados con `process.env.JWT_SECRET`, al no haber hashing
@@ -88,7 +88,7 @@ un error.
 El archivo `admin.middleware.ts` implementa dos middlewares:
 `authMiddleware`, que verifica el token JWT, y `requireRole`, que
 restringe el acceso a rutas según los roles (por ejemplo, `ADMIN` o
-`CELADOR`)[\[7\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/middlewares/admin.middleware.ts#L14-L40).
+`CELADOR`)[\[7\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/middlewares/admin.middleware.ts#L14-L40).
 Es una buena práctica separar la verificación de autenticación de la
 autorización, aunque se debe garantizar que el secreto JWT se obtenga de
 una fuente segura (variables de entorno). Las funciones manejan los
@@ -104,7 +104,7 @@ operaciones del sistema. Algunas observaciones destacadas:
   `pool.query` con parámetros para evitar inyecciones SQL. Por ejemplo,
   en `admin.controller.ts` se construyen cláusulas `WHERE` dinámicas y
   se pasan como parámetros a
-  `pool.query`[\[8\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/admin.controller.ts#L125-L177).
+  `pool.query`[\[8\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/admin.controller.ts#L125-L177).
   Esta práctica reduce el riesgo de inyección, aunque convendría aislar
   la lógica de construcción de consultas en un servicio o utilizar un
   ORM como TypeORM o Prisma.
@@ -134,7 +134,7 @@ El servidor incorpora `socket.io` para manejar eventos relacionados con
 la firma digital y la interacción con dispositivos móviles. En
 `index.ts` se inicializa el socket y se pasan los eventos a módulos como
 `initIO` y
-`initSockets`[\[5\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/index.ts#L21-L111).
+`initSockets`[\[5\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/index.ts#L21-L111).
 Aunque no se analizó el código de eventos, es importante que estos
 canales controlen adecuadamente la autenticación del cliente y validen
 los datos recibidos para evitar ataques de inyección o saturación.
@@ -143,7 +143,7 @@ los datos recibidos para evitar ataques de inyección o saturación.
 
 - **Credenciales expuestas**: el archivo de configuración de la base de
   datos contiene credenciales en
-  claro[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/config/db.ts#L2-L10).
+  claro[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/config/db.ts#L2-L10).
   Además, el `README` proporciona datos de ejemplo con contraseña
   `contraseña`[\[1\]](https://github.com/DanExl24/GEDASC#:~:text=Estructura%20del%20proyecto).
   Es fundamental almacenar estos valores en variables de entorno y
@@ -151,7 +151,7 @@ los datos recibidos para evitar ataques de inyección o saturación.
   datos reales.
 - **Contraseñas sin hashing**: la comparación de contraseñas en texto
   plano en
-  `auth.controller.ts`[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/auth.controller.ts#L5-L45)
+  `auth.controller.ts`[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/auth.controller.ts#L5-L45)
   implica que la columna `password` de la tabla `usuarios` almacena
   contraseñas tal cual. Se recomienda utilizar una librería como
   `bcryptjs` para hash y salting, y modificar el proceso de registro y
@@ -249,14 +249,14 @@ gestionar accesos en un entorno educativo. Su estructura modular y el
 uso de TypeScript son puntos fuertes. Sin embargo, se identifican
 vulnerabilidades significativas como el almacenamiento de contraseñas en
 texto plano y la exposición de credenciales en el
-código[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/config/db.ts#L2-L10)[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/auth.controller.ts#L5-L45).
+código[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/config/db.ts#L2-L10)[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/auth.controller.ts#L5-L45).
 Adoptar buenas prácticas de seguridad, mejorar la gestión de errores y
 documentar la API elevará la calidad del proyecto y lo hará más seguro y
 mantenible. La implementación de hashing de contraseñas, uso de
 variables de entorno y validación estricta de entradas son pasos
 esenciales para evolucionar hacia una solución de nivel profesional.
 
-------------------------------------------------------------------------
+---
 
 [\[1\]](https://github.com/DanExl24/GEDASC#:~:text=Estructura%20del%20proyecto)
 [\[2\]](https://github.com/DanExl24/GEDASC#:~:text=Ejecutar%20el%20proyecto)
@@ -266,27 +266,27 @@ Formacion del SENA · GitHub
 
 <https://github.com/DanExl24/GEDASC>
 
-[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/config/db.ts#L2-L10)
+[\[4\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/config/db.ts#L2-L10)
 db.ts
 
-<https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/config/db.ts>
+<https://github.com/DanExl24/GEDASC/blob/master/database/src/config/db.ts>
 
-[\[5\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/index.ts#L21-L111)
+[\[5\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/index.ts#L21-L111)
 index.ts
 
-<https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/index.ts>
+<https://github.com/DanExl24/GEDASC/blob/master/database/src/index.ts>
 
-[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/auth.controller.ts#L5-L45)
+[\[6\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/auth.controller.ts#L5-L45)
 auth.controller.ts
 
-<https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/auth.controller.ts>
+<https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/auth.controller.ts>
 
-[\[7\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/middlewares/admin.middleware.ts#L14-L40)
+[\[7\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/middlewares/admin.middleware.ts#L14-L40)
 admin.middleware.ts
 
-<https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/middlewares/admin.middleware.ts>
+<https://github.com/DanExl24/GEDASC/blob/master/database/src/middlewares/admin.middleware.ts>
 
-[\[8\]](https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/admin.controller.ts#L125-L177)
+[\[8\]](https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/admin.controller.ts#L125-L177)
 admin.controller.ts
 
-<https://github.com/DanExl24/GEDASC/blob/master/DataBase/src/controllers/admin.controller.ts>
+<https://github.com/DanExl24/GEDASC/blob/master/database/src/controllers/admin.controller.ts>

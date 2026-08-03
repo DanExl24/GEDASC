@@ -18,7 +18,7 @@ async function run() {
     // Truncamos las tablas de ingresos, salidas y firmas de máquinas/vehículos
     // y reiniciamos los contadores secuenciales a 1.
     await client.query('TRUNCATE TABLE detalles_salida, detalles_ingreso, detalles_maquinas RESTART IDENTITY CASCADE;');
-    console.log('Database cleaned successfully! All entries, exits, and machine signatures have been cleared.');
+    console.log('database cleaned successfully! All entries, exits, and machine signatures have been cleared.');
   } catch (err) {
     console.error('Failed to clean database:', err);
     process.exit(1);

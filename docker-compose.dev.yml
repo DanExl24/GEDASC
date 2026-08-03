@@ -5,26 +5,26 @@ services:
       - TZ=America/Bogota
       - PGTZ=America/Bogota
     env_file:
-      - ./DataBase/.env_postgres
+      - ./database/.env_postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./DataBase/init_scripts:/docker-entrypoint-initdb.d
+      - ./database/init_scripts:/docker-entrypoint-initdb.d
     networks:
       - gedasc_network
 
   backend:
     build:
-      context: ./DataBase
+      context: ./database
       dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
       - TZ=America/Bogota
     env_file:
-      - ./DataBase/.env
+      - ./database/.env
     volumes:
-      - ./DataBase/src:/app/src
-      - ./DataBase/prisma:/app/prisma
+      - ./database/src:/app/src
+      - ./database/prisma:/app/prisma
     depends_on:
       - postgres
     networks:

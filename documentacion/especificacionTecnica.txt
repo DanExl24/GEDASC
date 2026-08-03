@@ -123,7 +123,7 @@ ________________________________________
  Estructura general
 El backend está estructurado bajo arquitectura MVC con separación por capas y soporte para WebSockets.
 ________________________________________
- DataBase/src/
+ database/src/
  controllers/
 Contiene la lógica de negocio del sistema.
 •	HandlersMachine/ → lógica especializada para manejo de máquinas 

@@ -2,11 +2,11 @@ services:
   backend:
     container_name: gedasc-backend
     build:
-      context: ./DataBase
+      context: ./database
     environment:
       - TZ=America/Bogota
     env_file:
-      - ./DataBase/.env
+      - ./database/.env
     depends_on:
       - postgres
     networks:
@@ -21,10 +21,10 @@ services:
       - TZ=America/Bogota
       - PGTZ=America/Bogota
     env_file:
-      - ./DataBase/.env_postgres
+      - ./database/.env_postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./DataBase/init_scripts:/docker-entrypoint-initdb.d
+      - ./database/init_scripts:/docker-entrypoint-initdb.d
     networks:
       - gedasc-internal
     restart: always

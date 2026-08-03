@@ -18,28 +18,28 @@ async function run() {
 
     // 1. Encontrar y recrear constraint de aprendiz_formacion -> formaciones
     const afFKQuery = await client.query(`
-      SELECT constraint_name 
-      FROM information_schema.key_column_usage 
-      WHERE table_name = 'aprendiz_formacion' AND column_name = 'id_formacion' 
+      SELECT constraint_name
+      FROM information_schema.key_column_usage
+      WHERE table_name = 'aprendiz_formacion' AND column_name = 'id_formacion'
       AND constraint_name NOT LIKE '%_pkey';
     `);
-    
+
     for (const row of afFKQuery.rows) {
       console.log(`Re-creating constraint ${row.constraint_name} on table aprendiz_formacion...`);
       await client.query(`ALTER TABLE aprendiz_formacion DROP CONSTRAINT IF EXISTS "${row.constraint_name}" CASCADE;`);
     }
     await client.query(`
-      ALTER TABLE aprendiz_formacion 
-      ADD CONSTRAINT fk_aprendiz_formacion_id_formacion 
-      FOREIGN KEY (id_formacion) REFERENCES formaciones(id_formacion) 
+      ALTER TABLE aprendiz_formacion
+      ADD CONSTRAINT fk_aprendiz_formacion_id_formacion
+      FOREIGN KEY (id_formacion) REFERENCES formaciones(id_formacion)
       ON UPDATE CASCADE ON DELETE CASCADE;
     `);
 
     // 2. Encontrar y recrear constraint de detalles_ingreso -> formaciones
     const diFKQuery = await client.query(`
-      SELECT constraint_name 
-      FROM information_schema.key_column_usage 
-      WHERE table_name = 'detalles_ingreso' AND column_name = 'id_formacion' 
+      SELECT constraint_name
+      FROM information_schema.key_column_usage
+      WHERE table_name = 'detalles_ingreso' AND column_name = 'id_formacion'
       AND constraint_name NOT LIKE '%_pkey';
     `);
 
@@ -48,9 +48,9 @@ async function run() {
       await client.query(`ALTER TABLE detalles_ingreso DROP CONSTRAINT IF EXISTS "${row.constraint_name}" CASCADE;`);
     }
     await client.query(`
-      ALTER TABLE detalles_ingreso 
-      ADD CONSTRAINT fk_detalles_ingreso_id_formacion 
-      FOREIGN KEY (id_formacion) REFERENCES formaciones(id_formacion) 
+      ALTER TABLE detalles_ingreso
+      ADD CONSTRAINT fk_detalles_ingreso_id_formacion
+      FOREIGN KEY (id_formacion) REFERENCES formaciones(id_formacion)
       ON UPDATE CASCADE ON DELETE SET NULL;
     `);
 
