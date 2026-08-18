@@ -34,6 +34,7 @@ export type RawMachineItem = {
 
 export type RawMachineDetailResult = RawMachineItem & {
   items?: RawMachineItem[] | null
+  sesion_cerrada?: boolean
 }
 
 export type MaquinaItem = {
@@ -66,6 +67,7 @@ export type MaquinaItem = {
 export type MaquinaDetalleUI = {
   items: MaquinaItem[]
   estado: EstadoMaquina
+  sesion_cerrada?: boolean
 
   pc?: {
     marca: string | null

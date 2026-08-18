@@ -73,6 +73,7 @@ export const normalizeMachineDetail = (
   return {
     items,
     estado,
+    sesion_cerrada: raw.sesion_cerrada,
     pc: firstItem?.pc ?? null,
     vh: firstItem?.vh ?? null,
     firma: firstItem?.firma ?? null,

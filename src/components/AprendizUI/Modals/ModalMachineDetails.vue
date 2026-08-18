@@ -8,9 +8,11 @@
           <p class="text-xs font-bold uppercase tracking-wider text-emerald-800">Equipos de la Sesión</p>
           <p class="text-xs text-slate-500">
             {{ maquinaDetalle?.items?.length || 0 }} {{ (maquinaDetalle?.items?.length || 0) === 1 ? 'equipo registrado' : 'equipos registrados' }}
+            <span v-if="!canAddMachines" class="ml-1 text-[11px] font-bold text-slate-400">· Sesión cerrada</span>
           </p>
         </div>
         <BaseButtonOpen
+          v-if="canAddMachines"
           text="➕ Agregar más equipos/vehículos"
           variant="green"
           class-button="min-h-0 text-xs px-3 py-2 font-bold"
@@ -77,7 +79,7 @@
         </div>
 
         <!-- BOTON REGISTRAR RETIRO DE ESTE ACTIVO ESPECÍFICO (VÍA MÓVIL) -->
-        <div v-if="item.estado_equipo !== 'retirado' && activeRetiroId !== item.id_detallemaquina" class="flex justify-end pt-1">
+        <div v-if="item.estado_equipo !== 'retirado' && !maquinaDetalle?.sesion_cerrada && activeRetiroId !== item.id_detallemaquina" class="flex justify-end pt-1">
           <BaseButtonOpen
             text="📱 Solicitar firma de retiro en móvil"
             variant="green"
@@ -104,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import BaseModal from '@/components/Modals/BaseModal.vue'
 import BaseText from '@/components/Text/BaseText.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
@@ -116,10 +118,13 @@ import type { MaquinaDetalleUI, MaquinaItem } from '@/types/machineDetails.types
 import { API_URL } from '@/config/network'
 import { connectSocket } from '@/socket'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   id_aprendiz?: number | string
   documento_aprendiz?: string
-}>()
+  allowAdd?: boolean
+}>(), {
+  allowAdd: true
+})
 
 const emit = defineEmits<{
   (e: 'retired'): void
@@ -129,6 +134,15 @@ const emit = defineEmits<{
 
 const { getDetalleMaquina } = useMachineService()
 const socket = connectSocket()
+
+const canAddMachines = computed(() => {
+  if (props.allowAdd === false) return false
+  if (maquinaDetalle.value?.sesion_cerrada) return false
+  const allRetired = (maquinaDetalle.value?.items?.length || 0) > 0 &&
+    maquinaDetalle.value!.items.every((item) => item.estado_equipo === 'retirado')
+  if (allRetired) return false
+  return true
+})
 
 const maquinaDetalle = ref<MaquinaDetalleUI | null>(null)
 const modalRef = ref()

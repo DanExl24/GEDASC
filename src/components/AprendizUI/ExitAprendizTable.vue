@@ -94,6 +94,7 @@
       v-if="aprendizMachine"
       ref="modalMachineDetails"
       :id_aprendiz="aprendizMachine.id_aprendiz"
+      :allow-add="false"
     />
 
     <!-- Modal Detalle Sesión -->

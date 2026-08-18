@@ -936,6 +936,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
         dm.firma_salida,
         dm.estado_equipo,
         dm.hora_retiro_equipo,
+        ds.hora_salida AS sesion_hora_salida,
 
         ac2.id_aprendiz AS owner_pc_id,
         aopc.nombre AS owner_pc_name,
@@ -950,6 +951,9 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
       LEFT JOIN detalles_ingreso AS di
         ON di.id_ingreso = dm.id_ingreso OR di.id_detallemaquina = dm.id_detallemaquina
+
+      LEFT JOIN detalles_salida AS ds
+        ON ds.id_ingreso = COALESCE(dm.id_ingreso, di.id_ingreso)
 
       LEFT JOIN aprendiz a_act
         ON a_act.id_aprendiz = di.id_aprendiz
@@ -1029,6 +1033,8 @@ export const SearchMachine = async (request: Request, response: Response) => {
         ? 'NO_PRINCIPAL'
         : 'NORMAL'
 
+    const sesion_cerrada = result.rows.some((r) => r.sesion_hora_salida !== null && r.sesion_hora_salida !== undefined)
+
     const items = result.rows.map((data) => {
       const itemOwnerId = data.owner_pc_id ?? data.owner_vh_id ?? null
       const itemOwnerName = data.owner_pc_name ?? data.owner_vh_name ?? null
@@ -1065,6 +1071,7 @@ export const SearchMachine = async (request: Request, response: Response) => {
       estado,
       result: {
         ...items[0],
+        sesion_cerrada,
         items
       }
     })
