@@ -15,10 +15,6 @@ export const runSeed = async () => {
         (2, 'CELADOR')
       ON CONFLICT (id_rol) DO UPDATE SET nombre = EXCLUDED.nombre;
     `)
-    // Ajustar secuencia de roles si aplica
-    await client.query(`
-      SELECT setval(pg_get_serial_sequence('roles', 'id_rol'), COALESCE((SELECT MAX(id_rol) FROM roles), 1));
-    `).catch(() => {})
 
     // 2. Sembrar Usuarios Iniciales
     console.log('🔹 Sembrando usuarios administrativos...')
@@ -31,6 +27,7 @@ export const runSeed = async () => {
         ('Celador Turno Mañana', 'celador@gedasc.com', $2, 2)
       ON CONFLICT (email) DO UPDATE 
       SET nombre = EXCLUDED.nombre,
+          password = EXCLUDED.password,
           id_rol = EXCLUDED.id_rol;
     `, [adminPassHash, celadorPassHash])
 
@@ -42,52 +39,43 @@ export const runSeed = async () => {
         (2, 'Gestión Empresarial', 'V1', 'Tecnólogo', 'activo')
       ON CONFLICT (id_programa) DO UPDATE 
       SET nombre_programa = EXCLUDED.nombre_programa,
-          nivel = EXCLUDED.nivel;
-    `).catch(async () => {
-      // Compatibilidad con tabla programa con serial
-      await client.query(`
-        INSERT INTO programa (nombre_programa, version, nivel, estado) VALUES
-          ('Análisis y Desarrollo de Software', 'V1', 'Tecnólogo', 'activo')
-        ON CONFLICT DO NOTHING;
-      `)
-    })
+          version = EXCLUDED.version,
+          nivel = EXCLUDED.nivel,
+          estado = EXCLUDED.estado;
+    `)
 
     // 4. Sembrar Horarios Reutilizables y Días
     console.log('🔹 Sembrando horarios y días de funcionamiento...')
     await client.query(`
       INSERT INTO horario (id_horario, hora_inicio, hora_fin, jornada) VALUES
         (1, '07:00:00', '13:00:00', 'Mañana'),
-        (2, '13:00:00', '19:00:00', 'Tarde'),
+        (2, '13:00:00', '18:00:00', 'Tarde'),
         (3, '18:00:00', '22:00:00', 'Noche')
       ON CONFLICT (id_horario) DO UPDATE 
       SET hora_inicio = EXCLUDED.hora_inicio,
           hora_fin = EXCLUDED.hora_fin,
           jornada = EXCLUDED.jornada;
-    `).catch(() => {})
+    `)
 
+    // Eliminar días previos de esos horarios para evitar duplicados y reinsertar
+    await client.query(`DELETE FROM horario_dia WHERE id_horario IN (1, 2, 3);`)
     await client.query(`
       INSERT INTO horario_dia (id_horario, dia_semana) VALUES
         (1, 'Lunes'), (1, 'Martes'), (1, 'Miércoles'), (1, 'Jueves'), (1, 'Viernes'),
         (2, 'Lunes'), (2, 'Martes'), (2, 'Miércoles'), (2, 'Jueves'), (2, 'Viernes'),
-        (3, 'Lunes'), (3, 'Martes'), (3, 'Miércoles'), (3, 'Jueves'), (3, 'Viernes')
-      ON CONFLICT DO NOTHING;
-    `).catch(() => {})
+        (3, 'Lunes'), (3, 'Martes'), (3, 'Miércoles'), (3, 'Jueves'), (3, 'Viernes');
+    `)
 
     // 5. Sembrar Fichas / Formaciones
     console.log('🔹 Sembrando fichas de formación...')
     await client.query(`
-      INSERT INTO formaciones (id_formacion, nombre, nivel, id_programa, id_horario, estado) VALUES
-        (2823456, 'ADSO - Ficha 2823456', 'Tecnólogo', 1, 1, 'activa')
+      INSERT INTO formaciones (id_formacion, id_programa, id_horario, fecha_inicio, fecha_fin, estado) VALUES
+        (2823456, 1, 1, CURRENT_DATE, CURRENT_DATE + INTERVAL '2 years', 'activa')
       ON CONFLICT (id_formacion) DO UPDATE 
-      SET nombre = EXCLUDED.nombre,
+      SET id_programa = EXCLUDED.id_programa,
+          id_horario = EXCLUDED.id_horario,
           estado = EXCLUDED.estado;
-    `).catch(async () => {
-      await client.query(`
-        INSERT INTO formaciones (id_formacion, nombre, nivel) VALUES
-          (2823456, 'ADSO - Ficha 2823456', 'Tecnólogo')
-        ON CONFLICT DO NOTHING;
-      `)
-    })
+    `)
 
     // 6. Sembrar Aprendices Base
     console.log('🔹 Sembrando aprendices base...')
@@ -149,7 +137,7 @@ export const runSeed = async () => {
         SELECT 1 FROM aprendiz_formacion af 
         WHERE af.id_aprendiz = a.id_aprendiz AND af.id_formacion = 2823456
       );
-    `).catch(() => {})
+    `)
 
     await client.query('COMMIT')
     console.log('✅ [SEED] ¡Población de datos iniciales completada exitosamente!')
