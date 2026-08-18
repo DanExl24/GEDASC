@@ -87,9 +87,7 @@ const router = createRouter({
     },
     {
       path : '/admin-programas',
-      name : 'AdminProgramasView',
-      component : () => import('../views/AdminProgramasView.vue'),
-      meta: { requiresAuth: true, role: 'ADMIN' }
+      redirect: '/admin-horarios'
     },
     {
       path : '/admin-celadores',

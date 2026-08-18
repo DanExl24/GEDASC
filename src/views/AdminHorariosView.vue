@@ -59,7 +59,67 @@
           </button>
         </div>
 
-        <div class="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-sm">
+        <!-- FILTROS ADMINISTRATIVOS TAB 1 -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-[20px] border border-slate-100 shadow-sm font-quicksand">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              v-model="filterFichaSearch"
+              type="text"
+              placeholder="Buscar ficha por código o programa..."
+              class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Filtro Nivel -->
+            <select
+              v-model="filterFichaNivel"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todos los niveles</option>
+              <option v-for="opt in nivelOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <!-- Filtro Jornada -->
+            <select
+              v-model="filterFichaJornada"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todas las jornadas</option>
+              <option value="Mañana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
+              <option value="Mixta">Mixta</option>
+            </select>
+
+            <!-- Filtro Estado -->
+            <select
+              v-model="filterFichaEstado"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todos los estados</option>
+              <option value="activa">Activa</option>
+              <option value="inactiva">Inactiva</option>
+            </select>
+
+            <!-- Botón Limpiar Filtros -->
+            <button
+              v-if="hasActiveFichaFilters"
+              @click="clearFichaFilters"
+              class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer"
+              title="Limpiar filtros"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-sm font-quicksand">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50/70 border-b border-slate-100">
@@ -73,7 +133,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="f in formaciones" :key="f.id_formacion" class="hover:bg-slate-50/50 transition">
+              <tr v-for="f in filteredFormaciones" :key="f.id_formacion" class="hover:bg-slate-50/50 transition">
                 <td class="p-4 font-bold text-slate-800 text-sm">
                   # {{ f.id_formacion }}
                 </td>
@@ -116,8 +176,18 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="formaciones.length === 0">
-                <td colspan="7" class="p-8 text-center text-slate-400 text-sm">No hay fichas de formación registradas.</td>
+              <tr v-if="filteredFormaciones.length === 0">
+                <td colspan="7" class="p-8 text-center text-slate-400 text-sm">
+                  <div v-if="hasActiveFichaFilters" class="space-y-2">
+                    <p>No se encontraron fichas de formación con los filtros aplicados.</p>
+                    <button @click="clearFichaFilters" class="text-xs font-bold text-emerald-600 hover:underline cursor-pointer">
+                      Limpiar filtros de búsqueda
+                    </button>
+                  </div>
+                  <div v-else>
+                    No hay fichas de formación registradas.
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -139,7 +209,57 @@
           </button>
         </div>
 
-        <div class="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-sm">
+        <!-- FILTROS ADMINISTRATIVOS TAB 2 -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-[20px] border border-slate-100 shadow-sm font-quicksand">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              v-model="filterHorarioSearch"
+              type="text"
+              placeholder="Filtrar por hora de inicio o fin (ej: 06:00, 12:00)..."
+              class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Filtro Jornada -->
+            <select
+              v-model="filterHorarioJornada"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todas las jornadas</option>
+              <option value="Mañana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
+              <option value="Mixta">Mixta</option>
+            </select>
+
+            <!-- Filtro Día de Semana -->
+            <select
+              v-model="filterHorarioDia"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todos los días</option>
+              <option v-for="d in weekDays" :key="d" :value="d">{{ d }}</option>
+            </select>
+
+            <!-- Botón Limpiar Filtros -->
+            <button
+              v-if="hasActiveHorarioFilters"
+              @click="clearHorarioFilters"
+              class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer"
+              title="Limpiar filtros"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-sm font-quicksand">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50/70 border-b border-slate-100">
@@ -151,7 +271,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="h in horarios" :key="h.id_horario" class="hover:bg-slate-50/50 transition">
+              <tr v-for="h in filteredHorarios" :key="h.id_horario" class="hover:bg-slate-50/50 transition">
                 <td class="p-4 text-xs text-slate-400 font-bold"># {{ h.id_horario }}</td>
                 <td class="p-4">
                   <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-bold">
@@ -177,8 +297,18 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="horarios.length === 0">
-                <td colspan="5" class="p-8 text-center text-slate-400 text-sm">No hay horarios registrados.</td>
+              <tr v-if="filteredHorarios.length === 0">
+                <td colspan="5" class="p-8 text-center text-slate-400 text-sm">
+                  <div v-if="hasActiveHorarioFilters" class="space-y-2">
+                    <p>No se encontraron horarios con los filtros aplicados.</p>
+                    <button @click="clearHorarioFilters" class="text-xs font-bold text-emerald-600 hover:underline cursor-pointer">
+                      Limpiar filtros de búsqueda
+                    </button>
+                  </div>
+                  <div v-else>
+                    No hay horarios registrados.
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -200,7 +330,55 @@
           </button>
         </div>
 
-        <div class="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-sm">
+        <!-- FILTROS ADMINISTRATIVOS TAB 3 -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-[20px] border border-slate-100 shadow-sm font-quicksand">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              v-model="filterProgramaSearch"
+              type="text"
+              placeholder="Buscar programa por nombre o versión..."
+              class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Filtro Nivel -->
+            <select
+              v-model="filterProgramaNivel"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todos los niveles</option>
+              <option v-for="opt in nivelOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <!-- Filtro Estado -->
+            <select
+              v-model="filterProgramaEstado"
+              class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition cursor-pointer"
+            >
+              <option value="">Todos los estados</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+
+            <!-- Botón Limpiar Filtros -->
+            <button
+              v-if="hasActiveProgramaFilters"
+              @click="clearProgramaFilters"
+              class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer"
+              title="Limpiar filtros"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-sm font-quicksand">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50/70 border-b border-slate-100">
@@ -213,7 +391,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="p in programas" :key="p.id_programa" class="hover:bg-slate-50/50 transition">
+              <tr v-for="p in filteredProgramas" :key="p.id_programa" class="hover:bg-slate-50/50 transition">
                 <td class="p-4 text-xs text-slate-400 font-bold"># {{ p.id_programa }}</td>
                 <td class="p-4 text-xs text-slate-800 font-bold">{{ p.nombre_programa }}</td>
                 <td class="p-4 text-xs text-slate-600 font-medium">V. {{ p.version }}</td>
@@ -243,8 +421,18 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="programas.length === 0">
-                <td colspan="6" class="p-8 text-center text-slate-400 text-sm">No hay programas académicos registrados.</td>
+              <tr v-if="filteredProgramas.length === 0">
+                <td colspan="6" class="p-8 text-center text-slate-400 text-sm">
+                  <div v-if="hasActiveProgramaFilters" class="space-y-2">
+                    <p>No se encontraron programas académicos con los filtros aplicados.</p>
+                    <button @click="clearProgramaFilters" class="text-xs font-bold text-emerald-600 hover:underline cursor-pointer">
+                      Limpiar filtros de búsqueda
+                    </button>
+                  </div>
+                  <div v-else>
+                    No hay programas académicos registrados.
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -663,10 +851,105 @@ const nivelOptions = [
   { label: 'Especialización Tecnológica', value: 'Especialización Tecnológica' }
 ]
 
+// ==================== FILTROS CON PESO ADMINISTRATIVO ====================
+
+// Tab 1: Fichas
+const filterFichaSearch = ref('')
+const filterFichaNivel = ref('')
+const filterFichaJornada = ref('')
+const filterFichaEstado = ref('')
+
+const hasActiveFichaFilters = computed(() => {
+  return !!(filterFichaSearch.value.trim() || filterFichaNivel.value || filterFichaJornada.value || filterFichaEstado.value)
+})
+
+const clearFichaFilters = () => {
+  filterFichaSearch.value = ''
+  filterFichaNivel.value = ''
+  filterFichaJornada.value = ''
+  filterFichaEstado.value = ''
+}
+
+const filteredFormaciones = computed(() => {
+  return formaciones.value.filter(f => {
+    const search = filterFichaSearch.value.toLowerCase().trim()
+    const matchesSearch = !search ||
+      String(f.id_formacion).includes(search) ||
+      (f.nombre && f.nombre.toLowerCase().includes(search))
+
+    const matchesNivel = !filterFichaNivel.value || f.nivel === filterFichaNivel.value
+    const matchesJornada = !filterFichaJornada.value || (f.jornada && f.jornada.toLowerCase() === filterFichaJornada.value.toLowerCase())
+    const matchesEstado = !filterFichaEstado.value || f.estado === filterFichaEstado.value
+
+    return matchesSearch && matchesNivel && matchesJornada && matchesEstado
+  })
+})
+
+// Tab 2: Horarios
+const filterHorarioSearch = ref('')
+const filterHorarioJornada = ref('')
+const filterHorarioDia = ref('')
+
+const hasActiveHorarioFilters = computed(() => {
+  return !!(filterHorarioSearch.value.trim() || filterHorarioJornada.value || filterHorarioDia.value)
+})
+
+const clearHorarioFilters = () => {
+  filterHorarioSearch.value = ''
+  filterHorarioJornada.value = ''
+  filterHorarioDia.value = ''
+}
+
+const filteredHorarios = computed(() => {
+  return horarios.value.filter(h => {
+    const search = filterHorarioSearch.value.toLowerCase().trim()
+    const matchesSearch = !search ||
+      String(h.id_horario).includes(search) ||
+      (h.hora_inicio && h.hora_inicio.toLowerCase().includes(search)) ||
+      (h.hora_fin && h.hora_fin.toLowerCase().includes(search))
+
+    const matchesJornada = !filterHorarioJornada.value || (h.jornada && h.jornada.toLowerCase() === filterHorarioJornada.value.toLowerCase())
+    const matchesDia = !filterHorarioDia.value || (h.dias_semana && h.dias_semana.toLowerCase().includes(filterHorarioDia.value.toLowerCase()))
+
+    return matchesSearch && matchesJornada && matchesDia
+  })
+})
+
+// Tab 3: Programas
+const filterProgramaSearch = ref('')
+const filterProgramaNivel = ref('')
+const filterProgramaEstado = ref('')
+
+const hasActiveProgramaFilters = computed(() => {
+  return !!(filterProgramaSearch.value.trim() || filterProgramaNivel.value || filterProgramaEstado.value)
+})
+
+const clearProgramaFilters = () => {
+  filterProgramaSearch.value = ''
+  filterProgramaNivel.value = ''
+  filterProgramaEstado.value = ''
+}
+
+const filteredProgramas = computed(() => {
+  return programas.value.filter(p => {
+    const search = filterProgramaSearch.value.toLowerCase().trim()
+    const matchesSearch = !search ||
+      String(p.id_programa).includes(search) ||
+      (p.nombre_programa && p.nombre_programa.toLowerCase().includes(search)) ||
+      (p.version && p.version.toLowerCase().includes(search))
+
+    const matchesNivel = !filterProgramaNivel.value || p.nivel === filterProgramaNivel.value
+    const matchesEstado = !filterProgramaEstado.value || p.estado === filterProgramaEstado.value
+
+    return matchesSearch && matchesNivel && matchesEstado
+  })
+})
+
+// Tabs con conteo dinámico de resultados
 const tabs = computed<{ label: string; value: 'formaciones' | 'horarios' | 'programas'; count: number }[]>(() => [
-  { label: 'Fichas de Formación', value: 'formaciones', count: formaciones.value.length },
-  { label: 'Horarios Académicos', value: 'horarios', count: horarios.value.length },
-  { label: 'Programas Curriculares', value: 'programas', count: programas.value.length }
+  { label: 'Fichas de Formación', value: 'formaciones', count: filteredFormaciones.value.length },
+  { label: 'Horarios Académicos', value: 'horarios', count: filteredHorarios.value.length },
+  { label: 'Programas Curriculares', value: 'programas', count: filteredProgramas.value.length }
 ])
 
 const programaSelectOptions = computed(() => {

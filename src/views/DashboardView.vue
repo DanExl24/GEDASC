@@ -380,14 +380,6 @@ const allDashboardActions: DashboardAction[] = [
     accentClass: 'bg-emerald-700',
   },
   {
-    title: 'Programas de Formación',
-    eyebrow: 'Admin',
-    description: 'Registro y control de programas curriculares y sus versiones.',
-    to: '/admin-programas',
-    icon: RecordPaper,
-    accentClass: '!bg-[rgb(21,142,79)]',
-  },
-  {
     title: 'Gestión de Celadores',
     eyebrow: 'Admin',
     description: 'Creación, edición y control de cuentas exclusivas de celadores operadores.',
