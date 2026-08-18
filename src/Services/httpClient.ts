@@ -107,5 +107,9 @@ export const fetchWithAuth = async <T>(
     throw new Error(payload.message || 'Error en la petición al servidor')
   }
 
-  return payload.data as T
+  if (payload.data !== undefined) {
+    return payload.data as T
+  }
+
+  return payload as unknown as T
 }

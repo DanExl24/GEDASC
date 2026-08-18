@@ -861,7 +861,11 @@ export const deleteFormacionController = async (req: Request, res: Response) => 
     if (rowCount === 0) {
       return res.status(404).json({ success: false, message: 'Formación no encontrada' })
     }
-    res.json({ success: true, message: 'Formación eliminada correctamente' })
+    res.json({
+      success: true,
+      message: 'Formación eliminada correctamente',
+      data: { message: 'Formación eliminada correctamente' }
+    })
   } catch (error) {
     console.error(error)
     res.status(500).json({ success: false, message: 'Error al eliminar formación' })
@@ -914,10 +918,14 @@ export const desvincularTodosFormacionController = async (req: Request, res: Res
       [id_formacion]
     )
 
+    const message = `Se desvincularon ${rowCount ?? 0} aprendices de la formación exitosamente.`
     res.json({
       success: true,
-      message: `Se desvincularon ${rowCount ?? 0} aprendices de la formación exitosamente.`,
-      desvinculados: rowCount ?? 0
+      message,
+      data: {
+        desvinculados: rowCount ?? 0,
+        message
+      }
     })
   } catch (error) {
     console.error(error)

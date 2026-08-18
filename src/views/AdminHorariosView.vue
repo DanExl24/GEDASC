@@ -797,7 +797,8 @@ const handleDesvincularTodos = async () => {
   loadingDesvincularTodos.value = true
   try {
     const res = await desvincularTodosAprendicesFormacion(auth.token, selectedFicha.value.id_formacion)
-    addNotification(res.message || 'Todos los aprendices han sido desvinculados', 'success')
+    const msg = res?.message || 'Todos los aprendices han sido desvinculados'
+    addNotification(msg, 'success')
     await loadFichaAprendicesData(selectedFicha.value.id_formacion)
   } catch (error: unknown) {
     console.error(error)
