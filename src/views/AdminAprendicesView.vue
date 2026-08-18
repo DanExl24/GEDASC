@@ -95,7 +95,7 @@
             <button
               type="button"
               @click="openCreateAprendiz"
-              class="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-md hover:shadow-lg cursor-pointer"
+              class="h-10 px-4 rounded-xl bg-senaColor hover:bg-emerald-700 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-sm hover:shadow-md cursor-pointer"
             >
               <span>+</span>
               <span>Registrar Aprendiz</span>
@@ -103,17 +103,19 @@
             <button
               type="button"
               @click="openImportGeneral"
-              class="px-3.5 py-2.5 rounded-2xl border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              class="h-10 px-4 rounded-xl border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <span>📥</span>
               <span>Importar Masivo (.xlsx / .json)</span>
             </button>
-            <BaseButtonOpen
-              text="Gestionar Asociaciones"
-              variant="green"
-              class-button="rounded-2xl px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider shadow-sm transition"
+            <button
+              type="button"
               @click="openAsociacionesModal()"
-            />
+              class="h-10 px-4 rounded-xl border border-purple-200 bg-purple-50/80 hover:bg-purple-100 text-purple-800 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <span>🎓</span>
+              <span>Gestionar Asociaciones</span>
+            </button>
           </div>
         </div>
 
@@ -360,7 +362,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 import BaseField from '@/components/Forms/BaseField.vue'
 import BaseModal from '@/components/Modals/BaseModal.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
