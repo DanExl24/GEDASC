@@ -19,12 +19,10 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
           script: |
             cd ~/GEDASC
-            git fetch origin GEDASC-V2
-            git reset --hard origin/GEDASC-V2
+            git pull origin GEDASC-V2
             docker compose up -d --build
-            docker network connect proxy-network nginx-proxy-manager || true
             docker image prune -f
