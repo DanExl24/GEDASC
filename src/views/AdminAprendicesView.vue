@@ -323,15 +323,12 @@
                     </div>
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      @click="handleToggleMonitor(aprendiz)"
-                      class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
-                      :class="aprendiz.es_monitor ? 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100' : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100'"
-                      title="Haz clic para alternar rol de monitor"
+                    <span
+                      class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider select-none"
+                      :class="aprendiz.es_monitor ? 'border-purple-300 bg-purple-50 text-purple-700' : 'border-slate-200 bg-slate-50 text-slate-400'"
                     >
                       <span>{{ aprendiz.es_monitor ? '★ Monitor' : '☆ No' }}</span>
-                    </button>
+                    </span>
                   </td>
                   <td>
                     <button
@@ -517,7 +514,6 @@ import {
   getAdminAprendices,
   getAdminMachinesByAprendiz,
   getAdminTrack,
-  toggleAdminMonitor,
   toggleAdminAprendizStatus,
   deleteAdminAprendiz,
   type AdminAprendizRow,
@@ -838,20 +834,6 @@ const openImportGeneral = () => {
 
 const handleEditAprendiz = (aprendiz: AprendizWithActivity) => {
   aprendizFormModalRef.value?.openEdit(aprendiz)
-}
-
-const handleToggleMonitor = async (aprendiz: AprendizWithActivity) => {
-  if (!auth.token) return
-  const nextValue = !aprendiz.es_monitor
-  try {
-    await toggleAdminMonitor(auth.token, String(aprendiz.id_aprendiz), nextValue)
-    aprendiz.es_monitor = nextValue
-    addNotification(`Rol de monitor ${nextValue ? 'asignado' : 'retirado'} a ${aprendiz.nombre}`, 'success')
-  } catch (error: unknown) {
-    console.error(error)
-    const msg = error instanceof Error ? error.message : 'Error al cambiar rol de monitor'
-    addNotification(msg, 'error')
-  }
 }
 
 const handleToggleStatus = async (aprendiz: AprendizWithActivity) => {
