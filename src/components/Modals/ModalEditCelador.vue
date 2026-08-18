@@ -1,90 +1,77 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-    <div class="bg-gray-900 border border-gray-700/60 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-      <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 bg-gray-800/80 border-b border-gray-700/50">
-        <div class="flex items-center space-x-3">
-          <div class="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-white tracking-wide">Editar Celador</h3>
-        </div>
-        <button @click="close" class="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-700/50">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+  <BaseModal
+    :is-open="isOpen"
+    title="Editar Celador"
+    subtitle="Modificación de datos y credenciales de acceso"
+    size="md"
+    @close="close"
+  >
+    <form @submit.prevent="handleSubmit" id="formEditCelador" class="space-y-4">
+      <div v-if="errorMessage" class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-sm flex items-center space-x-2">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ errorMessage }}</span>
       </div>
 
-      <!-- Formulario -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
-        <div v-if="errorMessage" class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-sm flex items-center space-x-2">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{{ errorMessage }}</span>
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Nombre Completo</label>
+        <input
+          v-model="form.nombre"
+          type="text"
+          required
+          class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
+        />
+      </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Nombre Completo</label>
-          <input
-            v-model="form.nombre"
-            type="text"
-            required
-            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
-          />
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Correo Electrónico</label>
+        <input
+          v-model="form.email"
+          type="email"
+          required
+          class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
+        />
+      </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Correo Electrónico</label>
-          <input
-            v-model="form.email"
-            type="email"
-            required
-            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
-          />
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Nueva Contraseña (Opcional)</label>
+        <input
+          v-model="form.password"
+          type="password"
+          minlength="6"
+          placeholder="Dejar en blanco para mantener la actual"
+          class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
+        />
+      </div>
+    </form>
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Nueva Contraseña (Opcional)</label>
-          <input
-            v-model="form.password"
-            type="password"
-            minlength="6"
-            placeholder="Dejar en blanco para mantener la actual"
-            class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
-          />
-        </div>
-
-        <!-- Footer Actions -->
-        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-800">
-          <button
-            type="button"
-            @click="close"
-            class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center space-x-2"
-          >
-            <span v-if="loading">Actualizando...</span>
-            <span v-else>Actualizar Celador</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+    <template #footer>
+      <button
+        type="button"
+        @click="close"
+        class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        form="formEditCelador"
+        :disabled="loading"
+        class="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center space-x-2"
+      >
+        <span v-if="loading">Actualizando...</span>
+        <span v-else>Actualizar Celador</span>
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { API_URL } from '@/config/network'
 import { useAuthStore } from '@/stores/auth'
+import BaseModal from '@/components/UI/BaseModal.vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -110,14 +97,18 @@ const form = reactive({
   password: ''
 })
 
-watch(() => props.celador, (newVal) => {
-  if (newVal) {
-    form.nombre = newVal.nombre || ''
-    form.email = newVal.email || ''
-    form.password = ''
-    errorMessage.value = ''
-  }
-}, { immediate: true })
+watch(
+  () => props.celador,
+  (newVal) => {
+    if (newVal) {
+      form.nombre = newVal.nombre || ''
+      form.email = newVal.email || ''
+      form.password = ''
+      errorMessage.value = ''
+    }
+  },
+  { immediate: true }
+)
 
 const close = () => {
   emit('close')
