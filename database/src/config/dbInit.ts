@@ -51,6 +51,11 @@ export const initDbSchema = async () => {
       ADD COLUMN IF NOT EXISTS cierre_automatico BOOLEAN DEFAULT FALSE;
     `)
 
+    // 6. Ampliar longitud de documento de identidad para soportar extranjeros y PPT (hasta 20 caracteres)
+    await pool.query(`
+      ALTER TABLE aprendiz ALTER COLUMN documento TYPE VARCHAR(20);
+    `)
+
     console.log('[DBInit] Esquema de base de datos verificado e incializado correctamente.')
   } catch (error) {
     console.error('[DBInit] Error durante la inicialización del esquema de BD:', error)

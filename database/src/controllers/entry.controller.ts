@@ -608,13 +608,19 @@ export const AddMachine = async (request: Request, response: Response) => {
       forzarExcepcion
     } = request.body;
 
-    // 🔤 normalización
-    const isBicycle = tipoMaquina === 'vh' && tipoVehiculo?.toUpperCase().trim() === 'BICICLETA';
-    const placaNormalizada = isBicycle
-      ? (placaSerial?.toUpperCase().trim() || 'BICI')
+    // 🔤 normalización y autogeneración para vehículos ligeros (bicicleta, patineta)
+    const isLightVehicle = tipoMaquina === 'vh' && (tipoVehiculo?.toUpperCase().trim() === 'BICICLETA' || tipoVehiculo?.toUpperCase().trim() === 'PATINETA');
+    const prefix = tipoVehiculo?.toUpperCase().trim() === 'PATINETA' ? 'PAT' : 'BIC';
+    const autoPlate = `${prefix}-${id_aprendiz}-${Date.now().toString().slice(-4)}`;
+    
+    const placaNormalizada = isLightVehicle
+      ? (placaSerial?.toUpperCase().trim() && placaSerial?.toUpperCase().trim() !== 'BICI' && placaSerial?.toUpperCase().trim() !== 'PATINETA'
+          ? placaSerial.toUpperCase().trim()
+          : autoPlate)
       : placaSerial?.toUpperCase().trim();
-    const modeloNormalizado = isBicycle
-      ? (modelo?.toUpperCase().trim() || 'BICICLETA')
+
+    const modeloNormalizado = isLightVehicle
+      ? (modelo?.toUpperCase().trim() || (prefix === 'PAT' ? 'PATINETA' : 'BICICLETA'))
       : modelo?.toUpperCase().trim();
 
     //  validaciones básicas

@@ -1,24 +1,29 @@
 import { Router } from 'express'
-// importar funcion
-import { AddEntry, SearchMachine, SearchPrincipalMachine } from '../controllers/entry.controller'
-import { EntryRecord } from '../controllers/entry.controller'
-import { DetectEntry } from '../controllers/entry.controller'
-import { EntryManual } from '../controllers/entry.controller'
-import { SearchAprendiz } from '../controllers/entry.controller'
-import { AddMachine } from '../controllers/entry.controller'
-import { UpdateMachine } from '../controllers/entry.controller'
+import {
+  AddEntry,
+  SearchMachine,
+  SearchPrincipalMachine,
+  EntryRecord,
+  DetectEntry,
+  EntryManual,
+  SearchAprendiz,
+  AddMachine,
+  UpdateMachine
+} from '../controllers/entry.controller'
+import { validateRequest } from '../middlewares/validate.middleware'
+import { documentoParamSchema, createEntrySchema } from '../schemas/entry.schema'
+
 const router = Router()
 
-// crear una ruta para ver ingresos de hoy
-router.post('/addEntry/:documento', AddEntry)
+router.post('/addEntry/:documento', validateRequest({ params: documentoParamSchema, body: createEntrySchema }), AddEntry)
 router.get('/historial', EntryRecord)
-router.get('/verificarEntrada/:documento',DetectEntry)
-router.get('/ingresoManual/:documento',EntryManual)
+router.get('/verificarEntrada/:documento', validateRequest({ params: documentoParamSchema }), DetectEntry)
+router.get('/ingresoManual/:documento', validateRequest({ params: documentoParamSchema }), EntryManual)
 router.get('/buscar', SearchAprendiz)
-router.post('/ingresoMaquina/:id',AddMachine)
-router.post('/ingresoDobleMaquina/:id_aprendiz',UpdateMachine)
-router.get('/detalleMaquinas/:id_aprendiz',SearchMachine)
-router.get('/firmaIngreso/:id_aprendiz',SearchMachine)
+router.post('/ingresoMaquina/:id', AddMachine)
+router.post('/ingresoDobleMaquina/:id_aprendiz', UpdateMachine)
+router.get('/detalleMaquinas/:id_aprendiz', SearchMachine)
+router.get('/firmaIngreso/:id_aprendiz', SearchMachine)
 router.get('/maquinaPrincipal/:id_aprendiz', SearchPrincipalMachine)
 
 export default router

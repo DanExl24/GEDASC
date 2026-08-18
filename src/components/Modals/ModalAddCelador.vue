@@ -42,8 +42,8 @@
           v-model="form.password"
           type="password"
           required
-          minlength="6"
-          placeholder="Mínimo 6 caracteres"
+          minlength="8"
+          placeholder="Mínimo 8 caracteres"
           class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-sm"
         />
       </div>
