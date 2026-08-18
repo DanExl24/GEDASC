@@ -8,7 +8,7 @@
 - **Descripción**: Un programa de formación curricular (`programa`) puede estar asociado a múltiples formaciones o fichas (`formaciones`). Sin embargo, toda formación debe pertenecer obligatoriamente a un único programa académico.
 - **Motivo**: Respetar el modelo relacional institucional del SENA donde cada ficha es una cohorte de un diseño curricular específico.
 - **Módulos afectados**: `07_gestion_academica`, `02_control_ingreso`.
-- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`documentacion/nuevaImplementacion/fase6_horarios_academicos.sql`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/nuevaImplementacion/fase6_horarios_academicos.sql).
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`database/migrations/fase6_horarios_academicos.sql`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/migrations/fase6_horarios_academicos.sql).
 - **Endpoints relacionados**: `POST /api/admin/formaciones`, `PUT /api/admin/formaciones/:id_formacion`.
 - **Historias de usuario relacionadas**: `HU-ACAD-001`, `HU-ACAD-003`.
 
