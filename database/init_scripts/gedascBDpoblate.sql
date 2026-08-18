@@ -2,15 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict LBHlTaZbSWgo7sKhgLwdQb057U3Q2MDxlw6DnkPVXJ0CFGfUvgA5LdAtVxySAhZ
+\restrict q4gNuuimSvD3nAMlgRfhNdpxIiNXhxFjK8ZxqJ9TK0vxJigreD2S636Vdu3IFeZ
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
-SET statement_timeout = 0;
 SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
---SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -740,6 +737,36 @@ COPY public.aprendiz_formacion (id, id_aprendiz, id_formacion, estado, fecha_ini
 30	10	3142784	activo	2026-06-30 18:12:40.23351	\N
 31	1	3142785	activo	2026-07-02 18:50:21.204026	\N
 32	7	3142785	activo	2026-07-02 20:20:32.453	\N
+35	1	2823456	activo	2026-08-17 19:27:19.854273	\N
+36	3	2823456	activo	2026-08-17 19:27:19.854273	\N
+37	4	2823456	activo	2026-08-17 19:27:19.854273	\N
+38	5	2823456	activo	2026-08-17 19:27:19.854273	\N
+39	6	2823456	activo	2026-08-17 19:27:19.854273	\N
+40	7	2823456	activo	2026-08-17 19:27:19.854273	\N
+41	8	2823456	activo	2026-08-17 19:27:19.854273	\N
+42	9	2823456	activo	2026-08-17 19:27:19.854273	\N
+43	11	2823456	activo	2026-08-17 19:27:19.854273	\N
+44	12	2823456	activo	2026-08-17 19:27:19.854273	\N
+45	13	2823456	activo	2026-08-17 19:27:19.854273	\N
+46	14	2823456	activo	2026-08-17 19:27:19.854273	\N
+47	15	2823456	activo	2026-08-17 19:27:19.854273	\N
+48	16	2823456	activo	2026-08-17 19:27:19.854273	\N
+49	17	2823456	activo	2026-08-17 19:27:19.854273	\N
+50	18	2823456	activo	2026-08-17 19:27:19.854273	\N
+51	19	2823456	activo	2026-08-17 19:27:19.854273	\N
+52	20	2823456	activo	2026-08-17 19:27:19.854273	\N
+53	21	2823456	activo	2026-08-17 19:27:19.854273	\N
+54	22	2823456	activo	2026-08-17 19:27:19.854273	\N
+55	23	2823456	activo	2026-08-17 19:27:19.854273	\N
+56	24	2823456	activo	2026-08-17 19:27:19.854273	\N
+57	25	2823456	activo	2026-08-17 19:27:19.854273	\N
+58	26	2823456	activo	2026-08-17 19:27:19.854273	\N
+59	27	2823456	activo	2026-08-17 19:27:19.854273	\N
+60	28	2823456	activo	2026-08-17 19:27:19.854273	\N
+61	29	2823456	activo	2026-08-17 19:27:19.854273	\N
+62	30	2823456	activo	2026-08-17 19:27:19.854273	\N
+63	2	2823456	activo	2026-08-17 19:27:19.854273	\N
+64	10	2823456	activo	2026-08-17 19:27:19.854273	\N
 \.
 
 
@@ -766,6 +793,10 @@ COPY public.computadores (id_computador, serial, marca, activo) FROM stdin;
 --
 
 COPY public.detalles_ingreso (id_ingreso, id_aprendiz, id_detallemaquina, hora_ingreso, tipo_sesion, motivo_reingreso, id_formacion, motivo_visita) FROM stdin;
+1	10	\N	2026-07-02 19:36:43.517394	formacion	\N	\N	Evento institucional
+2	10	\N	2026-07-02 20:25:39.098979	formacion	Olvidó un objeto/pertenencia	\N	pq si
+3	27	\N	2026-07-02 20:26:02.589309	formacion	\N	\N	Reunión con instructor
+4	7	\N	2026-07-02 20:45:09.573898	formacion	\N	\N	Monitoría
 \.
 
 
@@ -782,6 +813,7 @@ COPY public.detalles_maquinas (id_detallemaquina, id_computador, id_vehiculo, fi
 --
 
 COPY public.detalles_salida (id_salida, id_ingreso, hora_salida) FROM stdin;
+1	1	2026-07-02 20:24:42.153462
 \.
 
 
@@ -792,6 +824,7 @@ COPY public.detalles_salida (id_salida, id_ingreso, hora_salida) FROM stdin;
 COPY public.formaciones (id_formacion, id_programa, id_horario, fecha_inicio, fecha_fin, estado) FROM stdin;
 3142784	2	5	2026-07-02	2028-07-02	activa
 3142785	1	1	2026-07-02	2028-07-02	activa
+2823456	1	1	2026-08-17	2028-08-17	activa
 \.
 
 
@@ -800,8 +833,10 @@ COPY public.formaciones (id_formacion, id_programa, id_horario, fecha_inicio, fe
 --
 
 COPY public.horario (id_horario, hora_inicio, hora_fin, jornada) FROM stdin;
-1	06:00:00	12:00:00	Mañana
 5	12:00:00	18:00:00	Tarde
+1	07:00:00	13:00:00	Mañana
+2	13:00:00	18:00:00	Tarde
+3	18:00:00	22:00:00	Noche
 \.
 
 
@@ -810,16 +845,26 @@ COPY public.horario (id_horario, hora_inicio, hora_fin, jornada) FROM stdin;
 --
 
 COPY public.horario_dia (id_horario, dia_semana) FROM stdin;
-1	Lunes
-1	Martes
-1	Miércoles
-1	Jueves
-1	Viernes
 5	Lunes
 5	Miércoles
 5	Martes
 5	Jueves
 5	Viernes
+1	Lunes
+1	Martes
+1	Miércoles
+1	Jueves
+1	Viernes
+2	Lunes
+2	Martes
+2	Miércoles
+2	Jueves
+2	Viernes
+3	Lunes
+3	Martes
+3	Miércoles
+3	Jueves
+3	Viernes
 \.
 
 
@@ -828,8 +873,8 @@ COPY public.horario_dia (id_horario, dia_semana) FROM stdin;
 --
 
 COPY public.programa (id_programa, nombre_programa, version, estado, nivel) FROM stdin;
-2	ANALISIS Y DESARROLLO DE SOFTWARE	V1	activo	Tecnólogo
-1	GESTION CONTABLE Y FINANCIERA	V1	activo	Tecnólogo
+1	Análisis y Desarrollo de Software	V1	activo	Tecnólogo
+2	Gestión Empresarial	V1	activo	Tecnólogo
 \.
 
 
@@ -848,8 +893,8 @@ COPY public.roles (id_rol, nombre) FROM stdin;
 --
 
 COPY public.usuarios (id_usuario, nombre, email, password, id_rol, activo, creado_en, ultimo_login) FROM stdin;
-1	Administrador	admin@gedasc.com	$2b$10$JZeitk51jbFy9MrlEVXhFOPzpYpvp0uhRfqR39PoX4Ij9ZQOjdw/i	1	t	2026-06-11 13:29:10.366971	\N
-2	Celador Turno Mañana	celador@gedasc.com	$2b$10$47E2jRGGV1RSXa6w0XztXeySxecPTM9pPL2KChGwgGd8tqOFDmd.6	2	t	2026-06-11 13:29:10.366971	\N
+1	Administrador	admin@gedasc.com	$2b$10$ggY.X0S4AMEfT23/9TUKiOSHInLkQVX8rtjUvEFgLVMPbtxtdTFFy	1	t	2026-06-11 13:29:10.366971	\N
+2	Celador Turno Mañana	celador@gedasc.com	$2b$10$nQ5BWN/h/eIzIjIu7UqItuaijNG7RQ3mPzfOuTwFq63UVYX0a/Wr6	2	t	2026-06-11 13:29:10.366971	\N
 \.
 
 
@@ -873,14 +918,14 @@ SELECT pg_catalog.setval('public.aprendiz_computador_id_seq', 2, true);
 -- Name: aprendiz_formacion_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.aprendiz_formacion_id_seq', 34, true);
+SELECT pg_catalog.setval('public.aprendiz_formacion_id_seq', 64, true);
 
 
 --
 -- Name: aprendiz_id_aprendiz_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.aprendiz_id_aprendiz_seq', 30, true);
+SELECT pg_catalog.setval('public.aprendiz_id_aprendiz_seq', 60, true);
 
 
 --
@@ -901,7 +946,7 @@ SELECT pg_catalog.setval('public.computadores_id_computador_seq', 2, true);
 -- Name: detalles_ingreso_id_ingreso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.detalles_ingreso_id_ingreso_seq', 1, false);
+SELECT pg_catalog.setval('public.detalles_ingreso_id_ingreso_seq', 4, true);
 
 
 --
@@ -915,7 +960,7 @@ SELECT pg_catalog.setval('public.detalles_maquinas_id_detallemaquina_seq', 1, fa
 -- Name: detalles_salida_id_salida_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.detalles_salida_id_salida_seq', 1, false);
+SELECT pg_catalog.setval('public.detalles_salida_id_salida_seq', 1, true);
 
 
 --
@@ -950,7 +995,7 @@ SELECT pg_catalog.setval('public.roles_id_rol_seq', 2, true);
 -- Name: usuarios_id_usuario_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.usuarios_id_usuario_seq', 2, true);
+SELECT pg_catalog.setval('public.usuarios_id_usuario_seq', 6, true);
 
 
 --
@@ -1245,7 +1290,7 @@ ALTER TABLE ONLY public.aprendiz_vehiculo
 ALTER TABLE ONLY public.detalles_ingreso
     ADD CONSTRAINT detalles_ingreso_id_aprendiz_fkey FOREIGN KEY (id_aprendiz) REFERENCES public.aprendiz(id_aprendiz);
 
- 
+
 --
 -- Name: detalles_ingreso detalles_ingreso_id_detallemaquina_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
@@ -1330,5 +1375,5 @@ ALTER TABLE ONLY public.usuarios
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LBHlTaZbSWgo7sKhgLwdQb057U3Q2MDxlw6DnkPVXJ0CFGfUvgA5LdAtVxySAhZ
+\unrestrict q4gNuuimSvD3nAMlgRfhNdpxIiNXhxFjK8ZxqJ9TK0vxJigreD2S636Vdu3IFeZ
 
