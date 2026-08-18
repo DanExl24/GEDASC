@@ -97,7 +97,7 @@
         <ExitAprendizTable :aprendiz-data="aprendizData" />
       </section>
 
-      <ModalRegisterExitManual ref="modalManual" />
+      <ModalRegisterManual ref="modalManual" mode="salidas" />
     </main>
   </div>
 </template>
@@ -110,7 +110,7 @@ import SearchBar from '@/components/UI/SearchBar.vue'
 import BaseButtonOpen from '@/components/Buttons/BaseButtonOpen.vue'
 import BarcodeScanner from '@/components/Library/BarcodeScanner.vue'
 import ExitAprendizTable from '@/components/AprendizUI/ExitAprendizTable.vue'
-import ModalRegisterExitManual from '@/components/AprendizUI/Modals/ModalRegisterExitManual.vue'
+import ModalRegisterManual from '@/components/AprendizUI/Modals/ModalRegisterManual.vue'
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
 import { DetectExit } from '@/Services/DetectExits'

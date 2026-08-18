@@ -159,21 +159,50 @@
         :id_aprendiz="currentAprendizId"
         @retired="handleMachineRetired"
       />
-      <ModalReentryReason
-        ref="modalReentry"
+      <!-- Modal Reingreso -->
+      <ModalSelectReason
+        :is-open="isReentryModalOpen"
+        title="Motivo de Reingreso"
+        subtitle="El aprendiz ya cuenta con registros hoy. Indique el motivo del reingreso:"
+        label="Seleccione el motivo de reingreso"
+        :options="reentryReasons"
+        variant="emerald"
+        confirm-text="Aceptar Reingreso"
+        @close="isReentryModalOpen = false"
         @confirm="handleReentryConfirm"
       />
+
       <ModalSelectFormation
         ref="modalSelectFormationRef"
         @confirm="handleFormationSelected"
       />
-      <ModalVisitReason
-        ref="modalVisitReasonRef"
+
+      <!-- Modal Visita Fuera de Horario -->
+      <ModalSelectReason
+        :is-open="isVisitModalOpen"
+        title="Visita Fuera de Horario"
+        subtitle="El horario actual no coincide con sus formaciones activas"
+        label="Motivo del ingreso fuera de horario"
+        alert-title="⚠️ Ingreso Extraordinario"
+        alert-message="Indique la justificación para autorizar el ingreso al CTA fuera del horario formativo."
+        :options="visitReasons"
+        variant="blue"
+        confirm-text="Autorizar Ingreso"
+        @close="isVisitModalOpen = false"
         @confirm="handleVisitReasonConfirmed"
       />
-      <ModalEarlyExitReason
+
+      <!-- Modal Salida Anticipada -->
+      <ModalSelectReason
         :is-open="isEarlyExitModalOpen"
-        :scheduled-end-time="tempEarlyExitEndTime"
+        title="Salida Anticipada"
+        :subtitle="tempEarlyExitEndTime ? `Fin oficial de clase: ${tempEarlyExitEndTime}` : 'Horario no finalizado'"
+        label="Motivo de Egreso Anticipado"
+        alert-title="⚠️ Advertencia de Horario Académico"
+        alert-message="El aprendiz está registrando su salida antes del horario de finalización de su formación. Seleccione el motivo justificado."
+        :options="earlyExitReasons"
+        variant="amber"
+        confirm-text="Confirmar Salida"
         @close="isEarlyExitModalOpen = false"
         @confirm="handleEarlyExitConfirmed"
       />
@@ -191,10 +220,8 @@ import BarcodeScanner from '@/components/Library/BarcodeScanner.vue'
 import ModalRegisterManual from '@/components/AprendizUI/Modals/ModalRegisterManual.vue'
 import ModalConfirm from '@/components/AprendizUI/Modals/ModalConfirm.vue'
 import ModalMachineDetails from '@/components/AprendizUI/Modals/ModalMachineDetails.vue'
-import ModalReentryReason from '@/components/AprendizUI/Modals/ModalReentryReason.vue'
 import ModalSelectFormation from '@/components/AprendizUI/Modals/ModalSelectFormation.vue'
-import ModalVisitReason from '@/components/AprendizUI/Modals/ModalVisitReason.vue'
-import ModalEarlyExitReason from '@/components/AprendizUI/Modals/ModalEarlyExitReason.vue'
+import ModalSelectReason from '@/components/UI/ModalSelectReason.vue'
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
 import { DetectEntry } from '@/Services/DetectEntrys'
@@ -231,12 +258,38 @@ const modalManual = ref()
 const tempScannedCode = ref('')
 const modalConfirmMonitor = ref<InstanceType<typeof ModalConfirm> | null>(null)
 const modalMachineDetails = ref<InstanceType<typeof ModalMachineDetails> | null>(null)
-const modalReentry = ref<InstanceType<typeof ModalReentryReason> | null>(null)
 const modalSelectFormationRef = ref<InstanceType<typeof ModalSelectFormation> | null>(null)
-const modalVisitReasonRef = ref<InstanceType<typeof ModalVisitReason> | null>(null)
 
+const isReentryModalOpen = ref(false)
+const isVisitModalOpen = ref(false)
 const isEarlyExitModalOpen = ref(false)
 const tempEarlyExitEndTime = ref<string | null>(null)
+
+const reentryReasons = [
+  'Formación académica extra',
+  'Monitoría o apoyo docente',
+  'Olvidó un objeto/pertenencia',
+  'Reunión administrativa/Coordinación',
+  'Otro'
+]
+
+const visitReasons = [
+  'Asesoría con instructor / Consulta académica',
+  'Trámite administrativo / Coordinación',
+  'Uso de biblioteca / Ambientes de aprendizaje',
+  'Actividad de bienestar al aprendiz / Deportes',
+  'Diligencia personal justificada',
+  'Otro'
+]
+
+const earlyExitReasons = [
+  'Permiso concedido por Instructor',
+  'Cita médica / Salud',
+  'Calamidad doméstica justificada',
+  'Finalización anticipada de actividades lectivas',
+  'Trámite institucional CTA',
+  'Otro'
+]
 
 const currentAprendizId = ref<number | null>(null)
 
@@ -273,7 +326,7 @@ const evaluateNextStep = async () => {
     if (selectedIdFormacion.value === undefined && selectedMotivoVisita.value === undefined) {
       if (tempMatchingFormations.value.length === 0) {
         // Outside schedule: prompt for reason for visit
-        modalVisitReasonRef.value?.open()
+        isVisitModalOpen.value = true
         return
       } else if (tempMatchingFormations.value.length === 1) {
         // Match exactly 1
@@ -288,7 +341,7 @@ const evaluateNextStep = async () => {
 
   // Step 3: Reentry Check
   if (tempIsReentry.value && !reentryReasonResolved.value) {
-    modalReentry.value?.open()
+    isReentryModalOpen.value = true
     return
   }
 
@@ -322,6 +375,9 @@ const finalizeEntry = async () => {
     tipoSesionResolved.value = false
     reentryReasonResolved.value = false
     reentryReasonText.value = ''
+    isReentryModalOpen.value = false
+    isVisitModalOpen.value = false
+    isEarlyExitModalOpen.value = false
     scannerModal.value?.closeScanner()
   }
 }
@@ -336,7 +392,7 @@ const registrarIngresoMonitor = async (tipoSesion: 'formacion' | 'monitoria') =>
 const handleReentryConfirm = async (reason: string) => {
   reentryReasonText.value = reason
   reentryReasonResolved.value = true
-  modalReentry.value?.close()
+  isReentryModalOpen.value = false
   await evaluateNextStep()
 }
 
@@ -347,6 +403,7 @@ const handleFormationSelected = async (idFormacion: number) => {
 
 const handleVisitReasonConfirmed = async (reason: string) => {
   selectedMotivoVisita.value = reason
+  isVisitModalOpen.value = false
   await evaluateNextStep()
 }
 
