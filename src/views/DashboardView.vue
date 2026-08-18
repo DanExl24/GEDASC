@@ -459,14 +459,7 @@ const dashboardStats = computed<DashboardStatItem[]>(() =>
 
 const dashboardActions = computed(() => {
   if (!isAdmin.value) {
-    return allDashboardActions.filter((action) =>
-      action.to !== '/admin-record-control' &&
-      action.to !== '/admin-borrowed-assets' &&
-      action.to !== '/admin-aprendices' &&
-      action.to !== '/admin-alerts' &&
-      action.to !== '/admin-horarios' &&
-      action.to !== '/admin-programas'
-    )
+    return allDashboardActions.filter((action) => !action.to.startsWith('/admin-'))
   }
 
   return allDashboardActions.filter((action) =>

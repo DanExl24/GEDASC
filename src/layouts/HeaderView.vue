@@ -49,17 +49,6 @@
             </button>
           </template>
 
-          <!-- Botón de Simulación de Hora para Admin -->
-          <button
-            v-if="auth.isAuthenticated && auth.isAdmin"
-            type="button"
-            @click="modalSimulador?.open()"
-            class="flex items-center gap-1 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-800 shadow-sm transition hover:bg-amber-100"
-            title="Cambiar hora de pruebas"
-          >
-            ⏱️ <span class="hidden sm:inline">Simular Hora</span>
-          </button>
-
           <!-- Reloj -->
           <div class="flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50/60 px-2.5 py-1.5 shadow-sm">
             <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -72,7 +61,7 @@
           <button
             v-if="auth.isAuthenticated"
             type="button"
-            class="rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs sm:text-sm font-semibold text-red-700 shadow-sm transition-colors duration-200 hover:border-red-200 hover:bg-red-100"
+            class="rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs sm:text-sm font-semibold text-red-700 shadow-sm transition-colors duration-200 hover:border-red-200 hover:bg-red-100 cursor-pointer"
             @click="handleLogout"
           >
             <span class="hidden sm:inline">Cerrar sesión</span>
@@ -83,8 +72,6 @@
       </div>
     </div>
     <div class="h-1 w-full bg-[linear-gradient(90deg,#0b7a0b_0%,#1ca64a_35%,#ffffff_100%)]"></div>
-
-    <ModalSimularHora ref="modalSimulador" @updated="handleTimeUpdated" />
 
     <ModalConfirm
       ref="modalReemplazarValidador"
@@ -106,7 +93,6 @@
 import { ref, onMounted } from 'vue'
 import senaLogo from '@/assets/Logos/logo-del-sena-verde.jpg'
 import ThisTime from '@/components/UI/ThisTime.vue'
-import ModalSimularHora from '@/components/Modals/ModalSimularHora.vue'
 import ModalConfirm from '@/components/AprendizUI/Modals/ModalConfirm.vue'
 import ModalDesvincularValidador from '@/components/Modals/ModalDesvincularValidador.vue'
 import router from '@/router'
@@ -114,7 +100,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useDeviceValidator } from '@/composables/useDeviceValidator'
 
 const auth = useAuthStore()
-const modalSimulador = ref()
 const modalReemplazarValidador = ref()
 const modalDesvincularValidador = ref()
 const thisTimeRef = ref()
@@ -160,15 +145,6 @@ const processDesactivacion = async (password: string) => {
     modalDesvincularValidador.value?.setError(result.message || 'Contraseña incorrecta')
   } else {
     modalDesvincularValidador.value?.close()
-  }
-}
-
-const handleTimeUpdated = () => {
-  // Forzar actualización inmediata del reloj en el header
-  if (thisTimeRef.value && typeof thisTimeRef.value.getTime === 'function') {
-    thisTimeRef.value.getTime()
-  } else {
-    window.location.reload()
   }
 }
 
