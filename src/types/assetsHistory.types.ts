@@ -6,7 +6,12 @@ export interface AssetOwnerDetail {
   apellido: string
   formacion: string
   hora_ingreso: string | null
+  hora_salida?: string | null
   firma: string | null
+  firma_ingreso?: string | null
+  firma_salida?: string | null
+  estado_equipo?: string | null
+  hora_retiro_equipo?: string | null
   id_formacion: number | null
   horario_inicio: string | null
   horario_fin: string | null
