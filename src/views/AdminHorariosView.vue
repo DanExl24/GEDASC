@@ -475,7 +475,23 @@
 
         <!-- Tabla/Listado de aprendices vinculados -->
         <div class="space-y-2.5">
-          <h3 class="font-robotoSlab text-xs font-bold uppercase tracking-wider text-slate-500">Aprendices Vinculados</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="font-robotoSlab text-xs font-bold uppercase tracking-wider text-slate-500">
+              Aprendices Vinculados ({{ aprendicesVinculados.length }})
+            </h3>
+            <button
+              v-if="aprendicesVinculados.length > 0"
+              type="button"
+              @click="handleDesvincularTodos"
+              :disabled="loadingDesvincularTodos"
+              class="px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-600 hover:text-white text-xs font-bold text-red-600 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>{{ loadingDesvincularTodos ? 'Desvinculando...' : 'Desvincular Todos' }}</span>
+            </button>
+          </div>
           <div class="overflow-hidden rounded-xl border border-slate-100 bg-white">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
@@ -533,6 +549,7 @@ import {
   updateFormacion,
   deleteFormacion,
   getFormacionAprendices,
+  desvincularTodosAprendicesFormacion,
   type Programa,
   type Horario,
   type FormacionCompleta
@@ -747,11 +764,14 @@ const handleAsignarAprendiz = async () => {
     await asignarFormacionAdmin(auth.token, String(nuevoAprendizId.value), selectedFicha.value.id_formacion)
     addNotification('Aprendiz vinculado exitosamente', 'success')
     await loadFichaAprendicesData(selectedFicha.value.id_formacion)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error)
-    addNotification(error.message || 'Error al vincular aprendiz', 'error')
+    const msg = error instanceof Error ? error.message : 'Error al vincular aprendiz'
+    addNotification(msg, 'error')
   }
 }
+
+const loadingDesvincularTodos = ref(false)
 
 const handleDesvincularAprendiz = async (idAprendiz: number) => {
   if (!auth.token || !selectedFicha.value) return
@@ -765,6 +785,26 @@ const handleDesvincularAprendiz = async (idAprendiz: number) => {
   } catch (error) {
     console.error(error)
     addNotification('Error al desvincular aprendiz', 'error')
+  }
+}
+
+const handleDesvincularTodos = async () => {
+  if (!auth.token || !selectedFicha.value) return
+  const total = aprendicesVinculados.value.length
+  if (!confirm(`¿Está seguro de que desea desvincular a TODOS los ${total} aprendices de la ficha #${selectedFicha.value.id_formacion}? Esta acción no se puede deshacer.`)) {
+    return
+  }
+  loadingDesvincularTodos.value = true
+  try {
+    const res = await desvincularTodosAprendicesFormacion(auth.token, selectedFicha.value.id_formacion)
+    addNotification(res.message || 'Todos los aprendices han sido desvinculados', 'success')
+    await loadFichaAprendicesData(selectedFicha.value.id_formacion)
+  } catch (error: unknown) {
+    console.error(error)
+    const msg = error instanceof Error ? error.message : 'Error al desvincular los aprendices'
+    addNotification(msg, 'error')
+  } finally {
+    loadingDesvincularTodos.value = false
   }
 }
 

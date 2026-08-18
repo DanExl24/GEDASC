@@ -90,3 +90,14 @@ export interface AprendicesVinculacion {
 export const getFormacionAprendices = (token: string, id_formacion: number): Promise<AprendicesVinculacion> => {
   return fetchWithAuth<AprendicesVinculacion>(`/api/admin/formaciones/${id_formacion}/aprendices`, token)
 }
+
+export const desvincularTodosAprendicesFormacion = (
+  token: string,
+  id_formacion: number
+): Promise<{ success: boolean; message: string; desvinculados: number }> => {
+  return fetchWithAuth<{ success: boolean; message: string; desvinculados: number }>(
+    `/api/admin/formaciones/${id_formacion}/aprendices/todos`,
+    token,
+    'DELETE'
+  )
+}

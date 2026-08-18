@@ -906,6 +906,25 @@ export const getFormacionAprendicesController = async (req: Request, res: Respon
   }
 }
 
+export const desvincularTodosFormacionController = async (req: Request, res: Response) => {
+  try {
+    const { id_formacion } = req.params
+    const { rowCount } = await pool.query(
+      `DELETE FROM aprendiz_formacion WHERE id_formacion = $1 AND estado = 'activo'`,
+      [id_formacion]
+    )
+
+    res.json({
+      success: true,
+      message: `Se desvincularon ${rowCount ?? 0} aprendices de la formación exitosamente.`,
+      desvinculados: rowCount ?? 0
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al desvincular todos los aprendices de la formación' })
+  }
+}
+
 /* ==========================================================================
    GESTIÓN EXCLUSIVA DE CELADORES (SOLO ROL CELADOR / ID_ROL = 2)
    ========================================================================== */
