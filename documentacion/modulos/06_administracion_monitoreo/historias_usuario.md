@@ -166,3 +166,31 @@ Al presionar *"Asociaciones"* en la vista de aprendices, se abre [`ModalAsociaci
 - **Endpoints relacionados**: `GET /api/admin/aprendices/:id_aprendiz/formaciones`, `POST /api/admin/aprendices/toggleMonitor/:id_aprendiz`, `POST /api/admin/aprendices/:id_aprendiz/formaciones`, `DELETE /api/admin/aprendices/:id_aprendiz/formaciones/:id_formacion`
 - **Componentes frontend relacionados**: `src/components/AprendizUI/Modals/ModalAsociaciones.vue`, `src/views/AdminAprendicesView.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`
+
+---
+
+# HU-ADM-007
+
+## Historia
+**Como** administrador del sistema  
+**Quiero** registrar, editar, listar y habilitar/deshabilitar cuentas exclusivas de celadores desde el panel web  
+**Para** gestionar los accesos del personal de vigilancia en portería sin necesidad de manipulación manual de base de datos ni permitir la creación de cuentas de administrador adicionales.
+
+## Descripción
+En [`AdminCeladoresView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminCeladoresView.vue), el administrador dispone de una interfaz completa para dar de alta celadores mediante `ModalAddCelador.vue` (nombre, correo y contraseña hasheada en Bcrypt), modificar sus datos o restablecer su clave mediante `ModalEditCelador.vue`, y conmutar su estado operativo (`activo = true/false`). El sistema fuerza estrictamente que todo usuario creado por este medio tenga asignado únicamente el rol `CELADOR` (`id_rol = 2`).
+
+## Criterios de Aceptación
+- La vista [`AdminCeladoresView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminCeladoresView.vue) consulta `GET /api/admin/celadores` y lista exclusivamente los usuarios con `id_rol = 2`.
+- Al presionar *"Nuevo Celador"*, se abre `ModalAddCelador.vue` solicitando: Nombre, Email y Contraseña (mínimo 6 caracteres).
+- El backend procesa `POST /api/admin/celadores` forzando `id_rol = 2` y validando unicidad de correo.
+- Al presionar *"Editar"*, se abre `ModalEditCelador.vue` permitiendo actualizar nombre, correo y opcionalmente una nueva contraseña.
+- Al presionar el botón de conmutación de estado, se envía `PATCH /api/admin/celadores/:id/toggle`, alternando entre `activo = true` y `activo = false`. Si un celador está inactivo, no puede iniciar sesión en el sistema.
+
+## Metadatos
+- **Prioridad**: Alta
+- **Roles involucrados**: `ADMIN`
+- **Reglas de negocio relacionadas**: `RN-ADM-006`, `RN-AUTH-001`
+- **Endpoints relacionados**: `GET /api/admin/celadores`, `POST /api/admin/celadores`, `PUT /api/admin/celadores/:id`, `PATCH /api/admin/celadores/:id/toggle`
+- **Componentes frontend relacionados**: `src/views/AdminCeladoresView.vue`, `src/components/Modals/ModalAddCelador.vue`, `src/components/Modals/ModalEditCelador.vue`
+- **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`
+

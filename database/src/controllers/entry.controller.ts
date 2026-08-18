@@ -130,12 +130,21 @@ export const DetectEntry = async (request: Request, response: Response) => {
     const id_aprendiz = aprendiz.rows[0].id_aprendiz;
     const es_monitor = aprendiz.rows[0].es_monitor;
 
-    // 2️⃣ Verificar si tiene sesión activa HOY (ingreso sin salida el día de hoy)
+    // 2️⃣ Verificar si tiene una sesión activa (ingreso sin salida hoy)
     const activeSessionQuery = await pool.query(`
-      SELECT di.id_ingreso, di.id_detallemaquina, dm.estado_equipo
+      SELECT 
+        di.id_ingreso, 
+        di.id_detallemaquina, 
+        dm.estado_equipo,
+        di.id_formacion,
+        h.hora_fin,
+        TO_CHAR(h.hora_fin, 'HH12:MI AM') AS hora_fin_formateada,
+        (CURRENT_TIME < (h.hora_fin - INTERVAL '30 minutes')) AS es_salida_anticipada
       FROM detalles_ingreso di
       LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
       LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina
+      LEFT JOIN formaciones f ON f.id_formacion = di.id_formacion
+      LEFT JOIN horario h ON h.id_horario = f.id_horario
       WHERE di.id_aprendiz = $1 
         AND ds.hora_salida IS NULL
         AND di.hora_ingreso >= CURRENT_DATE
@@ -143,9 +152,10 @@ export const DetectEntry = async (request: Request, response: Response) => {
       LIMIT 1
     `, [id_aprendiz]);
 
-    if (activeSessionQuery.rowCount! > 0) {
+    if (activeSessionQuery.rowCount && activeSessionQuery.rowCount > 0) {
       const session = activeSessionQuery.rows[0];
       const hasMachine = session.id_detallemaquina !== null && session.estado_equipo === 'dentro';
+      const isEarlyExit = Boolean(session.es_salida_anticipada && session.hora_fin);
 
       return response.status(200).json({
         message: "El aprendiz tiene una sesión activa. Registrando salida.",
@@ -155,7 +165,9 @@ export const DetectEntry = async (request: Request, response: Response) => {
         hasMachine,
         id_detallemaquina: session.id_detallemaquina,
         id_ingreso: session.id_ingreso,
-        id_aprendiz
+        id_aprendiz,
+        isEarlyExit,
+        hora_fin: session.hora_fin_formateada || null
       });
     }
 

@@ -14,6 +14,8 @@ export const DetectEntry = async (
   id_ingreso?: number
   id_aprendiz?: number
   isReentry?: boolean
+  isEarlyExit?: boolean
+  hora_fin?: string | null
   schedule?: VerificationScheduleContext
 }> => {
 
@@ -43,6 +45,8 @@ export const DetectEntry = async (
       id_ingreso: data.id_ingreso,
       id_aprendiz: data.id_aprendiz,
       isReentry: data.isReentry,
+      isEarlyExit: data.isEarlyExit,
+      hora_fin: data.hora_fin,
       schedule: data.schedule
     };
 

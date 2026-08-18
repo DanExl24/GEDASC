@@ -2,6 +2,14 @@ const API = import.meta.env.VITE_API_URL
 
 import type { DetectRegisterStatus } from "@/types/register.types";
 
+export interface DetectExitResult {
+  status: DetectRegisterStatus
+  hasActiveSession?: boolean
+  hasMachine?: boolean
+  isEarlyExit?: boolean
+  hora_fin?: string | null
+}
+
 export const DetectExit = async (
   documento: string
 ): Promise<DetectRegisterStatus> => {
@@ -11,7 +19,6 @@ export const DetectExit = async (
   try {
     const response = await fetch(`${API}/api/registroSalidas/verificarSalida/${documento}`)
 
-    // 🔴 IMPORTANTE: manejar 404 primero
     if (response.status === 404) {
       return 'no_existe'
     }
@@ -22,7 +29,6 @@ export const DetectExit = async (
 
     const data = await response.json()
 
-    // ⚠️ validación defensiva (por si backend devuelve vacío o null)
     if (!data || typeof data.yaSalio === 'undefined') {
       return 'error'
     }
@@ -36,5 +42,44 @@ export const DetectExit = async (
   } catch (error) {
     console.error(error)
     return 'error'
+  }
+}
+
+export const DetectExitFull = async (
+  documento: string
+): Promise<DetectExitResult> => {
+  if (!documento) return { status: 'error' }
+
+  try {
+    const response = await fetch(`${API}/api/registroSalidas/verificarSalida/${documento}`)
+
+    if (response.status === 404) {
+      return { status: 'no_existe' }
+    }
+
+    if (!response.ok) {
+      return { status: 'error' }
+    }
+
+    const data = await response.json()
+
+    if (!data || typeof data.yaSalio === 'undefined') {
+      return { status: 'error' }
+    }
+
+    if (!data.yaSalio) {
+      return {
+        status: 'ok',
+        hasActiveSession: true,
+        hasMachine: data.hasMachine,
+        isEarlyExit: data.isEarlyExit,
+        hora_fin: data.hora_fin
+      }
+    }
+
+    return { status: 'ya_registrado', hasActiveSession: false }
+  } catch (error) {
+    console.error(error)
+    return { status: 'error' }
   }
 }

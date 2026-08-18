@@ -4,6 +4,7 @@ import { CTAResponse } from '../types/contract.type'
 import { pool } from '../config/db'
 import { filtersMap } from '../utils/filtersMap'
 import { setSimulatedTime, getSimulatedTimeState } from '../utils/timeSimulation'
+import bcrypt from 'bcryptjs'
 
 const service = AdminService()
 type DateFilter = keyof typeof filtersMap.date
@@ -904,3 +905,169 @@ export const getFormacionAprendicesController = async (req: Request, res: Respon
     res.status(500).json({ success: false, message: 'Error al obtener aprendices de la formación' })
   }
 }
+
+/* ==========================================================================
+   GESTIÓN EXCLUSIVA DE CELADORES (SOLO ROL CELADOR / ID_ROL = 2)
+   ========================================================================== */
+
+export const getCeladoresController = async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        u.id_usuario,
+        u.nombre,
+        u.email,
+        u.id_rol,
+        r.nombre AS rol,
+        u.activo,
+        u.creado_en,
+        u.ultimo_login
+      FROM usuarios u
+      JOIN roles r ON r.id_rol = u.id_rol
+      WHERE u.id_rol = 2 -- Exclusivamente CELADOR
+      ORDER BY u.id_usuario DESC
+    `)
+    res.json({ success: true, data: rows })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al obtener celadores' })
+  }
+}
+
+export const createCeladorController = async (req: Request, res: Response) => {
+  try {
+    const { nombre, email, password } = req.body
+
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Nombre, email y contraseña son obligatorios' 
+      })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'La contraseña debe tener al menos 6 caracteres' 
+      })
+    }
+
+    // Verificar si el email ya existe
+    const { rowCount } = await pool.query('SELECT 1 FROM usuarios WHERE email = $1', [email.trim().toLowerCase()])
+    if (rowCount && rowCount > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El correo electrónico ya se encuentra registrado' 
+      })
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Forzar siempre id_rol = 2 (CELADOR) para impedir creación de administradores
+    const { rows } = await pool.query(`
+      INSERT INTO usuarios (nombre, email, password, id_rol, activo)
+      VALUES ($1, $2, $3, 2, true)
+      RETURNING id_usuario, nombre, email, id_rol, activo, creado_en
+    `, [nombre.trim(), email.trim().toLowerCase(), hashedPassword])
+
+    res.status(201).json({
+      success: true,
+      message: 'Celador creado exitosamente',
+      data: rows[0]
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al crear celador' })
+  }
+}
+
+export const updateCeladorController = async (req: Request, res: Response) => {
+  try {
+    const { id_usuario } = req.params
+    const { nombre, email, password } = req.body
+
+    if (!nombre || !email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Nombre y email son obligatorios' 
+      })
+    }
+
+    // Verificar que el usuario a editar sea un Celador (id_rol = 2)
+    const userCheck = await pool.query('SELECT id_rol FROM usuarios WHERE id_usuario = $1', [id_usuario])
+    if (userCheck.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' })
+    }
+    if (userCheck.rows[0].id_rol !== 2) {
+      return res.status(403).json({ success: false, message: 'Solo se permite editar cuentas de celadores' })
+    }
+
+    // Verificar si el email está en uso por otro usuario
+    const emailCheck = await pool.query(
+      'SELECT 1 FROM usuarios WHERE email = $1 AND id_usuario != $2',
+      [email.trim().toLowerCase(), id_usuario]
+    )
+    if (emailCheck.rowCount && emailCheck.rowCount > 0) {
+      return res.status(400).json({ success: false, message: 'El correo electrónico ya está en uso por otro usuario' })
+    }
+
+    if (password && password.trim().length > 0) {
+      if (password.trim().length < 6) {
+        return res.status(400).json({ success: false, message: 'La nueva contraseña debe tener al menos 6 caracteres' })
+      }
+      const hashedPassword = await bcrypt.hash(password.trim(), 10)
+      const { rows } = await pool.query(`
+        UPDATE usuarios 
+        SET nombre = $1, email = $2, password = $3 
+        WHERE id_usuario = $4 AND id_rol = 2
+        RETURNING id_usuario, nombre, email, id_rol, activo
+      `, [nombre.trim(), email.trim().toLowerCase(), hashedPassword, id_usuario])
+      return res.json({ success: true, message: 'Celador actualizado con nueva contraseña', data: rows[0] })
+    } else {
+      const { rows } = await pool.query(`
+        UPDATE usuarios 
+        SET nombre = $1, email = $2 
+        WHERE id_usuario = $3 AND id_rol = 2
+        RETURNING id_usuario, nombre, email, id_rol, activo
+      `, [nombre.trim(), email.trim().toLowerCase(), id_usuario])
+      return res.json({ success: true, message: 'Datos de celador actualizados exitosamente', data: rows[0] })
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al actualizar celador' })
+  }
+}
+
+export const toggleCeladorStatusController = async (req: Request, res: Response) => {
+  try {
+    const { id_usuario } = req.params
+
+    const userCheck = await pool.query('SELECT id_rol, activo FROM usuarios WHERE id_usuario = $1', [id_usuario])
+    if (userCheck.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' })
+    }
+    if (userCheck.rows[0].id_rol !== 2) {
+      return res.status(403).json({ success: false, message: 'Solo se permite cambiar el estado de cuentas de celadores' })
+    }
+
+    const currentStatus = userCheck.rows[0].activo
+    const newStatus = !currentStatus
+
+    const { rows } = await pool.query(`
+      UPDATE usuarios
+      SET activo = $1
+      WHERE id_usuario = $2 AND id_rol = 2
+      RETURNING id_usuario, nombre, email, activo
+    `, [newStatus, id_usuario])
+
+    res.json({
+      success: true,
+      message: `Cuenta de celador ${newStatus ? 'activada' : 'desactivada'} correctamente`,
+      data: rows[0]
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al modificar estado del celador' })
+  }
+}
+

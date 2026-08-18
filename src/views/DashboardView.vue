@@ -387,6 +387,14 @@ const allDashboardActions: DashboardAction[] = [
     icon: RecordPaper,
     accentClass: '!bg-[rgb(21,142,79)]',
   },
+  {
+    title: 'Gestión de Celadores',
+    eyebrow: 'Admin',
+    description: 'Creación, edición y control de cuentas exclusivas de celadores operadores.',
+    to: '/admin-celadores',
+    icon: registerPerson,
+    accentClass: 'bg-emerald-800',
+  },
 ]
 
 const isAdmin = computed(() => auth.isAdmin)

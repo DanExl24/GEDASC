@@ -25,7 +25,7 @@ export const useExitAprendiz = () => {
     }
   }
 
-  const AddSalidaAprendiz = async (documento: string) => {
+  const AddSalidaAprendiz = async (documento: string, motivo_salida_anticipada?: string) => {
     if (!documento) return { ok: false, message: 'Documento vacío' }
 
     try {
@@ -34,6 +34,7 @@ export const useExitAprendiz = () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ motivo_salida_anticipada })
         },
       )
 

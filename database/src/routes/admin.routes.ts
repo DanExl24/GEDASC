@@ -38,7 +38,11 @@ import {
   deleteFormacionController,
   getFormacionAprendicesController,
   setSimulationTimeController,
-  getSimulationTimeController
+  getSimulationTimeController,
+  getCeladoresController,
+  createCeladorController,
+  updateCeladorController,
+  toggleCeladorStatusController
 } from '../controllers/admin.controller'
 
 router.post('/simularHora', setSimulationTimeController)
@@ -93,5 +97,11 @@ router.post('/formaciones', createFormacionController)
 router.put('/formaciones/:id_formacion', updateFormacionController)
 router.delete('/formaciones/:id_formacion', deleteFormacionController)
 router.get('/formaciones/:id_formacion/aprendices', getFormacionAprendicesController)
+
+// Rutas exclusivas para Gestión de Celadores
+router.get('/celadores', getCeladoresController)
+router.post('/celadores', createCeladorController)
+router.put('/celadores/:id_usuario', updateCeladorController)
+router.patch('/celadores/:id_usuario/toggle', toggleCeladorStatusController)
 
 export default router

@@ -47,3 +47,14 @@
 - **Archivos donde se implementa**: [`database/src/controllers/exit.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/exit.controller.ts#L61-L68).
 - **Endpoints relacionados**: `POST /api/registroSalidas/addExit/:documento`.
 - **Historias de usuario relacionadas**: `HU-SAL-001`, `HU-SAL-002`.
+
+---
+
+### RN-SAL-005: Detección de Salida Anticipada y Justificación Obligatoria
+- **Descripción**: Si la hora del egreso es inferior a la hora de finalización del horario académico (`CURRENT_TIME < (horario.hora_fin - INTERVAL '30 minutes')`), el sistema clasifica la salida como anticipada y exige el registro del motivo justificado en `detalles_salida.motivo_salida_anticipada`.
+- **Motivo**: Auditar deserciones tempranas de clase o salidas autorizadas por motivos médicos y personales.
+- **Módulos afectados**: `03_control_salida`, `05_historial_reportes`, `07_gestion_academica`.
+- **Archivos donde se implementa**: [`database/src/controllers/exit.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/exit.controller.ts), [`src/components/AprendizUI/Modals/ModalEarlyExitReason.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/AprendizUI/Modals/ModalEarlyExitReason.vue), [`src/views/GeneralEntryView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/GeneralEntryView.vue).
+- **Endpoints relacionados**: `GET /api/registroSalidas/verificarSalida/:documento`, `POST /api/registroSalidas/addExit/:documento`.
+- **Historias de usuario relacionadas**: `HU-SAL-006`.
+

@@ -48,8 +48,8 @@ documentacion/modulos/
 - **Casos de Uso**: [`casos_uso.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/02_control_ingreso/casos_uso.md) (`CU-ING-01`, `CU-ING-02`).
 
 ### 📌 [Módulo 03: Control Operativo de Salida de Aprendices](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/03_control_salida/README.md)
-- **Historias de Usuario**: [`historias_usuario.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/03_control_salida/historias_usuario.md) (`HU-SAL-001` a `HU-SAL-005`).
-- **Reglas de Negocio**: [`reglas_negocio.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/03_control_salida/reglas_negocio.md) (`RN-SAL-001` a `RN-SAL-004`).
+- **Historias de Usuario**: [`historias_usuario.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/03_control_salida/historias_usuario.md) (`HU-SAL-001` a `HU-SAL-006`).
+- **Reglas de Negocio**: [`reglas_negocio.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/03_control_salida/reglas_negocio.md) (`RN-SAL-001` a `RN-SAL-005`).
 - **Casos de Uso**: [`casos_uso.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/03_control_salida/casos_uso.md) (`CU-SAL-01`, `CU-SAL-02`).
 
 ### 📌 [Módulo 04: Gestión de Equipos de Cómputo y Vehículos](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/04_equipos_vehiculos/README.md)
@@ -63,8 +63,8 @@ documentacion/modulos/
 - **Casos de Uso**: [`casos_uso.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/05_historial_reportes/casos_uso.md) (`CU-HIST-01`).
 
 ### 📌 [Módulo 06: Administración, Monitoreo y Alertas](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/06_administracion_monitoreo/README.md)
-- **Historias de Usuario**: [`historias_usuario.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/06_administracion_monitoreo/historias_usuario.md) (`HU-ADM-001` a `HU-ADM-006`).
-- **Reglas de Negocio**: [`reglas_negocio.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/06_administracion_monitoreo/reglas_negocio.md) (`RN-ADM-001` a `RN-ADM-005`).
+- **Historias de Usuario**: [`historias_usuario.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/06_administracion_monitoreo/historias_usuario.md) (`HU-ADM-001` a `HU-ADM-007`).
+- **Reglas de Negocio**: [`reglas_negocio.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/06_administracion_monitoreo/reglas_negocio.md) (`RN-ADM-001` a `RN-ADM-006`).
 - **Casos de Uso**: [`casos_uso.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/06_administracion_monitoreo/casos_uso.md) (`CU-ADM-01`, `CU-ADM-02`).
 
 ### 📌 [Módulo 07: Gestión Curricular y Horarios Académicos](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/modulos/07_gestion_academica/README.md)

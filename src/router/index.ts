@@ -92,6 +92,12 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
+      path : '/admin-celadores',
+      name : 'AdminCeladoresView',
+      component : () => import('../views/AdminCeladoresView.vue'),
+      meta: { requiresAuth: true, role: 'ADMIN' }
+    },
+    {
       path : '/mobile-view',
       name : 'MobileView',
       component : () => import('../mobile/Mobile.vue'),

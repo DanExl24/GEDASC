@@ -171,6 +171,12 @@
         ref="modalVisitReasonRef"
         @confirm="handleVisitReasonConfirmed"
       />
+      <ModalEarlyExitReason
+        :is-open="isEarlyExitModalOpen"
+        :scheduled-end-time="tempEarlyExitEndTime"
+        @close="isEarlyExitModalOpen = false"
+        @confirm="handleEarlyExitConfirmed"
+      />
     </main>
   </div>
 </template>
@@ -188,6 +194,7 @@ import ModalMachineDetails from '@/components/AprendizUI/Modals/ModalMachineDeta
 import ModalReentryReason from '@/components/AprendizUI/Modals/ModalReentryReason.vue'
 import ModalSelectFormation from '@/components/AprendizUI/Modals/ModalSelectFormation.vue'
 import ModalVisitReason from '@/components/AprendizUI/Modals/ModalVisitReason.vue'
+import ModalEarlyExitReason from '@/components/AprendizUI/Modals/ModalEarlyExitReason.vue'
 import codebar from '@/assets/Icons/barcodeScanner.png'
 import add from '@/assets/Icons/add.png'
 import { DetectEntry } from '@/Services/DetectEntrys'
@@ -212,6 +219,7 @@ const {
 
 const {
   HistorialSalidaAprendiz,
+  AddSalidaAprendiz,
   aprendizData: exitData,
   latestAprendiz: latestExit
 } = useExitAprendiz()
@@ -226,6 +234,9 @@ const modalMachineDetails = ref<InstanceType<typeof ModalMachineDetails> | null>
 const modalReentry = ref<InstanceType<typeof ModalReentryReason> | null>(null)
 const modalSelectFormationRef = ref<InstanceType<typeof ModalSelectFormation> | null>(null)
 const modalVisitReasonRef = ref<InstanceType<typeof ModalVisitReason> | null>(null)
+
+const isEarlyExitModalOpen = ref(false)
+const tempEarlyExitEndTime = ref<string | null>(null)
 
 const currentAprendizId = ref<number | null>(null)
 
@@ -418,15 +429,39 @@ const handleScanner = async (code: string) => {
       return
     }
 
-    const validacion = await AñadirIngresoAprendiz(code)
-    if (validacion) {
+    // Si es salida anticipada antes de finalizar formación -> solicitar justificación
+    if (res.isEarlyExit) {
+      tempScannedCode.value = code
+      tempEarlyExitEndTime.value = res.hora_fin || null
+      isEarlyExitModalOpen.value = true
+      return
+    }
+
+    const validacion = await AddSalidaAprendiz(code)
+    if (validacion.ok) {
       addNotification('Salida Registrada', 'success')
       await HistorialSalidaAprendiz()
       await HistorialIngresoAprendiz()
+    } else {
+      addNotification(validacion.message || 'Error registrando salida', 'warning')
     }
     scannerModal.value?.closeScanner()
     return
   }
+}
+
+const handleEarlyExitConfirmed = async (reason: string) => {
+  const validacion = await AddSalidaAprendiz(tempScannedCode.value, reason)
+  if (validacion.ok) {
+    addNotification('Salida anticipada registrada con justificación', 'success')
+    await HistorialSalidaAprendiz()
+    await HistorialIngresoAprendiz()
+  } else {
+    addNotification(validacion.message || 'Error registrando salida', 'warning')
+  }
+  isEarlyExitModalOpen.value = false
+  tempScannedCode.value = ''
+  scannerModal.value?.closeScanner()
 }
 
 

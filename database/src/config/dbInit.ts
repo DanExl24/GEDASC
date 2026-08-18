@@ -44,6 +44,13 @@ export const initDbSchema = async () => {
       );
     `)
 
+    // 5. Agregar columnas de soporte a detalles_salida (salida anticipada y auto-cierre)
+    await pool.query(`
+      ALTER TABLE detalles_salida 
+      ADD COLUMN IF NOT EXISTS motivo_salida_anticipada VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS cierre_automatico BOOLEAN DEFAULT FALSE;
+    `)
+
     console.log('[DBInit] Esquema de base de datos verificado e incializado correctamente.')
   } catch (error) {
     console.error('[DBInit] Error durante la inicialización del esquema de BD:', error)

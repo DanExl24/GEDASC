@@ -57,3 +57,16 @@
 - **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts#L78-L82).
 - **Endpoints relacionados**: `GET /api/admin/statsQuarter`, `GET /api/admin/statsYear`.
 - **Historias de usuario relacionadas**: `HU-ADM-001`.
+
+---
+
+## 5. Gestión de Cuentas de Usuario
+
+### RN-ADM-006: Restricción Exclusiva para Alta de Cuentas de Celador
+- **Descripción**: El Administrador únicamente tiene permitido crear, editar y cambiar el estado de cuentas con rol `CELADOR` (`id_rol = 2`). El sistema bloquea a nivel de backend cualquier intento de asignar o promover un usuario al rol `ADMIN` a través de los formularios o endpoints de gestión de usuarios.
+- **Motivo**: Blindar la seguridad de la plataforma, evitando la proliferación no controlada de superusuarios administradores.
+- **Módulos afectados**: `06_administracion_monitoreo`, `01_autenticacion_acceso`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`src/views/AdminCeladoresView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminCeladoresView.vue).
+- **Endpoints relacionados**: `POST /api/admin/celadores`, `PUT /api/admin/celadores/:id`, `PATCH /api/admin/celadores/:id/toggle`.
+- **Historias de usuario relacionadas**: `HU-ADM-007`.
+

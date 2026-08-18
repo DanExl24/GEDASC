@@ -133,3 +133,31 @@ Dispone de una barra de búsqueda en la parte superior de la tabla de salidas. A
 - **Endpoints relacionados**: `GET /api/registroSalidas/buscar`
 - **Componentes frontend relacionados**: `src/views/GeneralExitView.vue`, `src/views/GeneralEntryView.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/exit.controller.ts`
+
+---
+
+# HU-SAL-006
+
+## Historia
+**Como** celador de turno  
+**Quiero** que el sistema detecte si un aprendiz está saliendo antes de la hora estipulada de su formación académica  
+**Para** capturar obligatoriamente el motivo justificado de su egreso anticipado antes de permitir la salida.
+
+## Descripción
+Al escanear la salida, el sistema compara la hora actual (`CURRENT_TIME`) contra la hora de finalización configurada en el horario de la formación (`horario.hora_fin`). Si el aprendiz egresa con más de 30 minutos de anticipación al término de su jornada, se despliega el modal `ModalEarlyExitReason.vue` exigiendo seleccionar la justificación correspondiente (*Permiso de instructor*, *Cita médica*, *Calamidad doméstica*, *Fin de jornada*, *Otro*) y se almacena en `detalles_salida.motivo_salida_anticipada`.
+
+## Criterios de Aceptación
+- Si `CURRENT_TIME < (horario.hora_fin - INTERVAL '30 minutes')`, el backend marca `isEarlyExit = true`.
+- El frontend intercepta el flujo e impide la salida directa, abriendo `ModalEarlyExitReason.vue`.
+- El operador selecciona una justificación predefinida o ingresa una descripción personalizada si selecciona "Otro".
+- Al confirmar, se envía `POST /api/registroSalidas/addExit/:documento` incluyendo `{ motivo_salida_anticipada: '...' }`.
+- El registro de egreso almacena la justificación para fines de auditoría y reportes académicos.
+
+## Metadatos
+- **Prioridad**: Alta
+- **Roles involucrados**: `CELADOR`, `ADMIN`
+- **Reglas de negocio relacionadas**: `RN-SAL-005`
+- **Endpoints relacionados**: `GET /api/registroSalidas/verificarSalida/:documento`, `POST /api/registroSalidas/addExit/:documento`
+- **Componentes frontend relacionados**: `src/components/AprendizUI/Modals/ModalEarlyExitReason.vue`, `src/views/GeneralEntryView.vue`
+- **Controllers/Services relacionados**: `database/src/controllers/exit.controller.ts`
+

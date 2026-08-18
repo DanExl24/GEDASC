@@ -56,11 +56,12 @@ export const addExit = async (req: Request, res: Response) => {
     }
 
     const id_ingreso = activeSession.rows[0].id_ingreso;
+    const { motivo_salida_anticipada } = req.body || {};
 
     // 2️⃣ Registrar salida
     const result = await pool.query(
-      'INSERT INTO detalles_salida (id_ingreso) VALUES ($1) RETURNING *',
-      [id_ingreso]
+      'INSERT INTO detalles_salida (id_ingreso, motivo_salida_anticipada) VALUES ($1, $2) RETURNING *',
+      [id_ingreso, motivo_salida_anticipada || null]
     );
 
     // mandar resultados
@@ -192,27 +193,51 @@ export const DetectExit = async (request: Request, response: Response) => {
       })
     }
 
-    // 2. VERIFICAR SI YA REGISTRÓ SALIDA HOY
-    const salidaVerificada = await pool.query(`
-      SELECT ds.id_salida
-      FROM detalles_salida ds
-      JOIN detalles_ingreso di ON di.id_ingreso = ds.id_ingreso
-      JOIN aprendiz a ON a.id_aprendiz = di.id_aprendiz
-      WHERE a.documento = $1
-      AND ds.hora_salida >= CURRENT_DATE
-      AND ds.hora_salida < CURRENT_DATE + INTERVAL '1 day'
-    `, [documento])
+    const id_aprendiz = aprendizExiste.rows[0].id_aprendiz
 
-    if (salidaVerificada.rowCount && salidaVerificada.rowCount > 0) {
+    // 2. BUSCAR SESIÓN ACTIVA HOY (ingreso sin salida hoy)
+    const activeSessionQuery = await pool.query(`
+      SELECT 
+        di.id_ingreso, 
+        di.id_detallemaquina, 
+        di.id_formacion,
+        dm.estado_equipo,
+        h.hora_fin,
+        TO_CHAR(h.hora_fin, 'HH12:MI AM') AS hora_fin_formateada,
+        (CURRENT_TIME < (h.hora_fin - INTERVAL '30 minutes')) AS es_salida_anticipada
+      FROM detalles_ingreso di
+      LEFT JOIN detalles_salida ds ON ds.id_ingreso = di.id_ingreso
+      LEFT JOIN detalles_maquinas dm ON dm.id_detallemaquina = di.id_detallemaquina
+      LEFT JOIN formaciones f ON f.id_formacion = di.id_formacion
+      LEFT JOIN horario h ON h.id_horario = f.id_horario
+      WHERE di.id_aprendiz = $1 
+        AND ds.hora_salida IS NULL
+        AND di.hora_ingreso >= CURRENT_DATE
+      ORDER BY di.hora_ingreso DESC
+      LIMIT 1
+    `, [id_aprendiz])
+
+    if (activeSessionQuery.rowCount === 0) {
       return response.status(200).json({
-        message: "El aprendiz ya registró salida hoy",
+        message: "El aprendiz no tiene una sesión activa para registrar salida hoy",
+        hasActiveSession: false,
         yaSalio: true
       })
     }
 
+    const session = activeSessionQuery.rows[0]
+    const hasMachine = session.id_detallemaquina !== null && session.estado_equipo === 'dentro'
+    const isEarlyExit = Boolean(session.es_salida_anticipada && session.hora_fin)
+
     return response.status(200).json({
-      message: "El aprendiz no ha registrado salida hoy",
-      yaSalio: false
+      message: "Sesión activa encontrada",
+      hasActiveSession: true,
+      yaSalio: false,
+      id_ingreso: session.id_ingreso,
+      id_detallemaquina: session.id_detallemaquina,
+      hasMachine,
+      isEarlyExit,
+      hora_fin: session.hora_fin_formateada || null
     })
 
   } catch (error) {
