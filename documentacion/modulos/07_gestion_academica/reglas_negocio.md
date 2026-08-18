@@ -68,3 +68,16 @@
 - **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts).
 - **Endpoints relacionados**: `PUT /api/admin/formaciones/:id_formacion`.
 - **Historias de usuario relacionadas**: `HU-ACAD-005`.
+ 
+---
+ 
+## 4. Desvinculación y Matrícula
+
+### RN-ACAD-007: Desvinculación Masiva Atómica de Aprendices
+- **Descripción**: La operación de desvincular a todos los aprendices de una ficha formativa debe ejecutarse en una sola operación atómica en la base de datos (`DELETE FROM aprendiz_formacion WHERE id_formacion = $1 AND estado = 'activo'`), removiendo únicamente las asociaciones activas de dicha ficha sin alterar los registros maestros de los aprendices ni sus vinculaciones con otras fichas (en caso de doble formación o monitoría).
+- **Motivo**: Permitir la depuración ágil de cohortes académicas de forma segura e inmediata, garantizando la integridad de datos de los aprendices en el sistema.
+- **Módulos afectados**: `07_gestion_academica`, `06_administracion_monitoreo`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`src/Services/adminAcademic.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/Services/adminAcademic.ts), [`src/views/AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue).
+- **Endpoints relacionados**: `DELETE /api/admin/formaciones/:id_formacion/aprendices/todos`.
+- **Historias de usuario relacionadas**: `HU-ACAD-004`.
+

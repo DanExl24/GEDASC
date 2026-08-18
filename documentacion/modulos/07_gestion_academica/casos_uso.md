@@ -42,3 +42,32 @@
 
 - **Postcondiciones**:
   - El aprendiz queda formalmente matriculado en la ficha y sus ingresos en portería serán evaluados contra el horario de dicha formación.
+
+---
+
+## CU-ACAD-03: Desvinculación Masiva de Aprendices de una Ficha de Formación
+
+- **Actor Principal**: Administrador del sistema
+- **Precondiciones**:
+  - El usuario está autenticado con rol `ADMIN`.
+  - La ficha de formación tiene al menos un aprendiz vinculado activo.
+- **Disparador**: El administrador necesita vaciar o cerrar la cohorte de aprendices asignados a una formación académica.
+
+### Flujo Principal:
+1. En [`AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue), el administrador presiona el botón *"Ver Aprendices"* de la ficha correspondiente.
+2. Se abre el modal con la lista de aprendices actualmente matriculados.
+3. El administrador presiona el botón rojo *"Desvincular Todos"*.
+4. El sistema muestra un diálogo de confirmación indicando el número exacto de aprendices que serán desvinculados: *"¿Está seguro de que desea desvincular a TODOS los N aprendices de la ficha #XXXX? Esta acción no se puede deshacer."*
+5. El administrador confirma la acción.
+6. El frontend activa el estado de carga (`loadingDesvincularTodos = true`) y envía `DELETE /api/admin/formaciones/:id_formacion/aprendices/todos`.
+7. El backend ejecuta `DELETE FROM aprendiz_formacion WHERE id_formacion = $1 AND estado = 'activo'`, eliminando de forma atómica todas las asociaciones activas de la cohorte.
+8. El backend responde con `{ success: true, message: 'Se desvincularon N aprendices...', data: { desvinculados: N } }`.
+9. El frontend emite una notificación de éxito (`useNotifications`) y refresca automáticamente la lista de aprendices vinculados y no vinculados.
+
+### Flujos Alternativos:
+- **4a. Cancelación del usuario**:
+  - Si el administrador cancela el diálogo de confirmación, la operación se aborta sin enviar ninguna petición al servidor.
+
+- **Postcondiciones**:
+  - Todos los aprendices quedan desvinculados de la ficha formativa y vuelven a estar disponibles en el selector de aprendices no vinculados.
+

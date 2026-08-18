@@ -10,7 +10,7 @@ Capacidades principales:
 - **Gestión Curricular de Programas**: Catálogo institucional de programas formativos con versión, nivel de titulación y estado.
 - **Gestión de Horarios Reutilizables**: Definición de rangos de horas y días habilitados (`horario_dia`) con cálculo automático de jornada (*Mañana*, *Tarde*, *Noche*).
 - **Gestión de Fichas de Formación**: Registro y administración de fichas asociadas a un programa curricular y a un horario.
-- **Vinculación Rápida de Aprendices**: Asignación masiva y desvinculación de aprendices por ficha académica.
+- **Vinculación y Desvinculación Masiva de Aprendices**: Asignación ágil y desvinculación masiva atómica de aprendices por ficha académica.
 - **Inmutabilidad Histórica**: Preservación estricta de la trazabilidad horaria histórica.
 
 ---
@@ -27,11 +27,8 @@ Capacidades principales:
 - **Vistas**:
   - [`src/views/AdminProgramasView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminProgramasView.vue)
   - [`src/views/AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue)
-- **Modales Curriculares**:
-  - Modales de Programas (`ModalAddProgram.vue`, `ModalEditProgram.vue`)
-  - Modales de Horarios (`ModalAddHorario.vue`, `ModalEditHorario.vue`)
-  - Modales de Fichas/Formaciones (`ModalAddFormation.vue`, `ModalEditFormation.vue`)
-  - Modal de Aprendices por Ficha (`ModalLearnersByFormation.vue`)
+- **Servicios Frontend**:
+  - [`src/Services/adminAcademic.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/Services/adminAcademic.ts)
 
 ---
 
@@ -49,6 +46,7 @@ Capacidades principales:
 | `PUT` | `/api/admin/formaciones/:id_formacion` | Actualiza los datos o el horario de una ficha | `ADMIN` |
 | `DELETE` | `/api/admin/formaciones/:id_formacion` | Elimina una ficha de formación si no tiene restricciones | `ADMIN` |
 | `GET` | `/api/admin/formaciones/:id_formacion/aprendices` | Lista todos los aprendices vinculados a la ficha | `ADMIN` |
+| `DELETE` | `/api/admin/formaciones/:id_formacion/aprendices/todos` | Desvincula masivamente todos los aprendices activos de la ficha | `ADMIN` |
 
 ---
 
