@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch, type Component } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -78,7 +78,7 @@ const props = withDefaults(
     showClose?: boolean
     closeOnBackdrop?: boolean
     closeOnEsc?: boolean
-    icon?: any
+    icon?: Component | object | Function | string
   }>(),
   {
     title: '',

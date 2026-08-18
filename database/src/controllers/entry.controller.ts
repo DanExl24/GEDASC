@@ -1015,7 +1015,6 @@ export const SearchMachine = async (request: Request, response: Response) => {
 
     const first = result.rows[0]
     const ownerId = first.owner_pc_id ?? first.owner_vh_id ?? null
-    const ownerName = first.owner_pc_name ?? first.owner_vh_name ?? null
 
     const isBorrowed =
       ownerId != null && String(ownerId) !== String(first.id_aprendiz)
