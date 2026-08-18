@@ -183,16 +183,16 @@ flowchart TD
         TABLES --- CONSTRAINTS
     end
 
-    UI_DESKTOP -- "HTTPS (REST)" --> API_GATEWAY
-    UI_MOBILE -- "HTTPS (REST)" --> API_GATEWAY
-    UI_DESKTOP <-->| "WSS (Socket.io)" | WS_SERVER
-    UI_MOBILE <-->| "WSS (Socket.io)" | WS_SERVER
+    UI_DESKTOP -->|HTTPS REST| API_GATEWAY
+    UI_MOBILE -->|HTTPS REST| API_GATEWAY
+    UI_DESKTOP <-->|WSS Socket.io| WS_SERVER
+    UI_MOBILE <-->|WSS Socket.io| WS_SERVER
 
     API_GATEWAY --> JWT_GUARD
     JWT_GUARD --> ZOD_GUARD
     ZOD_GUARD --> CONTROLLERS
     CONTROLLERS <--> MACH_SRV
-    CONTROLLERS -- "pg.Pool (SQL Parametrizado)" --> DB
+    CONTROLLERS -->|SQL Parametrizado| DB
 ```
 
 ---
@@ -566,15 +566,15 @@ flowchart LR
         API["REST Endpoints\n(/api/validador)"]
     end
 
-    PHONE -- "1. Vinculación (device_id)" --> API
-    PHONE <-->| "2. WebSocket Handshake" | WS
-    PC_BROWSER <-->| "2. WebSocket Handshake" | WS
+    PHONE -->|1. Vinculación device_id| API
+    PHONE <-->|2. WebSocket Handshake| WS
+    PC_BROWSER <-->|2. WebSocket Handshake| WS
     
-    CAMERA -.->| "3. Emite 'validator:scanned'" | WS
-    WS -.->| "4. Rellena documento en tiempo real" | PC_BROWSER
+    CAMERA -.->|3. Emite validator:scanned| WS
+    WS -.->|4. Rellena documento en tiempo real| PC_BROWSER
     
-    TOUCH -.->| "5. Emite 'validator:signature_saved'" | WS
-    WS -.->| "6. Pasa firma Base64 al formulario" | PC_BROWSER
+    TOUCH -.->|5. Emite validator:signature_saved| WS
+    WS -.->|6. Pasa firma Base64 al formulario| PC_BROWSER
 ```
 
 ---
