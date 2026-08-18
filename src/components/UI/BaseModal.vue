@@ -10,28 +10,28 @@
     >
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
         @click.self="handleBackdropClick"
       >
         <div
           :class="[
-            'bg-gray-900 border border-gray-700/60 rounded-2xl shadow-2xl overflow-hidden w-full flex flex-col transform transition-all',
+            'bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden w-full flex flex-col transform transition-all',
             sizeClass
           ]"
         >
           <!-- Header -->
           <div
             v-if="$slots.header || title"
-            class="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-850/80"
+            class="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/60"
           >
             <slot name="header">
               <div class="flex items-center space-x-3">
-                <div v-if="icon" class="p-2 rounded-xl text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+                <div v-if="icon" class="p-2.5 rounded-2xl text-emerald-700 bg-emerald-100/60 border border-emerald-200/50">
                   <component :is="icon" class="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 class="text-base sm:text-lg font-bold text-white tracking-wide">{{ title }}</h3>
-                  <p v-if="subtitle" class="text-xs text-gray-400 mt-0.5">{{ subtitle }}</p>
+                  <h3 class="text-base sm:text-lg font-bold font-robotoSlab text-slate-800 tracking-tight">{{ title }}</h3>
+                  <p v-if="subtitle" class="text-xs font-quicksand text-slate-500 mt-0.5">{{ subtitle }}</p>
                 </div>
               </div>
             </slot>
@@ -39,7 +39,7 @@
               v-if="showClose"
               type="button"
               @click="close"
-              class="text-gray-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-gray-800 focus:outline-none"
+              class="text-slate-400 hover:text-slate-700 transition-colors p-2 rounded-xl hover:bg-slate-100 focus:outline-none cursor-pointer"
               aria-label="Cerrar modal"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,14 +49,14 @@
           </div>
 
           <!-- Body -->
-          <div class="p-6 overflow-y-auto max-h-[75vh]">
+          <div class="p-6 overflow-y-auto max-h-[75vh] font-quicksand text-slate-700">
             <slot />
           </div>
 
           <!-- Footer -->
           <div
             v-if="$slots.footer"
-            class="px-6 py-4 border-t border-gray-800 bg-gray-850/50 flex flex-wrap items-center justify-end gap-3"
+            class="px-6 py-4 border-t border-slate-100 bg-slate-50/40 flex flex-wrap items-center justify-end gap-3"
           >
             <slot name="footer" />
           </div>
