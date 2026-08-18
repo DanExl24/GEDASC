@@ -27,13 +27,17 @@ export const getId = async (request : Request , response : Response) => {
     if(!documento) return response.status(400).json({message:"Datos invalidos"})
 
     // traer id del aprendiz mediante su documento
-    const result = await pool.query('SELECT id_aprendiz FROM aprendiz  WHERE documento = $1',[documento])
+    const result = await pool.query('SELECT id_aprendiz FROM aprendiz WHERE documento = $1', [documento])
+
+    if (result.rowCount === 0) {
+      return response.status(404).json({ success: false, message: "Aprendiz no encontrado" })
+    }
 
     // respuesta del servidor
-    response.status(200).json(result.rows[0])
+    return response.status(200).json(result.rows[0])
 
   } catch (error) {
-    console.error(error)
-    response.status(500).json({message:"Hay un error", error: error})
+    console.error('[QueryId Error]:', error)
+    return response.status(500).json({ success: false, message: "Error interno en el servidor", error: error })
   }
 }

@@ -55,6 +55,7 @@ export const loginController = async (req: Request, res: Response) => {
         u.email,
         u.password,
         u.id_rol,
+        COALESCE(u.activo, true) AS activo,
         r.nombre AS rol
       FROM usuarios u
       JOIN roles r ON r.id_rol = u.id_rol
@@ -72,6 +73,14 @@ export const loginController = async (req: Request, res: Response) => {
 
     const user = rows[0]
 
+    // Verificar si la cuenta de usuario se encuentra activa (RN-004)
+    if (user.activo === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cuenta desactivada por el administrador. Contacte a soporte.'
+      })
+    }
+
     // Comparar contraseña usando bcrypt
     const isMatch = await bcrypt.compare(password, user.password)
 
@@ -81,11 +90,16 @@ export const loginController = async (req: Request, res: Response) => {
         message: 'Contraseña incorrecta'
       })
     }
-  const secret = process.env.JWT_SECRET
 
-  if (!secret) {
-    throw new Error('JWT_SECRET no está definido en el .env')
-  }
+    const secret = process.env.JWT_SECRET
+
+    if (!secret) {
+      throw new Error('JWT_SECRET no está definido en el .env')
+    }
+
+    // Actualizar fecha y hora del último login
+    await pool.query('UPDATE usuarios SET ultimo_login = NOW() WHERE id_usuario = $1', [user.id_usuario])
+
     const token = jwt.sign(
       {
         id: user.id_usuario,
@@ -109,10 +123,11 @@ export const loginController = async (req: Request, res: Response) => {
     })
 
   } catch (err) {
-    console.log(err)
+    console.error('[LoginController Error]:', err)
     return res.status(500).json({
       success: false,
       message: 'Error en login'
     })
   }
 }
+

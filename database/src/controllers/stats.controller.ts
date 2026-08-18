@@ -15,21 +15,21 @@ import { filtersMap } from '../utils/filtersMap';
  *         description: Resumen estadístico
  */
 export const StatsRecord = async (request: Request, response: Response) => {
-  try{
-
+  try {
     const entradasHoy = await pool.query(`SELECT COUNT(*) AS total FROM detalles_ingreso AS di WHERE ${filtersMap.date['TODAY']}`)
     const salidasHoy = await pool.query(`SELECT COUNT(*) AS total FROM detalles_salida AS ds WHERE ds.hora_salida >= CURRENT_DATE AND ds.hora_salida < CURRENT_DATE + INTERVAL '1 day'`)
     const esteMes = await pool.query(`SELECT COUNT(*) AS total FROM detalles_ingreso AS di WHERE ${filtersMap.date['THIS_MONTH']}`)
     const trimestre = await pool.query(`SELECT COUNT(*) AS total FROM detalles_ingreso AS di WHERE ${filtersMap.date['THIS_QUARTER']}`)
 
-    response.status(200).json({
-      entradasHoy : Number(entradasHoy.rows[0].total),
-      salidasHoy : Number(salidasHoy.rows[0].total),
-      esteMes : Number(esteMes.rows[0].total),
-      trimestre : Number(trimestre.rows[0].total),
+    return response.status(200).json({
+      entradasHoy : Number(entradasHoy.rows[0]?.total || 0),
+      salidasHoy : Number(salidasHoy.rows[0]?.total || 0),
+      esteMes : Number(esteMes.rows[0]?.total || 0),
+      trimestre : Number(trimestre.rows[0]?.total || 0),
     });
   } catch(error) {
-    console.log(error)
+    console.error('[StatsRecord Error]:', error)
+    return response.status(500).json({ success: false, message: 'Error interno al obtener estadísticas' })
   }
 };
 
@@ -44,7 +44,7 @@ export const StatsRecord = async (request: Request, response: Response) => {
  *         description: Lista de actividades recientes
  */
 export const TodayActivity = async (request: Request, response: Response) => {
-  try{
+  try {
     const result = await pool.query(`SELECT
       a.nombre,
       FLOOR(EXTRACT(EPOCH FROM (NOW() - di.hora_ingreso)) / 60) AS tiempo,
@@ -115,8 +115,10 @@ export const TodayActivity = async (request: Request, response: Response) => {
       hora : row.hora
     }))
 
-    response.status(200).json({ aprendices })
+    return response.status(200).json({ aprendices })
   } catch(error) {
-    console.log(error)
+    console.error('[TodayActivity Error]:', error)
+    return response.status(500).json({ success: false, message: 'Error interno al obtener actividades recientes' })
   }
 };
+

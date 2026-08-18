@@ -38,12 +38,9 @@ export const HistoryRecord = async (request: Request, response: Response) => {
     `);
 
     if (result.rowCount === 0) {
-      console.log(result.rows)
-      return response.status(404).json({
-        message: "No se encontraron registros hoy"
-      });
+      return response.status(200).json([]);
     }
-    console.log(result.rows)
+
     return response.status(200).json(result.rows);
 
   } catch (error) {
