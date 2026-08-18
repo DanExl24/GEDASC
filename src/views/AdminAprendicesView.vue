@@ -6,23 +6,165 @@
     />
 
     <section class="sticky top-[89px] z-20 border-b border-emerald-100 bg-white/95 backdrop-blur-sm shadow-[0_12px_30px_rgba(15,107,63,0.06)]">
-      <div class="mx-auto grid w-full max-w-7xl gap-3 px-4 py-3 lg:grid-cols-[1.35fr_0.75fr_auto] lg:items-end lg:px-8">
-        <SearchBar
-          v-model="search"
-          label="Buscar aprendiz"
-        />
+      <div class="mx-auto flex flex-col gap-3 px-4 py-3 max-w-7xl lg:px-8">
+        <!-- FILA 1: BÚSQUEDA, SELECTOR DE FICHA Y SALIDA -->
+        <div class="grid w-full gap-3 lg:grid-cols-[1.4fr_1fr_auto] lg:items-end">
+          <SearchBar
+            v-model="search"
+            label="Buscar por nombre, documento o programa"
+          />
 
-        <BaseField
-          v-model="inactiveDaysInput"
-          type="number"
-          label="Dias sin asistir"
-          place-holder="Ej: 7"
-        />
+          <div class="space-y-1">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+              Filtrar por Ficha / Formación
+            </label>
+            <div class="relative">
+              <select
+                v-model="filterFicha"
+                class="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-quicksand font-semibold text-slate-700 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 cursor-pointer pr-10"
+              >
+                <option value="todas">Todas las fichas formativas</option>
+                <option value="sin_ficha">Aprendices sin ficha asignada</option>
+                <option
+                  v-for="f in formacionesList"
+                  :key="f.id_formacion"
+                  :value="f.id_formacion"
+                >
+                  Ficha #{{ f.id_formacion }} - {{ f.nombre }}
+                </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
 
-        <ExitButton
-          to="/"
-          button-class="flex h-11 w-11 items-center justify-center self-center rounded-2xl border border-emerald-200 bg-white shadow-none transition-transform duration-300 hover:scale-105"
-        />
+          <ExitButton
+            to="/"
+            button-class="flex h-11 w-11 items-center justify-center self-center rounded-2xl border border-emerald-200 bg-white shadow-none transition-transform duration-300 hover:scale-105"
+          />
+        </div>
+
+        <!-- FILA 2: CHIPS INTERACTIVOS DE FILTROS RÁPIDOS -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Filtro Estado -->
+            <div class="inline-flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200/80">
+              <button
+                type="button"
+                @click="filterEstado = 'todos'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterEstado === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                @click="filterEstado = 'activos'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterEstado === 'activos' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-emerald-700'"
+              >
+                Activos
+              </button>
+              <button
+                type="button"
+                @click="filterEstado = 'inactivos'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterEstado === 'inactivos' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 hover:text-rose-700'"
+              >
+                Inactivos
+              </button>
+            </div>
+
+            <!-- Filtro Rol Monitor -->
+            <div class="inline-flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200/80">
+              <button
+                type="button"
+                @click="filterRol = 'todos'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterRol === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+              >
+                Roles: Todos
+              </button>
+              <button
+                type="button"
+                @click="filterRol = 'monitores'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterRol === 'monitores' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-500 hover:text-purple-700'"
+              >
+                ★ Monitores
+              </button>
+            </div>
+
+            <!-- Filtro Asistencia / Actividad -->
+            <div class="inline-flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200/80">
+              <button
+                type="button"
+                @click="filterAsistencia = 'todos'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterAsistencia === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+              >
+                Actividad: Toda
+              </button>
+              <button
+                type="button"
+                @click="filterAsistencia = 'inactivos_7d'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterAsistencia === 'inactivos_7d' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-500 hover:text-amber-700'"
+                title="Aprendices con más de 7 días sin asistir al CTA"
+              >
+                Ausencia ≥ 7d
+              </button>
+              <button
+                type="button"
+                @click="filterAsistencia = 'nunca'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterAsistencia === 'nunca' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                title="Aprendices que nunca han registrado accesos"
+              >
+                Sin asistencia
+              </button>
+              <button
+                type="button"
+                @click="filterAsistencia = 'hoy'"
+                class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                :class="filterAsistencia === 'hoy' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-500 hover:text-teal-700'"
+                title="Aprendices que asistieron hoy"
+              >
+                Asistieron hoy
+              </button>
+            </div>
+
+            <!-- Filtro Doble Formación -->
+            <button
+              type="button"
+              @click="filterDobleFormacion = !filterDobleFormacion"
+              class="px-3 py-1.5 rounded-xl border font-bold transition cursor-pointer flex items-center gap-1.5"
+              :class="filterDobleFormacion ? 'border-pink-300 bg-pink-100 text-pink-800 shadow-sm' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600'"
+            >
+              <span>🎓</span>
+              <span>Doble Formación (≥2)</span>
+            </button>
+          </div>
+
+          <!-- Limpiar Filtros -->
+          <div class="flex items-center gap-2">
+            <button
+              v-if="hasActiveFilters"
+              type="button"
+              @click="resetFilters"
+              class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>↺</span>
+              <span>Limpiar Filtros</span>
+            </button>
+            <span class="text-xs text-slate-500 font-medium">
+              Mostrando <strong>{{ filteredAprendices.length }}</strong> de {{ aprendices.length }}
+            </span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -362,7 +504,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import BaseField from '@/components/Forms/BaseField.vue'
 import BaseModal from '@/components/Modals/BaseModal.vue'
 import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
@@ -411,7 +552,12 @@ const auth = useAuthStore()
 const { addNotification } = useNotifications()
 
 const search = ref('')
-const inactiveDaysInput = ref('')
+const filterEstado = ref<'todos' | 'activos' | 'inactivos'>('todos')
+const filterRol = ref<'todos' | 'monitores'>('todos')
+const filterFicha = ref<string | number>('todas')
+const filterAsistencia = ref<'todos' | 'inactivos_7d' | 'nunca' | 'hoy'>('todos')
+const filterDobleFormacion = ref(false)
+
 const isLoading = ref(false)
 const loadError = ref('')
 const aprendices = ref<AprendizWithActivity[]>([])
@@ -437,10 +583,25 @@ const formacionesOptions = computed(() => {
   }))
 })
 
-const inactiveDays = computed(() => {
-  const parsed = Number.parseInt(inactiveDaysInput.value, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+const hasActiveFilters = computed(() => {
+  return (
+    search.value.trim() !== '' ||
+    filterEstado.value !== 'todos' ||
+    filterRol.value !== 'todos' ||
+    filterFicha.value !== 'todas' ||
+    filterAsistencia.value !== 'todos' ||
+    filterDobleFormacion.value === true
+  )
 })
+
+const resetFilters = () => {
+  search.value = ''
+  filterEstado.value = 'todos'
+  filterRol.value = 'todos'
+  filterFicha.value = 'todas'
+  filterAsistencia.value = 'todos'
+  filterDobleFormacion.value = false
+}
 
 const calculateInactiveDays = (lastVisit: string | null) => {
   if (!lastVisit) return Number.POSITIVE_INFINITY
@@ -459,25 +620,60 @@ const searchTerm = computed(() => search.value.trim().toLowerCase())
 
 const filteredAprendices = computed(() => {
   return aprendices.value.filter((aprendiz) => {
-    const matchesSearch = !searchTerm.value || [
-      aprendiz.nombre,
-      aprendiz.apellido,
-      aprendiz.documento
-    ].some((value) => String(value).toLowerCase().includes(searchTerm.value))
+    // 1. Filtro por búsqueda textual
+    const term = searchTerm.value
+    const matchesSearch =
+      !term ||
+      [
+        aprendiz.nombre,
+        aprendiz.apellido,
+        aprendiz.documento,
+        aprendiz.programa,
+        aprendiz.formacion
+      ].some((value) => String(value || '').toLowerCase().includes(term))
 
-    const matchesInactiveDays =
-      inactiveDays.value <= 0 ||
-      !Number.isFinite(aprendiz.inactiveDays) ||
-      aprendiz.inactiveDays >= inactiveDays.value
+    // 2. Filtro por estado activo / inactivo
+    const matchesEstado =
+      filterEstado.value === 'todos' ||
+      (filterEstado.value === 'activos' && aprendiz.estado !== false) ||
+      (filterEstado.value === 'inactivos' && aprendiz.estado === false)
 
-    return matchesSearch && matchesInactiveDays
+    // 3. Filtro por rol monitor
+    const matchesRol =
+      filterRol.value === 'todos' ||
+      (filterRol.value === 'monitores' && Boolean(aprendiz.es_monitor))
+
+    // 4. Filtro por ficha formativa
+    let matchesFicha = true
+    if (filterFicha.value !== 'todas') {
+      if (filterFicha.value === 'sin_ficha') {
+        matchesFicha = !aprendiz.formacion || aprendiz.formacion === 'Sin ficha'
+      } else {
+        matchesFicha = String(aprendiz.formacion || '').includes(String(filterFicha.value))
+      }
+    }
+
+    // 5. Filtro por actividad / asistencia
+    let matchesAsistencia = true
+    if (filterAsistencia.value === 'inactivos_7d') {
+      matchesAsistencia = !Number.isFinite(aprendiz.inactiveDays) || aprendiz.inactiveDays >= 7
+    } else if (filterAsistencia.value === 'nunca') {
+      matchesAsistencia = !aprendiz.ultima_visita
+    } else if (filterAsistencia.value === 'hoy') {
+      matchesAsistencia = aprendiz.inactiveDays === 0
+    }
+
+    // 6. Filtro por doble formación
+    const matchesDoble =
+      !filterDobleFormacion.value || Number(aprendiz.total_formaciones || 0) > 1
+
+    return matchesSearch && matchesEstado && matchesRol && matchesFicha && matchesAsistencia && matchesDoble
   })
 })
 
 const inactiveCount = computed(() =>
   filteredAprendices.value.filter((aprendiz) =>
-    inactiveDays.value > 0 &&
-    (!Number.isFinite(aprendiz.inactiveDays) || aprendiz.inactiveDays >= inactiveDays.value)
+    !Number.isFinite(aprendiz.inactiveDays) || aprendiz.inactiveDays >= 7
   ).length
 )
 
