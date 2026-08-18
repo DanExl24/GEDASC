@@ -131,3 +131,47 @@ export const desvincularTodosAprendicesFormacion = (
     'DELETE'
   )
 }
+
+export interface BulkImportAprendizItem {
+  documento: string
+  nombre?: string
+  apellido?: string
+}
+
+export interface BulkImportPayload {
+  aprendices: BulkImportAprendizItem[]
+  autoCreateNonExisting: boolean
+}
+
+export interface BulkImportDetail {
+  documento: string
+  nombre?: string
+  apellido?: string
+  estado: 'vinculado' | 'creado_y_vinculado' | 'conflicto_horario' | 'no_encontrado' | 'error' | 'ya_vinculado'
+  motivo?: string
+}
+
+export interface BulkImportResponse {
+  success: boolean
+  message: string
+  summary: {
+    total: number
+    vinculados: number
+    creadosYVinculados: number
+    omitidos: number
+  }
+  detalles: BulkImportDetail[]
+}
+
+export const importarAprendicesMasivo = (
+  token: string,
+  id_formacion: number,
+  payload: BulkImportPayload
+): Promise<BulkImportResponse> => {
+  return fetchWithAuth<BulkImportResponse>(
+    `/api/admin/formaciones/${id_formacion}/aprendices/masivo`,
+    token,
+    'POST',
+    payload
+  )
+}

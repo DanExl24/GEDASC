@@ -25,8 +25,9 @@ Capacidades principales:
 
 ### 2.2 Frontend (Vue 3 / TypeScript / Pinia)
 - **Vistas**:
-  - [`src/views/AdminProgramasView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminProgramasView.vue)
-  - [`src/views/AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue)
+  - [`src/views/AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue) *(Vista unificada 3-en-1: Fichas, Horarios y Programas)*
+- **Componentes**:
+  - [`src/components/Modals/ModalImportAprendicesMasivo.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesMasivo.vue) *(Importación multiformato XLSX / JSON con validación y reporte)*
 - **Servicios Frontend**:
   - [`src/Services/adminAcademic.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/Services/adminAcademic.ts)
 
@@ -49,6 +50,7 @@ Capacidades principales:
 | `PUT` | `/api/admin/formaciones/:id_formacion` | Actualiza los datos o el horario de una ficha | `ADMIN` |
 | `DELETE` | `/api/admin/formaciones/:id_formacion` | Elimina una ficha de formación si no tiene restricciones | `ADMIN` |
 | `GET` | `/api/admin/formaciones/:id_formacion/aprendices` | Lista todos los aprendices vinculados a la ficha | `ADMIN` |
+| `POST` | `/api/admin/formaciones/:id_formacion/aprendices/masivo` | Importa y vincula masivamente aprendices desde XLSX/JSON con validación | `ADMIN` |
 | `DELETE` | `/api/admin/formaciones/:id_formacion/aprendices/todos` | Desvincula masivamente todos los aprendices activos de la ficha | `ADMIN` |
 
 ---

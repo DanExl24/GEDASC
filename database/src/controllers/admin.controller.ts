@@ -1309,3 +1309,239 @@ export const toggleCeladorStatusController = async (req: Request, res: Response)
   }
 }
 
+export const importarAprendicesMasivoController = async (req: Request, res: Response) => {
+  try {
+    const { id_formacion } = req.params
+    const { aprendices, autoCreateNonExisting } = req.body
+
+    if (!id_formacion || !Array.isArray(aprendices) || aprendices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "id_formacion y un listado no vacío de aprendices son obligatorios"
+      })
+    }
+
+    // 1. Obtener horario activo de la formación destino
+    const targetSchedule = await pool.query(`
+      SELECT f.id_formacion, p.nombre_programa, h.hora_inicio, h.hora_fin, hd.dia_semana
+      FROM formaciones f
+      JOIN programa p ON p.id_programa = f.id_programa
+      JOIN horario h ON h.id_horario = f.id_horario
+      JOIN horario_dia hd ON hd.id_horario = h.id_horario
+      WHERE f.id_formacion = $1 AND f.estado = 'activa'
+    `, [id_formacion])
+
+    if (targetSchedule.rowCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "La formación especificada no existe o no tiene un horario activo asignado"
+      })
+    }
+
+    const targetDays = targetSchedule.rows
+
+    const results = {
+      total: aprendices.length,
+      vinculados: 0,
+      creadosYVinculados: 0,
+      omitidos: 0,
+      detalles: [] as Array<{
+        documento: string
+        nombre?: string
+        apellido?: string
+        estado: 'vinculado' | 'creado_y_vinculado' | 'conflicto_horario' | 'no_encontrado' | 'error' | 'ya_vinculado'
+        motivo?: string
+      }>
+    }
+
+    // Procesar cada fila
+    for (const item of aprendices) {
+      const docRaw = item.documento ? String(item.documento).trim() : ''
+      const nombreRaw = item.nombre ? String(item.nombre).trim() : ''
+      const apellidoRaw = item.apellido ? String(item.apellido).trim() : ''
+
+      if (!docRaw || docRaw.length < 5 || docRaw.length > 20) {
+        results.omitidos++
+        results.detalles.push({
+          documento: docRaw || 'N/A',
+          nombre: nombreRaw,
+          apellido: apellidoRaw,
+          estado: 'error',
+          motivo: 'Documento inválido (debe tener entre 5 y 20 caracteres)'
+        })
+        continue
+      }
+
+      // Buscar aprendiz por documento
+      const aprendizCheck = await pool.query(
+        `SELECT id_aprendiz, nombre, apellido FROM aprendiz WHERE documento = $1`,
+        [docRaw]
+      )
+
+      let idAprendiz: number | null = null
+      let wasCreated = false
+      let currentNombre = nombreRaw
+      let currentApellido = apellidoRaw
+
+      if (aprendizCheck.rowCount! > 0) {
+        idAprendiz = aprendizCheck.rows[0].id_aprendiz
+        currentNombre = aprendizCheck.rows[0].nombre
+        currentApellido = aprendizCheck.rows[0].apellido
+      } else {
+        // No existe
+        if (!autoCreateNonExisting) {
+          results.omitidos++
+          results.detalles.push({
+            documento: docRaw,
+            nombre: nombreRaw,
+            apellido: apellidoRaw,
+            estado: 'no_encontrado',
+            motivo: 'El aprendiz no está registrado en el sistema'
+          })
+          continue
+        }
+
+        // Crear aprendiz
+        if (!nombreRaw || !apellidoRaw) {
+          results.omitidos++
+          results.detalles.push({
+            documento: docRaw,
+            nombre: nombreRaw,
+            apellido: apellidoRaw,
+            estado: 'error',
+            motivo: 'No se puede crear el aprendiz: nombre y apellido son obligatorios'
+          })
+          continue
+        }
+
+        try {
+          const newAprendiz = await pool.query(
+            `INSERT INTO aprendiz (documento, nombre, apellido, estado)
+             VALUES ($1, $2, $3, true)
+             RETURNING id_aprendiz`,
+            [docRaw, nombreRaw, apellidoRaw]
+          )
+          idAprendiz = newAprendiz.rows[0].id_aprendiz
+          wasCreated = true
+        } catch (insertErr: any) {
+          results.omitidos++
+          results.detalles.push({
+            documento: docRaw,
+            nombre: nombreRaw,
+            apellido: apellidoRaw,
+            estado: 'error',
+            motivo: `Error al registrar aprendiz: ${insertErr.message || 'Error en base de datos'}`
+          })
+          continue
+        }
+      }
+
+      // Verificar si ya está vinculado a esta formación
+      const alreadyLinkedCheck = await pool.query(
+        `SELECT estado FROM aprendiz_formacion WHERE id_aprendiz = $1 AND id_formacion = $2`,
+        [idAprendiz, id_formacion]
+      )
+
+      if (alreadyLinkedCheck.rowCount! > 0 && alreadyLinkedCheck.rows[0].estado === 'activo') {
+        results.omitidos++
+        results.detalles.push({
+          documento: docRaw,
+          nombre: currentNombre,
+          apellido: currentApellido,
+          estado: 'ya_vinculado',
+          motivo: 'El aprendiz ya se encuentra vinculado activamente a esta ficha'
+        })
+        continue
+      }
+
+      // Verificar cruce de horario con otras formaciones activas del aprendiz (RN-ACAD-008)
+      const existingSchedules = await pool.query(`
+        SELECT f.id_formacion, p.nombre_programa, h.hora_inicio, h.hora_fin, hd.dia_semana
+        FROM aprendiz_formacion af
+        JOIN formaciones f ON f.id_formacion = af.id_formacion
+        JOIN programa p ON p.id_programa = f.id_programa
+        JOIN horario h ON h.id_horario = f.id_horario
+        JOIN horario_dia hd ON hd.id_horario = h.id_horario
+        WHERE af.id_aprendiz = $1 AND af.estado = 'activo' AND f.estado = 'activa'
+          AND af.id_formacion != $2
+      `, [idAprendiz, id_formacion])
+
+      let hasConflict = false
+      let conflictMessage = ''
+
+      for (const newSlot of targetDays) {
+        for (const existingSlot of existingSchedules.rows) {
+          if (newSlot.dia_semana === existingSlot.dia_semana) {
+            const newStart = newSlot.hora_inicio
+            const newEnd = newSlot.hora_fin
+            const existStart = existingSlot.hora_inicio
+            const existEnd = existingSlot.hora_fin
+
+            if (newStart < existEnd && newEnd > existStart) {
+              hasConflict = true
+              conflictMessage = `Cruce de horario con "${existingSlot.nombre_programa}" (Ficha ${existingSlot.id_formacion}) el ${existingSlot.dia_semana} (${existingSlot.hora_inicio} a ${existingSlot.hora_fin})`
+              break
+            }
+          }
+        }
+        if (hasConflict) break
+      }
+
+      if (hasConflict) {
+        results.omitidos++
+        results.detalles.push({
+          documento: docRaw,
+          nombre: currentNombre,
+          apellido: currentApellido,
+          estado: 'conflicto_horario',
+          motivo: conflictMessage
+        })
+        continue
+      }
+
+      // Proceder con la vinculación
+      await pool.query(
+        `INSERT INTO aprendiz_formacion (id_aprendiz, id_formacion, estado)
+         VALUES ($1, $2, 'activo')
+         ON CONFLICT (id_aprendiz, id_formacion)
+         DO UPDATE SET estado = 'activo', fecha_inicio = NOW()`,
+        [idAprendiz, id_formacion]
+      )
+
+      if (wasCreated) {
+        results.creadosYVinculados++
+        results.vinculados++
+        results.detalles.push({
+          documento: docRaw,
+          nombre: currentNombre,
+          apellido: currentApellido,
+          estado: 'creado_y_vinculado'
+        })
+      } else {
+        results.vinculados++
+        results.detalles.push({
+          documento: docRaw,
+          nombre: currentNombre,
+          apellido: currentApellido,
+          estado: 'vinculado'
+        })
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Proceso completado: ${results.vinculados} vinculados (${results.creadosYVinculados} creados), ${results.omitidos} omitidos.`,
+      summary: {
+        total: results.total,
+        vinculados: results.vinculados,
+        creadosYVinculados: results.creadosYVinculados,
+        omitidos: results.omitidos
+      },
+      detalles: results.detalles
+    })
+  } catch (error) {
+    console.error('Error en importación masiva:', error)
+    res.status(500).json({ success: false, message: 'Error interno al procesar la importación masiva' })
+  }
+}
+

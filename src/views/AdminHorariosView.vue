@@ -673,15 +673,26 @@
           <p class="text-xs text-slate-500 mt-0.5">Nivel: {{ selectedFicha?.nivel }} | Ficha: {{ selectedFicha?.id_formacion }}</p>
         </div>
 
-        <!-- Asignar nuevo aprendiz -->
-        <div class="space-y-2.5">
-          <h3 class="font-robotoSlab text-xs font-bold uppercase tracking-wider text-slate-500">Asignar Nuevo Aprendiz</h3>
+        <!-- Asignar nuevo aprendiz (Individual o Masivo) -->
+        <div class="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 class="font-robotoSlab text-xs font-bold uppercase tracking-wider text-slate-700">Vincular Aprendices</h3>
+            <button
+              type="button"
+              @click="openBulkImportModal"
+              class="px-3 py-1.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer self-start sm:self-auto"
+            >
+              <span>📥</span>
+              <span>Importación Masiva (.xlsx / .json)</span>
+            </button>
+          </div>
+
           <div class="flex gap-2">
             <div class="flex-1">
               <BaseSelect
                 v-model="nuevoAprendizId"
                 :options="aprendicesNoVinculadosOptions"
-                placeholder="Buscar aprendiz a vincular..."
+                placeholder="Buscar aprendiz individual a vincular..."
               />
             </div>
             <button
@@ -744,6 +755,13 @@
       </div>
     </BaseModal>
 
+    <!-- MODAL 5: IMPORTACIÓN MASIVA DE APRENDICES -->
+    <ModalImportAprendicesMasivo
+      ref="importMasivoModalRef"
+      :ficha="selectedFicha"
+      @imported="handleBulkImported"
+    />
+
   </div>
 </template>
 
@@ -782,6 +800,7 @@ import {
   asignarFormacionAdmin,
   desvincularFormacionAdmin
 } from '@/Services/adminAprendices'
+import ModalImportAprendicesMasivo from '@/components/Modals/ModalImportAprendicesMasivo.vue'
 
 // State
 const activeTab = ref<'formaciones' | 'horarios' | 'programas'>('formaciones')
@@ -796,6 +815,7 @@ const fichaModalRef = ref<InstanceType<typeof BaseModal> | null>(null)
 const horarioModalRef = ref<InstanceType<typeof BaseModal> | null>(null)
 const programaModalRef = ref<InstanceType<typeof BaseModal> | null>(null)
 const aprendicesFichaModalRef = ref<InstanceType<typeof BaseModal> | null>(null)
+const importMasivoModalRef = ref<InstanceType<typeof ModalImportAprendicesMasivo> | null>(null)
 
 // Selected ficha details for viewing/associating apprentices
 interface SimpleAprendiz {
@@ -1128,6 +1148,17 @@ const handleDesvincularTodos = async () => {
   } finally {
     loadingDesvincularTodos.value = false
   }
+}
+
+const openBulkImportModal = () => {
+  importMasivoModalRef.value?.open()
+}
+
+const handleBulkImported = async () => {
+  if (selectedFicha.value) {
+    await loadFichaAprendicesData(selectedFicha.value.id_formacion)
+  }
+  await loadAllData()
 }
 
 // Horario Modals & Actions

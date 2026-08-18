@@ -33,6 +33,7 @@ import {
   deleteFormacionController,
   getFormacionAprendicesController,
   desvincularTodosFormacionController,
+  importarAprendicesMasivoController,
   setSimulationTimeController,
   getSimulationTimeController,
   getCeladoresController,
@@ -96,6 +97,7 @@ router.post('/formaciones', validateRequest({ body: createFormacionSchema }), cr
 router.put('/formaciones/:id_formacion', updateFormacionController)
 router.delete('/formaciones/:id_formacion', deleteFormacionController)
 router.get('/formaciones/:id_formacion/aprendices', getFormacionAprendicesController)
+router.post('/formaciones/:id_formacion/aprendices/masivo', importarAprendicesMasivoController)
 router.delete('/formaciones/:id_formacion/aprendices/todos', desvincularTodosFormacionController)
 
 // Rutas exclusivas para Gestión de Celadores
