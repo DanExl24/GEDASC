@@ -78,7 +78,7 @@ const props = withDefaults(
     showClose?: boolean
     closeOnBackdrop?: boolean
     closeOnEsc?: boolean
-    icon?: Component | object | Function | string
+    icon?: Component | object  | string
   }>(),
   {
     title: '',

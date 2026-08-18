@@ -25,5 +25,8 @@ jobs:
           script: |
             cd ~/GEDASC
             git pull origin GEDASC-V2
-            docker compose up -d --build
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            docker compose build --parallel
+            docker compose up -d
             docker image prune -f

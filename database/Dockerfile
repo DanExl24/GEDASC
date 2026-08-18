@@ -1,10 +1,9 @@
-# STAGE 1
-
-FROM node:24-alpine AS builder
+# STAGE 1: BUILDER
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Origen , destino
+# Copiar manifiestos de paquetes
 COPY package.json package-lock.json ./ 
 
 RUN npm ci
@@ -12,24 +11,18 @@ RUN npm ci
 COPY . .
 
 RUN npx prisma generate
-
 RUN npm run build
+RUN npm prune --omit=dev
 
-# STAGE 2
-
-FROM node:24-alpine
+# STAGE 2: PRODUCTION RUNNER
+FROM node:22-alpine
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-
-
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 3000
 
-CMD [ "node","dist/index.js" ]
+CMD [ "node", "dist/index.js" ]
