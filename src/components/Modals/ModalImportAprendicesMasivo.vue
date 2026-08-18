@@ -422,7 +422,7 @@ const parseExcelOrJson = async (file: File) => {
         throw new Error('El archivo no contiene hojas de cálculo válidas')
       }
       const worksheet = workbook.Sheets[firstSheetName]
-      const rawList = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet)
+      const rawList = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet)
       extractRows(rawList)
     }
   } catch (error) {
@@ -432,7 +432,7 @@ const parseExcelOrJson = async (file: File) => {
   }
 }
 
-const extractRows = (rawList: Record<string, any>[]) => {
+const extractRows = (rawList: Record<string, unknown>[]) => {
   const normalized: BulkImportAprendizItem[] = []
 
   for (const item of rawList) {
@@ -529,9 +529,10 @@ const submitImport = async () => {
     } else {
       addNotification(res.message || 'Error en la importación', 'error')
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error al importar aprendices:', error)
-    addNotification(error.message || 'Error al conectar con el servidor', 'error')
+    const errorMsg = error instanceof Error ? error.message : 'Error al conectar con el servidor'
+    addNotification(errorMsg, 'error')
   } finally {
     isProcessing.value = false
   }

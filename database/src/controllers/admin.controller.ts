@@ -599,14 +599,15 @@ export const bulkCreateAprendicesController = async (req: Request, res: Response
           estado: 'creado',
           motivo: 'Registrado satisfactoriamente'
         })
-      } catch (err: any) {
+      } catch (err: unknown) {
         errores++
+        const errMsg = err instanceof Error ? err.message : 'Error al insertar en la base de datos'
         detalles.push({
           documento: doc,
           nombre: nom,
           apellido: ape,
           estado: 'error',
-          motivo: err.message || 'Error al insertar en la base de datos'
+          motivo: errMsg
         })
       }
     }
@@ -1720,14 +1721,15 @@ export const importarAprendicesMasivoController = async (req: Request, res: Resp
           )
           idAprendiz = newAprendiz.rows[0].id_aprendiz
           wasCreated = true
-        } catch (insertErr: any) {
+        } catch (insertErr: unknown) {
           results.omitidos++
+          const insertMsg = insertErr instanceof Error ? insertErr.message : 'Error en base de datos'
           results.detalles.push({
             documento: docRaw,
             nombre: nombreRaw,
             apellido: apellidoRaw,
             estado: 'error',
-            motivo: `Error al registrar aprendiz: ${insertErr.message || 'Error en base de datos'}`
+            motivo: `Error al registrar aprendiz: ${insertMsg}`
           })
           continue
         }
