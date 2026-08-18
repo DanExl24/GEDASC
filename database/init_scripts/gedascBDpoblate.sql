@@ -793,10 +793,6 @@ COPY public.computadores (id_computador, serial, marca, activo) FROM stdin;
 --
 
 COPY public.detalles_ingreso (id_ingreso, id_aprendiz, id_detallemaquina, hora_ingreso, tipo_sesion, motivo_reingreso, id_formacion, motivo_visita) FROM stdin;
-1	10	\N	2026-07-02 19:36:43.517394	formacion	\N	\N	Evento institucional
-2	10	\N	2026-07-02 20:25:39.098979	formacion	Olvidó un objeto/pertenencia	\N	pq si
-3	27	\N	2026-07-02 20:26:02.589309	formacion	\N	\N	Reunión con instructor
-4	7	\N	2026-07-02 20:45:09.573898	formacion	\N	\N	Monitoría
 \.
 
 
@@ -813,7 +809,6 @@ COPY public.detalles_maquinas (id_detallemaquina, id_computador, id_vehiculo, fi
 --
 
 COPY public.detalles_salida (id_salida, id_ingreso, hora_salida) FROM stdin;
-1	1	2026-07-02 20:24:42.153462
 \.
 
 
@@ -946,7 +941,7 @@ SELECT pg_catalog.setval('public.computadores_id_computador_seq', 2, true);
 -- Name: detalles_ingreso_id_ingreso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.detalles_ingreso_id_ingreso_seq', 4, true);
+SELECT pg_catalog.setval('public.detalles_ingreso_id_ingreso_seq', 1, false);
 
 
 --
@@ -960,7 +955,7 @@ SELECT pg_catalog.setval('public.detalles_maquinas_id_detallemaquina_seq', 1, fa
 -- Name: detalles_salida_id_salida_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.detalles_salida_id_salida_seq', 1, true);
+SELECT pg_catalog.setval('public.detalles_salida_id_salida_seq', 1, false);
 
 
 --

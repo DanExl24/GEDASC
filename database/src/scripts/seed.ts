@@ -4,8 +4,23 @@ import bcrypt from 'bcryptjs'
 export const runSeed = async () => {
   const client = await pool.connect()
   try {
-    console.log('🌱 [SEED] Iniciando población de datos iniciales en GEDASC...')
+    console.log('🌱 [SEED] Iniciando población de datos maestros en GEDASC...')
     await client.query('BEGIN')
+
+    // 0. Limpieza de registros transaccionales / operativos del día a día
+    console.log('🧹 [SEED] Limpiando registros operativos (ingresos, salidas, detalles de máquinas)...')
+    await client.query(`
+      DELETE FROM detalles_salida;
+      DELETE FROM detalles_maquinas;
+      DELETE FROM detalles_ingreso;
+    `)
+
+    // Reiniciar secuencias de auto-incremento operacionales
+    await client.query(`
+      SELECT pg_catalog.setval('detalles_ingreso_id_ingreso_seq', 1, false);
+      SELECT pg_catalog.setval('detalles_salida_id_salida_seq', 1, false);
+      SELECT pg_catalog.setval('detalles_maquinas_id_detallemaquina_seq', 1, false);
+    `)
 
     // 1. Sembrar Roles Base
     console.log('🔹 Sembrando roles...')
@@ -140,7 +155,7 @@ export const runSeed = async () => {
     `)
 
     await client.query('COMMIT')
-    console.log('✅ [SEED] ¡Población de datos iniciales completada exitosamente!')
+    console.log('✅ [SEED] ¡Población de datos maestros completada exitosamente! El sistema está listo para operar desde cero.')
   } catch (error) {
     await client.query('ROLLBACK')
     console.error('❌ [SEED] Error ejecutando la semilla:', error)
