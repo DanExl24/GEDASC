@@ -71,3 +71,45 @@
 - **Postcondiciones**:
   - Todos los aprendices quedan desvinculados de la ficha formativa y vuelven a estar disponibles en el selector de aprendices no vinculados.
 
+---
+
+## CU-ACAD-04: Importación y Vinculación Masiva de Aprendices por Archivo (.xlsx / .json)
+
+- **Actor Principal**: Administrador del sistema
+- **Precondiciones**:
+  - El usuario está autenticado con rol `ADMIN`.
+  - La ficha de formación destino está activa y cuenta con un horario válido asignado.
+- **Disparador**: El administrador cuenta con una planilla de aprendices (en formato Excel o JSON) y desea matricularlos en lote en la ficha de formación.
+
+### Flujo Principal:
+1. En [`AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue), el administrador hace clic en *"Ver Aprendices"* en la fila de la ficha deseada.
+2. En el encabezado de vinculación del modal, presiona el botón *"📥 Importación Masiva (.xlsx / .json)"*.
+3. Se despliega el componente [`ModalImportAprendicesMasivo.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesMasivo.vue).
+4. *(Opcional)* Si el administrador no tiene una plantilla, presiona *"📗 Plantilla .xlsx"* o *"📄 Plantilla .json"* para descargar una muestra estructurada.
+5. El administrador selecciona la estrategia deseada:
+   - *Crear y vincular nuevos aprendices* (por defecto).
+   - *Solo vincular aprendices ya registrados*.
+6. El administrador arrastra o selecciona su archivo `.xlsx` o `.json`.
+7. El sistema en el navegador analiza el archivo con `xlsx` o `JSON.parse`, normaliza los nombres de columnas y muestra una previsualización de los primeros 5 registros con el total de filas detectadas.
+8. El administrador presiona *"Vincular N Aprendices"*.
+9. El frontend envía la petición `POST /api/admin/formaciones/:id_formacion/aprendices/masivo` con el listado de aprendices y la opción de creación.
+10. El backend itera sobre cada registro:
+    - Valida formato de documento.
+    - Crea al aprendiz si no existe y la opción está habilitada.
+    - Verifica que el horario de la ficha no choque con otras formaciones activas del aprendiz (`RN-ACAD-008`).
+    - Inserta la asociación en `aprendiz_formacion`.
+11. El backend responde con el consolidado (`total`, `vinculados`, `creadosYVinculados`, `omitidos`) y el detalle individual por documento.
+12. El modal pasa a la vista de **Informe de Resultados**, mostrando métricas visuales y tabla con filtros (*Todos*, *Éxitos*, *Omitidos*) para auditar cualquier error o conflicto de horario.
+13. El administrador presiona *"Finalizar y Volver"*.
+14. El modal de aprendices de la ficha se actualiza automáticamente con todos los nuevos vinculados.
+
+### Flujos Alternativos:
+- **7a. Archivo sin columna de documento**:
+  - El sistema detecta la ausencia de encabezados de identificación (`documento`, `cedula`, etc.) y muestra una alerta preventiva bloqueando el botón de envío hasta que se cargue un archivo con la estructura correcta.
+- **10a. Aprendices con cruce de horario (`RN-ACAD-008`)**:
+  - Los aprendices en conflicto son marcados como `conflicto_horario` indicando la formación y horario con el que colisionan; no son matriculados en esta ficha, pero el resto de aprendices válidos sí se vincula exitosamente.
+
+- **Postcondiciones**:
+  - Los aprendices válidos quedan formalmente vinculados a la cohorte académica y sus controles de acceso en portería responderán al horario de la ficha.
+
+

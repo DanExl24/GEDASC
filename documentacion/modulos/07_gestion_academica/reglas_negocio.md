@@ -91,3 +91,28 @@
 - **Endpoints relacionados**: `PUT /api/admin/horarios/:id_horario`, `PUT /api/admin/formaciones/:id_formacion`.
 - **Historias de usuario relacionadas**: `HU-ACAD-002`, `HU-ACAD-003`.
 
+---
+
+## 5. Ingesta e Importación Masiva
+
+### RN-ACAD-009: Ingesta Masiva Flexible y Creación Automática Configurable
+- **Descripción**: La importación de aprendices desde archivos `.xlsx`, `.xls` y `.json` admite variaciones de nombres de columnas (ej. `documento`, `identificacion`, `cedula`, `dni`) y permite al administrador elegir entre:
+  1. *Crear automáticamente aprendices no existentes*: Inserta el registro en la tabla `aprendiz` (requiriendo `nombre` y `apellido`) y procede a vincularlo a la ficha.
+  2. *Solo vincular aprendices existentes*: Omite cualquier documento no encontrado previamente en el sistema.
+- **Motivo**: Adaptabilidad a planillas de matrícula institucionales emitidas por SofiaPlus o administradores locales con diferentes formatos de encabezados.
+- **Módulos afectados**: `07_gestion_academica`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`src/components/Modals/ModalImportAprendicesMasivo.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesMasivo.vue).
+- **Endpoints relacionados**: `POST /api/admin/formaciones/:id_formacion/aprendices/masivo`.
+- **Historias de usuario relacionadas**: `HU-ACAD-006`.
+
+---
+
+### RN-ACAD-010: Tolerancia a Fallos y Reporte Detallado de Conflictos en Ingesta Masiva
+- **Descripción**: Durante una importación masiva, si uno o más registros presentan conflictos (cruce de horario `RN-ACAD-008`, documento inválido, falta de nombres para creación o aprendiz no encontrado), el sistema **no aborta toda la transacción**. En su lugar, vincula todos los registros válidos, omite los conflictivos y retorna un payload con resumen cuantitativo y el motivo exacto de omisión por cada documento.
+- **Motivo**: Maximizar la eficiencia operativa del administrador evitando que un solo registro erróneo bloquee la matrícula de decenas de aprendices válidos.
+- **Módulos afectados**: `07_gestion_academica`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`src/components/Modals/ModalImportAprendicesMasivo.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesMasivo.vue).
+- **Endpoints relacionados**: `POST /api/admin/formaciones/:id_formacion/aprendices/masivo`.
+- **Historias de usuario relacionadas**: `HU-ACAD-006`.
+
+

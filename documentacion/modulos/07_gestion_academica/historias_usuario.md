@@ -10,7 +10,7 @@
 **Para** registrar los programas académicos oficiales ofertados por el CTA (ej. ADSO, Gestión Empresarial, etc.).
 
 ## Descripción
-En [`AdminProgramasView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminProgramasView.vue), el administrador administra el catálogo maestro de programas. Permite registrar el nombre oficial, versión curricular, nivel formativo (Técnico, Tecnólogo, Especialización) y estado (Activo / Inactivo).
+En la pestaña *"Programas Curriculares"* de [`AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue), el administrador administra el catálogo maestro de programas. Permite registrar el nombre oficial, versión curricular, nivel formativo (Técnico, Tecnólogo, Especialización) y estado (Activo / Inactivo).
 
 ## Criterios de Aceptación
 - La tabla consume `GET /api/admin/programas`.
@@ -24,7 +24,7 @@ En [`AdminProgramasView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GE
 - **Roles involucrados**: `ADMIN`
 - **Reglas de negocio relacionadas**: `RN-ACAD-001`, `RN-ACAD-002`
 - **Endpoints relacionados**: `GET /api/admin/programas`, `POST /api/admin/programas`, `PUT /api/admin/programas/:id_programa`
-- **Componentes frontend relacionados**: `src/views/AdminProgramasView.vue`
+- **Componentes frontend relacionados**: `src/views/AdminHorariosView.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`
 
 ---
@@ -133,3 +133,34 @@ Establece la regla de inmutabilidad: cuando una formación cambia de horario en 
 - **Endpoints relacionados**: `PUT /api/admin/formaciones/:id_formacion`
 - **Componentes frontend relacionados**: `src/views/AdminHorariosView.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`
+
+---
+
+# HU-ACAD-006
+
+## Historia
+**Como** administrador del sistema  
+**Quiero** importar y vincular masivamente aprendices a una ficha mediante archivos Excel (`.xlsx`, `.xls`) o JSON  
+**Para** matricular grupos completos de forma instantánea sin tener que registrar o asociar aprendices uno por uno.
+
+## Descripción
+En el modal de gestión de aprendices de una ficha formativa, el administrador puede abrir el asistente de **Importación Masiva** ([`ModalImportAprendicesMasivo.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesMasivo.vue)). Permite cargar archivos Excel o JSON con detección flexible de columnas (`documento`, `nombre`, `apellido`), seleccionar si los aprendices no existentes se deben crear automáticamente o ignorar, descargar plantillas de muestra, previsualizar los primeros registros, validar cruces de horarios en tiempo de ejecución (`RN-ACAD-008`) y visualizar un reporte exhaustivo con métricas de vinculados, creados y omitidos.
+
+## Criterios de Aceptación
+- **Soporte Multiformato**: Permite arrastrar o seleccionar archivos `.xlsx`, `.xls` y `.json`.
+- **Descarga de Plantillas**: Ofrece botones para descargar en caliente plantillas estructuradas de ejemplo (`.xlsx` y `.json`).
+- **Mapeo Flexible de Columnas**: Detecta nombres de columnas de documento (`documento`, `identificacion`, `cedula`, `dni`, etc.), nombre (`nombre`, `nombres`, `name`) y apellido (`apellido`, `apellidos`, `last_name`), ignorando tildes y mayúsculas.
+- **Estrategia de Creación Configurable**:
+  - Opción 1: *Crear y vincular nuevos aprendices* (crea el registro en la tabla `aprendiz` si no existe).
+  - Opción 2: *Solo vincular aprendices existentes* (omite los documentos no registrados).
+- **Validación de Cruces de Horario (`RN-ACAD-008`)**: El backend valida que ningún aprendiz tenga conflicto de horas/días con otra formación activa. Si existe colisión, solo se omite esa fila registrando el motivo exacto, sin abortar el resto de la importación.
+- **Reporte Post-Importación**: Presenta métricas cuantitativas (*Total*, *Vinculados*, *Creados*, *Omitidos*) y tabla filtrable para auditar el detalle de cada aprendiz procesado.
+
+## Metadatos
+- **Prioridad**: Alta
+- **Roles involucrados**: `ADMIN`
+- **Reglas de negocio relacionadas**: `RN-ACAD-001`, `RN-ACAD-008`, `RN-ACAD-009`, `RN-ACAD-010`
+- **Endpoints relacionados**: `POST /api/admin/formaciones/:id_formacion/aprendices/masivo`
+- **Componentes frontend relacionados**: `src/views/AdminHorariosView.vue`, `src/components/Modals/ModalImportAprendicesMasivo.vue`
+- **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`, `src/Services/adminAcademic.ts`
+
