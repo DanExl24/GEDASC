@@ -97,14 +97,15 @@ En la tabla de formaciones, al presionar el botón *"Ver Aprendices"* en una fic
 ## Criterios de Aceptación
 - El modal muestra la lista de aprendices matriculados con su nombre y documento.
 - Dispone de un buscador para incorporar nuevos aprendices mediante `POST /api/admin/aprendices/:id_aprendiz/formaciones`.
-- Dispone de una acción para desvincular mediante `DELETE /api/admin/aprendices/:id_aprendiz/formaciones/:id_formacion`.
+- Dispone de una acción individual para desvincular mediante `DELETE /api/admin/aprendices/:id_aprendiz/formaciones/:id_formacion`.
+- **Desvinculación Masiva**: Dispone del botón *"Desvincular Todos"* con diálogo de confirmación que elimina todas las asociaciones activas de la ficha de forma atómica mediante `DELETE /api/admin/formaciones/:id_formacion/aprendices/todos`.
 - La lista se actualiza reactivamente sin necesidad de recargar la página.
 
 ## Metadatos
 - **Prioridad**: Alta
 - **Roles involucrados**: `ADMIN`
 - **Reglas de negocio relacionadas**: `RN-ACAD-001`, `RN-ING-009`
-- **Endpoints relacionados**: `GET /api/admin/formaciones/:id_formacion/aprendices`, `POST /api/admin/aprendices/:id_aprendiz/formaciones`, `DELETE /api/admin/aprendices/:id_aprendiz/formaciones/:id_formacion`
+- **Endpoints relacionados**: `GET /api/admin/formaciones/:id_formacion/aprendices`, `POST /api/admin/aprendices/:id_aprendiz/formaciones`, `DELETE /api/admin/aprendices/:id_aprendiz/formaciones/:id_formacion`, `DELETE /api/admin/formaciones/:id_formacion/aprendices/todos`
 - **Componentes frontend relacionados**: `src/views/AdminHorariosView.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`
 
