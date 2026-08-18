@@ -22,8 +22,11 @@ import {
   getProgramasController,
   createProgramaController,
   updateProgramaController,
+  deleteProgramaController,
   getHorariosController,
   createHorarioController,
+  updateHorarioController,
+  deleteHorarioController,
   getAllFormacionesController,
   createFormacionController,
   updateFormacionController,
@@ -81,9 +84,12 @@ router.get('/statsExits', getAdminStatsController)
 router.get('/programas', getProgramasController)
 router.post('/programas', validateRequest({ body: createProgramaSchema }), createProgramaController)
 router.put('/programas/:id_programa', updateProgramaController)
+router.delete('/programas/:id_programa', deleteProgramaController)
 
 router.get('/horarios', getHorariosController)
 router.post('/horarios', validateRequest({ body: createHorarioSchema }), createHorarioController)
+router.put('/horarios/:id_horario', updateHorarioController)
+router.delete('/horarios/:id_horario', deleteHorarioController)
 
 router.get('/formaciones', getAllFormacionesController)
 router.post('/formaciones', validateRequest({ body: createFormacionSchema }), createFormacionController)

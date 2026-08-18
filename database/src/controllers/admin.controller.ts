@@ -678,6 +678,37 @@ export const updateProgramaController = async (req: Request, res: Response) => {
   }
 }
 
+export const deleteProgramaController = async (req: Request, res: Response) => {
+  try {
+    const { id_programa } = req.params
+
+    const { rows: inUse } = await pool.query(
+      'SELECT id_formacion FROM formaciones WHERE id_programa = $1 LIMIT 1',
+      [id_programa]
+    )
+    if (inUse.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `No se puede eliminar el programa curricular porque está asignado a fichas de formación activas (Ficha #${inUse[0].id_formacion}).`
+      })
+    }
+
+    const { rowCount } = await pool.query('DELETE FROM programa WHERE id_programa = $1', [id_programa])
+    if (rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Programa no encontrado' })
+    }
+
+    res.json({
+      success: true,
+      message: 'Programa curricular eliminado correctamente',
+      data: { message: 'Programa curricular eliminado correctamente' }
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al eliminar programa' })
+  }
+}
+
 export const getHorariosController = async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query(`
@@ -759,6 +790,146 @@ export const createHorarioController = async (req: Request, res: Response) => {
   }
 }
 
+export const updateHorarioController = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    const { id_horario } = req.params
+    const { hora_inicio, hora_fin, dias_semana } = req.body
+
+    if (!hora_inicio || !hora_fin || !Array.isArray(dias_semana) || dias_semana.length === 0) {
+      return res.status(400).json({ success: false, message: 'Campos requeridos faltantes o inválidos' })
+    }
+
+    await client.query('BEGIN')
+
+    // Validar cruce estricto de horarios para aprendices con doble titulación
+    const overlapQuery = `
+      SELECT 
+        a.nombre, 
+        a.apellido, 
+        a.documento,
+        f1.id_formacion AS ficha_actual,
+        f2.id_formacion AS ficha_conflicto,
+        p2.nombre_programa AS programa_conflicto,
+        TO_CHAR(h2.hora_inicio, 'HH24:MI') AS inicio_conflicto,
+        TO_CHAR(h2.hora_fin, 'HH24:MI') AS fin_conflicto,
+        hd2.dia_semana AS dia_conflicto
+      FROM aprendiz_formacion af1
+      JOIN formaciones f1 ON f1.id_formacion = af1.id_formacion
+      JOIN aprendiz_formacion af2 ON af2.id_aprendiz = af1.id_aprendiz AND af2.id_formacion != af1.id_formacion AND af2.estado = 'activo'
+      JOIN formaciones f2 ON f2.id_formacion = af2.id_formacion AND f2.estado = 'activa'
+      JOIN horario h2 ON h2.id_horario = f2.id_horario
+      JOIN horario_dia hd2 ON hd2.id_horario = h2.id_horario
+      JOIN programa p2 ON p2.id_programa = f2.id_programa
+      JOIN aprendiz a ON a.id_aprendiz = af1.id_aprendiz
+      WHERE f1.id_horario = $1 
+        AND af1.estado = 'activo'
+        AND f1.estado = 'activa'
+        AND hd2.dia_semana = ANY($2::text[])
+        AND (
+          ($3::time < h2.hora_fin) AND ($4::time > h2.hora_inicio)
+        )
+      LIMIT 5
+    `
+
+    const { rows: conflicts } = await client.query(overlapQuery, [
+      id_horario,
+      dias_semana,
+      hora_inicio,
+      hora_fin
+    ])
+
+    if (conflicts.length > 0) {
+      await client.query('ROLLBACK')
+      const first = conflicts[0]
+      return res.status(409).json({
+        success: false,
+        message: `Conflicto de cruce de horario: El aprendiz ${first.nombre} ${first.apellido} (Doc: ${first.documento}) matriculado en Ficha #${first.ficha_actual} se cruzaría los ${first.dia_conflicto} con la Ficha #${first.ficha_conflicto} (${first.programa_conflicto} de ${first.inicio_conflicto} a ${first.fin_conflicto}). Modifique primero la matrícula o el horario.`,
+        conflicts
+      })
+    }
+
+    const calculatedJornada = detectJornada(hora_inicio, hora_fin)
+
+    const { rows } = await client.query(
+      `UPDATE horario
+       SET hora_inicio = $1,
+           hora_fin = $2,
+           jornada = $3
+       WHERE id_horario = $4
+       RETURNING *`,
+      [hora_inicio, hora_fin, calculatedJornada, id_horario]
+    )
+
+    if (rows.length === 0) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ success: false, message: 'Horario no encontrado' })
+    }
+
+    // Actualizar días asociados
+    await client.query('DELETE FROM horario_dia WHERE id_horario = $1', [id_horario])
+    for (const dia of dias_semana) {
+      await client.query(
+        `INSERT INTO horario_dia (id_horario, dia_semana) VALUES ($1, $2)`,
+        [id_horario, dia]
+      )
+    }
+
+    await client.query('COMMIT')
+    res.json({
+      success: true,
+      message: 'Horario académico actualizado correctamente',
+      data: { ...rows[0], dias_semana: dias_semana.join(', ') }
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al actualizar horario' })
+  } finally {
+    client.release()
+  }
+}
+
+export const deleteHorarioController = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    const { id_horario } = req.params
+
+    const { rows: inUse } = await client.query(
+      'SELECT id_formacion FROM formaciones WHERE id_horario = $1 LIMIT 1',
+      [id_horario]
+    )
+    if (inUse.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `No se puede eliminar el horario porque está asignado a fichas de formación activas (Ficha #${inUse[0].id_formacion}).`
+      })
+    }
+
+    await client.query('BEGIN')
+    await client.query('DELETE FROM horario_dia WHERE id_horario = $1', [id_horario])
+    const { rowCount } = await client.query('DELETE FROM horario WHERE id_horario = $1', [id_horario])
+
+    if (rowCount === 0) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ success: false, message: 'Horario no encontrado' })
+    }
+
+    await client.query('COMMIT')
+    res.json({
+      success: true,
+      message: 'Horario académico eliminado correctamente',
+      data: { message: 'Horario académico eliminado correctamente' }
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Error al eliminar horario' })
+  } finally {
+    client.release()
+  }
+}
+
 export const getAllFormacionesController = async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query(`
@@ -824,6 +995,46 @@ export const updateFormacionController = async (req: Request, res: Response) => 
       return res.status(400).json({ success: false, message: 'Campos requeridos id_programa e id_horario faltantes' })
     }
 
+    // Validar si el nuevo horario genera conflicto con otra formación para algún aprendiz de esta ficha
+    const conflictQuery = `
+      SELECT 
+        a.nombre, 
+        a.apellido, 
+        a.documento,
+        f2.id_formacion AS ficha_conflicto,
+        p2.nombre_programa AS programa_conflicto,
+        TO_CHAR(h2.hora_inicio, 'HH24:MI') AS inicio_conflicto,
+        TO_CHAR(h2.hora_fin, 'HH24:MI') AS fin_conflicto,
+        hd2.dia_semana AS dia_conflicto
+      FROM aprendiz_formacion af1
+      JOIN aprendiz_formacion af2 ON af2.id_aprendiz = af1.id_aprendiz AND af2.id_formacion != $1 AND af2.estado = 'activo'
+      JOIN formaciones f2 ON f2.id_formacion = af2.id_formacion AND f2.estado = 'activa'
+      JOIN horario h2 ON h2.id_horario = f2.id_horario
+      JOIN horario_dia hd2 ON hd2.id_horario = h2.id_horario
+      JOIN programa p2 ON p2.id_programa = f2.id_programa
+      JOIN horario hNew ON hNew.id_horario = $2
+      JOIN horario_dia hdNew ON hdNew.id_horario = hNew.id_horario
+      JOIN aprendiz a ON a.id_aprendiz = af1.id_aprendiz
+      WHERE af1.id_formacion = $1 
+        AND af1.estado = 'activo'
+        AND hd2.dia_semana = hdNew.dia_semana
+        AND (
+          (hNew.hora_inicio < h2.hora_fin) AND (hNew.hora_fin > h2.hora_inicio)
+        )
+      LIMIT 5
+    `
+
+    const { rows: conflicts } = await pool.query(conflictQuery, [old_id_formacion, id_horario])
+
+    if (conflicts.length > 0) {
+      const first = conflicts[0]
+      return res.status(409).json({
+        success: false,
+        message: `Conflicto de cruce de horario: El aprendiz ${first.nombre} ${first.apellido} (Doc: ${first.documento}) matriculado en esta ficha se cruzaría los ${first.dia_conflicto} con la Ficha #${first.ficha_conflicto} (${first.programa_conflicto} de ${first.inicio_conflicto} a ${first.fin_conflicto}). Modifique primero la matrícula o el horario.`,
+        conflicts
+      })
+    }
+
     const { rows } = await pool.query(
       `UPDATE formaciones
        SET id_formacion = COALESCE($1, id_formacion),
@@ -847,7 +1058,7 @@ export const updateFormacionController = async (req: Request, res: Response) => 
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Formación no encontrada' })
     }
-    res.json({ success: true, data: rows[0] })
+    res.json({ success: true, message: 'Ficha de formación actualizada correctamente', data: rows[0] })
   } catch (error) {
     console.error(error)
     res.status(500).json({ success: false, message: 'Error al actualizar formación' })

@@ -147,6 +147,7 @@
                 <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Rango de Horas</th>
                 <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Jornada</th>
                 <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Días Asignados</th>
+                <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -159,9 +160,25 @@
                 </td>
                 <td class="p-4 text-xs text-slate-600 font-bold uppercase tracking-wider">{{ h.jornada }}</td>
                 <td class="p-4 text-xs text-slate-700 font-medium">{{ h.dias_semana }}</td>
+                <td class="p-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button 
+                      @click="openHorarioModal(h)"
+                      class="px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 text-[11px] font-bold text-slate-600 transition cursor-pointer"
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      @click="handleDeleteHorario(h.id_horario)"
+                      class="px-2.5 py-1 rounded-lg border border-red-100 hover:border-red-500 hover:bg-red-50 hover:text-red-700 text-[11px] font-bold text-red-500 transition cursor-pointer"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="horarios.length === 0">
-                <td colspan="4" class="p-8 text-center text-slate-400 text-sm">No hay horarios registrados.</td>
+                <td colspan="5" class="p-8 text-center text-slate-400 text-sm">No hay horarios registrados.</td>
               </tr>
             </tbody>
           </table>
@@ -192,6 +209,7 @@
                 <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Versión</th>
                 <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Nivel</th>
                 <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Estado</th>
+                <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -208,9 +226,25 @@
                     {{ p.estado }}
                   </span>
                 </td>
+                <td class="p-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button 
+                      @click="openProgramaModal(p)"
+                      class="px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 text-[11px] font-bold text-slate-600 transition cursor-pointer"
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      @click="handleDeletePrograma(p.id_programa)"
+                      class="px-2.5 py-1 rounded-lg border border-red-100 hover:border-red-500 hover:bg-red-50 hover:text-red-700 text-[11px] font-bold text-red-500 transition cursor-pointer"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="programas.length === 0">
-                <td colspan="5" class="p-8 text-center text-slate-400 text-sm">No hay programas académicos registrados.</td>
+                <td colspan="6" class="p-8 text-center text-slate-400 text-sm">No hay programas académicos registrados.</td>
               </tr>
             </tbody>
           </table>
@@ -306,10 +340,10 @@
       </form>
     </BaseModal>
 
-    <!-- MODAL 2: HORARIO (CREAR) -->
+    <!-- MODAL 2: HORARIO (CREAR O EDITAR) -->
     <BaseModal
       ref="horarioModalRef"
-      title="Crear Nuevo Horario"
+      :title="editingHorarioId ? 'Editar Horario Académico' : 'Crear Nuevo Horario'"
       body-class="relative max-h-[70vh] overflow-y-auto space-y-4 px-6 py-6"
     >
       <form @submit.prevent="submitHorario" class="space-y-4">
@@ -335,8 +369,6 @@
             />
           </div>
         </div>
-
-
 
         <!-- Días de la semana -->
         <div class="space-y-2">
@@ -370,16 +402,16 @@
             type="submit"
             class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition cursor-pointer"
           >
-            Crear Horario
+            {{ editingHorarioId ? 'Guardar Cambios' : 'Crear Horario' }}
           </button>
         </div>
       </form>
     </BaseModal>
 
-    <!-- MODAL 3: PROGRAMA (CREAR) -->
+    <!-- MODAL 3: PROGRAMA (CREAR O EDITAR) -->
     <BaseModal
       ref="programaModalRef"
-      title="Crear Programa Curricular"
+      :title="editingProgramaId ? 'Editar Programa Curricular' : 'Crear Programa Curricular'"
       body-class="relative max-h-[70vh] overflow-y-auto space-y-4 px-6 py-6"
     >
       <form @submit.prevent="submitPrograma" class="space-y-4">
@@ -433,7 +465,7 @@
             type="submit"
             class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition cursor-pointer"
           >
-            Crear Programa
+            {{ editingProgramaId ? 'Guardar Cambios' : 'Crear Programa' }}
           </button>
         </div>
       </form>
@@ -542,8 +574,12 @@ const { addNotification } = useNotifications()
 import {
   getProgramas,
   createPrograma,
+  updatePrograma,
+  deletePrograma,
   getHorarios,
   createHorario,
+  updateHorario,
+  deleteHorario,
   getAllFormaciones,
   createFormacion,
   updateFormacion,
@@ -564,6 +600,8 @@ const activeTab = ref<'formaciones' | 'horarios' | 'programas'>('formaciones')
 const formaciones = ref<FormacionCompleta[]>([])
 const horarios = ref<Horario[]>([])
 const programas = ref<Programa[]>([])
+const editingHorarioId = ref<number | null>(null)
+const editingProgramaId = ref<number | null>(null)
 
 // Modals refs
 const fichaModalRef = ref<InstanceType<typeof BaseModal> | null>(null)
@@ -810,11 +848,22 @@ const handleDesvincularTodos = async () => {
 }
 
 // Horario Modals & Actions
-const openHorarioModal = () => {
-  horarioForm.value = {
-    hora_inicio: '',
-    hora_fin: '',
-    dias_semana: []
+const openHorarioModal = (horario?: Horario) => {
+  if (horario) {
+    editingHorarioId.value = horario.id_horario
+    const dias = horario.dias_semana ? horario.dias_semana.split(',').map(d => d.trim()).filter(Boolean) : []
+    horarioForm.value = {
+      hora_inicio: horario.hora_inicio || '',
+      hora_fin: horario.hora_fin || '',
+      dias_semana: dias
+    }
+  } else {
+    editingHorarioId.value = null
+    horarioForm.value = {
+      hora_inicio: '',
+      hora_fin: '',
+      dias_semana: []
+    }
   }
   horarioModalRef.value?.openModal()
 }
@@ -827,27 +876,64 @@ const submitHorario = async () => {
     return
   }
   try {
-    await createHorario(auth.token, {
-      hora_inicio,
-      hora_fin,
-      dias_semana
-    })
-    addNotification('Horario académico creado con éxito', 'success')
+    if (editingHorarioId.value) {
+      await updateHorario(auth.token, editingHorarioId.value, {
+        hora_inicio,
+        hora_fin,
+        dias_semana
+      })
+      addNotification('Horario académico actualizado con éxito', 'success')
+    } else {
+      await createHorario(auth.token, {
+        hora_inicio,
+        hora_fin,
+        dias_semana
+      })
+      addNotification('Horario académico creado con éxito', 'success')
+    }
     horarioModalRef.value?.closeModal()
     await loadAllData()
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error)
-    addNotification('Error al crear el horario', 'error')
+    const msg = error instanceof Error ? error.message : 'Error al guardar el horario'
+    addNotification(msg, 'error')
+  }
+}
+
+const handleDeleteHorario = async (idHorario: number) => {
+  if (!auth.token) return
+  if (!confirm(`¿Está seguro de eliminar el horario #${idHorario}?`)) {
+    return
+  }
+  try {
+    const res = await deleteHorario(auth.token, idHorario)
+    addNotification(res?.message || 'Horario eliminado con éxito', 'success')
+    await loadAllData()
+  } catch (error: unknown) {
+    console.error(error)
+    const msg = error instanceof Error ? error.message : 'Error al eliminar el horario'
+    addNotification(msg, 'error')
   }
 }
 
 // Programa Modals & Actions
-const openProgramaModal = () => {
-  programaForm.value = {
-    nombre_programa: '',
-    version: '',
-    nivel: '',
-    estado: 'activo'
+const openProgramaModal = (programa?: Programa) => {
+  if (programa) {
+    editingProgramaId.value = programa.id_programa
+    programaForm.value = {
+      nombre_programa: programa.nombre_programa,
+      version: programa.version,
+      nivel: programa.nivel,
+      estado: programa.estado
+    }
+  } else {
+    editingProgramaId.value = null
+    programaForm.value = {
+      nombre_programa: '',
+      version: '',
+      nivel: '',
+      estado: 'activo'
+    }
   }
   programaModalRef.value?.openModal()
 }
@@ -860,18 +946,45 @@ const submitPrograma = async () => {
     return
   }
   try {
-    await createPrograma(auth.token, {
-      nombre_programa,
-      version,
-      nivel,
-      estado
-    })
-    addNotification('Programa curricular creado con éxito', 'success')
+    if (editingProgramaId.value) {
+      await updatePrograma(auth.token, editingProgramaId.value, {
+        nombre_programa,
+        version,
+        nivel,
+        estado
+      })
+      addNotification('Programa curricular actualizado con éxito', 'success')
+    } else {
+      await createPrograma(auth.token, {
+        nombre_programa,
+        version,
+        nivel,
+        estado
+      })
+      addNotification('Programa curricular creado con éxito', 'success')
+    }
     programaModalRef.value?.closeModal()
     await loadAllData()
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error)
-    addNotification('Error al crear el programa', 'error')
+    const msg = error instanceof Error ? error.message : 'Error al guardar el programa'
+    addNotification(msg, 'error')
+  }
+}
+
+const handleDeletePrograma = async (idPrograma: number) => {
+  if (!auth.token) return
+  if (!confirm(`¿Está seguro de eliminar el programa curricular #${idPrograma}?`)) {
+    return
+  }
+  try {
+    const res = await deletePrograma(auth.token, idPrograma)
+    addNotification(res?.message || 'Programa curricular eliminado con éxito', 'success')
+    await loadAllData()
+  } catch (error: unknown) {
+    console.error(error)
+    const msg = error instanceof Error ? error.message : 'Error al eliminar el programa'
+    addNotification(msg, 'error')
   }
 }
 

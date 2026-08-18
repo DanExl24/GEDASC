@@ -51,6 +51,17 @@ export const updatePrograma = (
   return fetchWithAuth<Programa>(`/api/admin/programas/${id_programa}`, token, 'PUT', data)
 }
 
+export const deletePrograma = (
+  token: string,
+  id_programa: number
+): Promise<{ success: boolean; message: string }> => {
+  return fetchWithAuth<{ success: boolean; message: string }>(
+    `/api/admin/programas/${id_programa}`,
+    token,
+    'DELETE'
+  )
+}
+
 export const getHorarios = (token: string): Promise<Horario[]> => {
   return fetchWithAuth<Horario[]>('/api/admin/horarios', token)
 }
@@ -60,6 +71,25 @@ export const createHorario = (
   data: { hora_inicio: string; hora_fin: string; jornada?: string; dias_semana: string[] }
 ): Promise<Horario> => {
   return fetchWithAuth<Horario>('/api/admin/horarios', token, 'POST', data)
+}
+
+export const updateHorario = (
+  token: string,
+  id_horario: number,
+  data: { hora_inicio: string; hora_fin: string; jornada?: string; dias_semana: string[] }
+): Promise<Horario> => {
+  return fetchWithAuth<Horario>(`/api/admin/horarios/${id_horario}`, token, 'PUT', data)
+}
+
+export const deleteHorario = (
+  token: string,
+  id_horario: number
+): Promise<{ success: boolean; message: string }> => {
+  return fetchWithAuth<{ success: boolean; message: string }>(
+    `/api/admin/horarios/${id_horario}`,
+    token,
+    'DELETE'
+  )
 }
 
 export const getAllFormaciones = (token: string): Promise<FormacionCompleta[]> => {
