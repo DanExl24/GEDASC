@@ -15,7 +15,8 @@ export const createExitSchema = z.object({
     .trim()
     .min(5, 'El documento debe tener al menos 5 caracteres')
     .max(20, 'El documento no puede exceder 20 caracteres')
-    .regex(/^[A-Za-z0-9-]+$/, 'El documento solo puede contener números, letras y guiones'),
+    .regex(/^[A-Za-z0-9-]+$/, 'El documento solo puede contener números, letras y guiones')
+    .optional(),
   motivo_salida_anticipada: z
     .string()
     .trim()

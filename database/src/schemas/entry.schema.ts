@@ -15,8 +15,10 @@ export const createEntrySchema = z.object({
     .trim()
     .min(5, 'El documento debe tener al menos 5 caracteres')
     .max(20, 'El documento no puede exceder 20 caracteres')
-    .regex(/^[A-Za-z0-9-]+$/, 'El documento solo puede contener números, letras y guiones'),
-  tipoSesion: z.enum(['formacion', 'monitoria']).default('formacion'),
+    .regex(/^[A-Za-z0-9-]+$/, 'El documento solo puede contener números, letras y guiones')
+    .optional(),
+  tipo_sesion: z.enum(['formacion', 'monitoria']).default('formacion').optional(),
+  tipoSesion: z.enum(['formacion', 'monitoria']).optional(),
   motivo_reingreso: z
     .string()
     .trim()

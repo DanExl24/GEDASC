@@ -365,21 +365,37 @@ export const EntryRecord = async (request: Request, response: Response) => {
  *         description: Datos del aprendiz para ingreso manual
  */
 export const EntryManual = async (request: Request, response : Response) =>{
-  const {documento} = request.params
-    // Obtener el aprendiz por documento
+  try {
+    const { documento } = request.params
+    // Obtener el aprendiz por documento y consolidar sus programas de formación
     const aprendizRecord = await pool.query(
-      `SELECT a.nombre, a.apellido, p.nombre_programa AS formacion 
+      `SELECT 
+         a.id_aprendiz,
+         a.nombre, 
+         a.apellido, 
+         COALESCE(
+           STRING_AGG(DISTINCT p.nombre_programa, ' / '),
+           'Sin formación asignada'
+         ) AS formacion 
        FROM aprendiz AS a  
        LEFT JOIN aprendiz_formacion AS af ON af.id_aprendiz = a.id_aprendiz AND af.estado = 'activo'
        LEFT JOIN formaciones AS f ON f.id_formacion = af.id_formacion 
        LEFT JOIN programa AS p ON p.id_programa = f.id_programa
-       WHERE a.documento = $1`, [documento]);
+       WHERE a.documento = $1
+       GROUP BY a.id_aprendiz, a.nombre, a.apellido`,
+      [documento]
+    );
+
     // verificar si el aprendiz si esta en la base de datos
-    if (aprendizRecord.rowCount == 0) {
+    if (aprendizRecord.rowCount === 0) {
       return response.status(404).json({ message: "Aprendiz no encontrado" });
     }
     const result = aprendizRecord.rows[0]
-    response.status(200).json({result})
+    response.status(200).json({ result })
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ message: "Error al consultar aprendiz" });
+  }
 }
 
 
