@@ -27,6 +27,8 @@ documentacion/
 │   └── arquitectura_patrones_datos.md
 ├── dic/                              # Diccionario de Datos Oficial de la Base de Datos
 │   └── diccionario_datos.md
+├── manual_tecnico/                   # Manual Técnico Oficial para Desarrolladores
+│   └── manual_tecnico_desarrollador.md
 ├── tecnico_integral/                 # Documento Técnico Integral y Arquitectura Global
 │   └── documento_tecnico_integral.md
 ├── tecnico_maestro/                  # Especificación Técnica Profunda de los 7 Módulos
@@ -52,6 +54,7 @@ documentacion/
 | Documento Maestro | Carpeta / Archivo | Propósito y Contenido |
 | :--- | :--- | :--- |
 | 🧠 **Base de Conocimiento** | [`base_conocimiento/conocimiento_sistema.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/base_conocimiento/conocimiento_sistema.md) | Visión del negocio, dominio SENA/CTA, 9 Decisiones Arquitectónicas (ADRs), stack tecnológico y guía de onboarding para nuevos desarrolladores. |
+| 🛠️ **Manual Técnico del Desarrollador** | [`manual_tecnico/manual_tecnico_desarrollador.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/manual_tecnico/manual_tecnico_desarrollador.md) | Guía técnica completa para ingeniería de software: arquitectura, stack, estructura de código, APIs, configuración, despliegue, seguridad y troubleshooting. |
 | 📐 **Arquitectura y Patrones** | [`arquitectura_patrones/arquitectura_patrones_datos.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/arquitectura_patrones/arquitectura_patrones_datos.md) | Arquitectura técnica, patrones de ingeniería (Zod, Sockets, pg.Pool), jerarquía RBAC, modelo relacional ERD y flujos técnicos críticos. |
 | 🗄️ **Diccionario de Datos** | [`dic/diccionario_datos.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/dic/diccionario_datos.md) | Catálogo oficial de las 16 tablas de PostgreSQL, campos, tipos, restricciones PK/FK/UK, índices B-Tree, enumeraciones y reglas en BD. |
 | 🏛️ **Documento Técnico Integral** | [`tecnico_integral/documento_tecnico_integral.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/tecnico_integral/documento_tecnico_integral.md) | Arquitectura global, capas, diagramas Mermaid de arquitectura, modelo ERD completo, seguridad RBAC/JWT e infraestructura de despliegue. |
