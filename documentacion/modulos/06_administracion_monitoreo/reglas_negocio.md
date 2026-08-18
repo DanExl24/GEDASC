@@ -70,3 +70,32 @@
 - **Endpoints relacionados**: `POST /api/admin/celadores`, `PUT /api/admin/celadores/:id`, `PATCH /api/admin/celadores/:id/toggle`.
 - **Historias de usuario relacionadas**: `HU-ADM-007`.
 
+---
+
+## 6. Gestión del Directorio Maestro de Aprendices
+
+### RN-ADM-007: Unicidad e Integridad de Documento de Aprendiz
+- **Descripción**: El número de documento del aprendiz es el identificador principal y único en la tabla `aprendiz`. El sistema no permite registrar ni actualizar aprendices cuyo documento colisione con otro ya existente.
+- **Motivo**: Garantizar la consistencia de los accesos, asignación de computadores y vehículos, y reportes de auditoría en portería.
+- **Módulos afectados**: `06_administracion_monitoreo`, `02_control_ingreso`, `03_control_salida`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`database/src/schemas/admin.schema.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/schemas/admin.schema.ts).
+- **Endpoints relacionados**: `POST /api/admin/aprendices`, `PUT /api/admin/aprendices/:id_aprendiz`.
+- **Historias de usuario relacionadas**: `HU-ADM-008`.
+
+### RN-ADM-008: Baja Lógica y Protección de Integridad Histórica
+- **Descripción**: Si un administrador solicita la eliminación de un aprendiz que ya cuenta con registros históricos de acceso en `detalles_ingreso`, el sistema rechaza la eliminación física y ejecuta automáticamente una baja lógica (`estado = false`), notificando al usuario que el historial ha sido preservado. Si el aprendiz no tiene movimientos históricos registrados, se limpian sus relaciones no transaccionales (`aprendiz_formacion`, `aprendiz_computador`, `aprendiz_vehiculo`) y se elimina de la base de datos.
+- **Motivo**: Preservar la inmutabilidad de los registros de seguridad y auditoría institucional del CTA.
+- **Módulos afectados**: `06_administracion_monitoreo`, `05_historial_reportes`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts).
+- **Endpoints relacionados**: `DELETE /api/admin/aprendices/:id_aprendiz`.
+- **Historias de usuario relacionadas**: `HU-ADM-008`.
+
+### RN-ADM-009: Ingesta y Validación de Registros Masivos de Aprendices
+- **Descripción**: En la importación masiva desde Excel (`.xlsx`, `.xls`) o JSON, el sistema normaliza encabezados sin distinguir mayúsculas, tildes o variaciones comunes (`documento`, `cedula`, `identificacion`, `nombre`, `apellido`, `es_monitor`). Los registros con documento ya existente se contabilizan como *Ya Registrados* sin interrumpir el proceso de los aprendices nuevos restantes. El backend retorna un informe métrico estructurado con el desglose exacto de novedades.
+- **Motivo**: Permitir la carga ágil y tolerante a fallos de cohortes completas de aprendices.
+- **Módulos afectados**: `06_administracion_monitoreo`, `07_gestion_academica`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`src/components/Modals/ModalImportAprendicesGeneral.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesGeneral.vue).
+- **Endpoints relacionados**: `POST /api/admin/aprendices/masivo`.
+- **Historias de usuario relacionadas**: `HU-ADM-009`.
+
+

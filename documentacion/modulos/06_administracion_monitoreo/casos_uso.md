@@ -52,3 +52,41 @@
 
 - **Postcondiciones**:
   - El administrador obtiene un panorama claro de las alertas críticas para la toma de decisiones.
+
+---
+
+## CU-ADM-04: Gestión Individual y Masiva del Directorio de Aprendices
+
+- **Actor Principal**: Administrador del sistema
+- **Precondiciones**:
+  - El usuario está autenticado con rol `ADMIN`.
+- **Disparador**: El administrador ingresa a [`AdminAprendicesView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminAprendicesView.vue).
+
+### Flujo Principal A (Registro Individual):
+1. El administrador presiona el botón **`+ Registrar Aprendiz`**.
+2. Se despliega el modal [`ModalAprendizForm.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalAprendizForm.vue).
+3. El administrador ingresa Documento de identidad, Nombre(s) y Apellido(s).
+4. Opcionalmente, selecciona la cohorte/ficha de formación inicial a la que pertenece el aprendiz.
+5. Presiona **`Registrar Aprendiz`**.
+6. El frontend envía `POST /api/admin/aprendices`.
+7. El backend inserta en `aprendiz` (y opcionalmente en `aprendiz_formacion`), confirmando con HTTP 201.
+8. La tabla de aprendices se actualiza reactivamente.
+
+### Flujo Principal B (Importación Masiva desde XLSX o JSON):
+1. El administrador presiona **`📥 Importar Masivo (.xlsx / .json)`**.
+2. Se despliega el modal [`ModalImportAprendicesGeneral.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesGeneral.vue).
+3. (Opcional) El administrador descarga la plantilla de muestra `plantilla_aprendices_general.xlsx` o `.json`.
+4. El administrador arrastra o selecciona su archivo estructurado.
+5. El sistema previsualiza los primeros registros leídos y el total detectado.
+6. El administrador presiona **`Registrar N Aprendices`**.
+7. El backend procesa el lote (`POST /api/admin/aprendices/masivo`), discriminando nuevos vs ya existentes.
+8. El modal muestra el panel de resultados (*Total*, *Creados*, *Ya Registrados*, *Errores*) con tabla de novedades filtrable.
+9. El administrador presiona **`Finalizar y Volver`** y la tabla se actualiza.
+
+### Flujo Alternativo (Eliminación con Protección de Integridad):
+1. En la fila de un aprendiz, el administrador presiona el botón 🗑️ (Eliminar).
+2. El sistema solicita confirmación en diálogo de seguridad.
+3. El backend verifica si el aprendiz tiene historial en `detalles_ingreso`.
+4. Si tiene historial, realiza una baja lógica (`estado = false`) protegiendo los registros históricos y notifica al administrador (`RN-ADM-008`).
+5. Si no tiene historial, elimina las asociaciones accesorias y borra el registro de la base de datos.
+

@@ -194,3 +194,83 @@ En [`AdminCeladoresView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GE
 - **Componentes frontend relacionados**: `src/views/AdminCeladoresView.vue`, `src/components/Modals/ModalAddCelador.vue`, `src/components/Modals/ModalEditCelador.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`
 
+---
+
+# HU-ADM-008
+
+## Historia
+**Como** administrador del sistema  
+**Quiero** registrar y editar aprendices de forma individual con validación de documentos y asignación formativa opcional  
+**Para** mantener actualizada la base de datos de aprendices y permitir su acceso al CTA sin depender de cargas previas en base de datos.
+
+## Descripción
+En [`AdminAprendicesView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminAprendicesView.vue), el administrador puede presionar el botón **`+ Registrar Aprendiz`** para abrir el modal [`ModalAprendizForm.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalAprendizForm.vue), ingresar Documento, Nombres, Apellidos y opcionalmente vincular al aprendiz a una cohorte/ficha académica inicial. De igual forma, en cada fila de la tabla puede editar la información básica del aprendiz o alternar su estado activo/inactivo.
+
+## Criterios de Aceptación
+- Al registrar, se valida que el documento no exista previamente en la tabla `aprendiz` (código HTTP 409 si colisiona).
+- Si se selecciona una ficha formativa inicial, se crea la vinculación en `aprendiz_formacion` con estado `activo`.
+- Al editar un aprendiz (`PUT /api/admin/aprendices/:id_aprendiz`), se validan nombres, apellidos y unicidad de documento frente a otros registros.
+- Al conmutar el estado (`PATCH /api/admin/aprendices/:id_aprendiz/toggle-status`), el aprendiz cambia de `Activo` a `Inactivo` inmediatamente en la interfaz.
+- Si se intenta eliminar un aprendiz con historial de ingresos en el CTA, el sistema lo desactiva automáticamente para proteger la trazabilidad de auditoría histórica (`RN-ADM-012`).
+
+## Metadatos
+- **Prioridad**: Alta
+- **Roles involucrados**: `ADMIN`
+- **Reglas de negocio relacionadas**: `RN-ADM-011`, `RN-ADM-012`
+- **Endpoints relacionados**: `POST /api/admin/aprendices`, `PUT /api/admin/aprendices/:id_aprendiz`, `PATCH /api/admin/aprendices/:id_aprendiz/toggle-status`, `DELETE /api/admin/aprendices/:id_aprendiz`
+- **Componentes frontend relacionados**: `src/components/Modals/ModalAprendizForm.vue`, `src/views/AdminAprendicesView.vue`
+- **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`, `src/Services/adminAprendices.ts`
+
+---
+
+# HU-ADM-009
+
+## Historia
+**Como** administrador del sistema  
+**Quiero** importar y registrar aprendices de manera masiva a partir de archivos Microsoft Excel (`.xlsx`, `.xls`) o JSON  
+**Para** cargar promociones y cohortes completas de aprendices al sistema con métricas detalladas de éxito y novedades.
+
+## Descripción
+En [`AdminAprendicesView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminAprendicesView.vue), el administrador dispone del modal [`ModalImportAprendicesGeneral.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/Modals/ModalImportAprendicesGeneral.vue). Permite arrastrar planillas XLSX/JSON, descargar plantillas de muestra con el formato esperado, previsualizar los registros leídos y procesar el lote completo contra el backend (`POST /api/admin/aprendices/masivo`).
+
+## Criterios de Aceptación
+- Admite archivos `.xlsx`, `.xls` y `.json`.
+- Dispone de botones para descargar las plantillas oficiales `plantilla_aprendices_general.xlsx` y `plantilla_aprendices_general.json`.
+- Normaliza encabezados flexibles (`documento`, `identificación`, `cédula`, `nombre`, `nombres`, `apellido`, `apellidos`, `es_monitor`).
+- Presenta previsualización de las primeras 5 filas y total de registros válidos detectados.
+- Retorna resumen cuantitativo (*Total Leídos*, *Nuevos Creados*, *Ya Registrados*, *Errores*) con tabla interactiva de novedades filtrable.
+
+## Metadatos
+- **Prioridad**: Alta
+- **Roles involucrados**: `ADMIN`
+- **Reglas de negocio relacionadas**: `RN-ADM-013`
+- **Endpoints relacionados**: `POST /api/admin/aprendices/masivo`
+- **Componentes frontend relacionados**: `src/components/Modals/ModalImportAprendicesGeneral.vue`, `src/views/AdminAprendicesView.vue`
+- **Controllers/Services relacionados**: `database/src/controllers/admin.controller.ts`, `src/Services/adminAprendices.ts`
+
+---
+
+# HU-ADM-010
+
+## Historia
+**Como** administrador del sistema  
+**Quiero** segmentar el directorio de aprendices mediante filtros interactivos y chips tácticos  
+**Para** supervisar rápidamente estados, roles de monitoría, fichas académicas, inasistencia prolongada y casos de doble formación.
+
+## Descripción
+La barra superior de [`AdminAprendicesView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminAprendicesView.vue) integra un buscador global, un selector de fichas y un conjunto de chips interactivos de filtrado reactivo (*Estado*, *Rol*, *Actividad*, *Doble Formación* y botón *Limpiar Filtros* con contador dinámico).
+
+## Criterios de Aceptación
+- Búsqueda en tiempo real por nombre, apellido, documento, programa o ficha.
+- Selector de fichas con opciones para cada formación activa y opción de *Aprendices sin ficha asignada*.
+- Filtros rápidos por estado (`Todos`, `Activos`, `Inactivos`), rol (`Roles: Todos`, `★ Monitores`) y actividad (`Actividad: Toda`, `Ausencia ≥ 7d`, `Sin asistencia`, `Asistieron hoy`).
+- Chip toggle para identificar aprendices con `Doble Formación (≥2)`.
+- Botón interactivo `↺ Limpiar Filtros` visible cuando al menos un filtro está activo.
+
+## Metadatos
+- **Prioridad**: Media
+- **Roles involucrados**: `ADMIN`
+- **Reglas de negocio relacionadas**: `RN-ADM-001`, `RN-ADM-005`
+- **Componentes frontend relacionados**: `src/views/AdminAprendicesView.vue`
+
+
