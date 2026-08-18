@@ -23,6 +23,8 @@ documentacion/
 ├── DOCUMENTACION_GENERAL.md          # Portal e Índice Maestro del Sistema
 ├── base_conocimiento/                # Base de Conocimiento, Dominio y ADRs
 │   └── conocimiento_sistema.md
+├── arquitectura_patrones/            # Arquitectura, Patrones de Ingeniería y Modelo de Datos
+│   └── arquitectura_patrones_datos.md
 ├── tecnico_integral/                 # Documento Técnico Integral y Arquitectura Global
 │   └── documento_tecnico_integral.md
 ├── tecnico_maestro/                  # Especificación Técnica Profunda de los 7 Módulos
@@ -48,6 +50,7 @@ documentacion/
 | Documento Maestro | Carpeta / Archivo | Propósito y Contenido |
 | :--- | :--- | :--- |
 | 🧠 **Base de Conocimiento** | [`base_conocimiento/conocimiento_sistema.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/base_conocimiento/conocimiento_sistema.md) | Visión del negocio, dominio SENA/CTA, 9 Decisiones Arquitectónicas (ADRs), stack tecnológico y guía de onboarding para nuevos desarrolladores. |
+| 📐 **Arquitectura y Patrones** | [`arquitectura_patrones/arquitectura_patrones_datos.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/arquitectura_patrones/arquitectura_patrones_datos.md) | Arquitectura técnica, patrones de ingeniería (Zod, Sockets, pg.Pool), jerarquía RBAC, modelo relacional ERD y flujos técnicos críticos. |
 | 🏛️ **Documento Técnico Integral** | [`tecnico_integral/documento_tecnico_integral.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/tecnico_integral/documento_tecnico_integral.md) | Arquitectura global, capas, diagramas Mermaid de arquitectura, modelo ERD completo, seguridad RBAC/JWT e infraestructura de despliegue. |
 | ⚙️ **Documento Técnico Maestro** | [`tecnico_maestro/documento_tecnico_maestro.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/tecnico_maestro/documento_tecnico_maestro.md) | Detalle técnico profundo de los 7 módulos: controladores, esquemas Zod, endpoints, payloads JSON, queries SQL parametrizadas y WebSockets. |
 | 📋 **Documento Funcional Maestro** | [`funcional_maestro/documento_funcional_maestro.md`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/documentacion/funcional_maestro/documento_funcional_maestro.md) | Comportamiento del sistema, casos de uso (`CU`), historias de usuario (`HU`), diagramas de secuencia funcionales y matrices de trazabilidad. |
