@@ -475,6 +475,303 @@ export const getAllMachinesByAprendizController = async (req: Request, res: Resp
   }
 }
 
+export const createAprendizController = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    const { documento, nombre, apellido, es_monitor, id_formacion } = req.body
+
+    const existing = await client.query('SELECT id_aprendiz FROM aprendiz WHERE documento = $1', [documento])
+    if (existing.rowCount && existing.rowCount > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `El documento ${documento} ya se encuentra registrado en el sistema`
+      })
+    }
+
+    await client.query('BEGIN')
+
+    const { rows } = await client.query(
+      `INSERT INTO aprendiz (documento, nombre, apellido, es_monitor, estado, fecha_registro)
+       VALUES ($1, $2, $3, $4, true, NOW())
+       RETURNING id_aprendiz, documento, nombre, apellido, es_monitor, estado, fecha_registro`,
+      [documento, nombre, apellido, Boolean(es_monitor)]
+    )
+
+    const nuevoAprendiz = rows[0]
+
+    if (id_formacion) {
+      const formacionCheck = await client.query('SELECT id_formacion FROM formaciones WHERE id_formacion = $1', [id_formacion])
+      if (formacionCheck.rowCount && formacionCheck.rowCount > 0) {
+        await client.query(
+          `INSERT INTO aprendiz_formacion (id_aprendiz, id_formacion, estado, fecha_inicio)
+           VALUES ($1, $2, 'activo', CURRENT_DATE)`,
+          [nuevoAprendiz.id_aprendiz, id_formacion]
+        )
+      }
+    }
+
+    await client.query('COMMIT')
+
+    return res.status(201).json({
+      success: true,
+      message: 'Aprendiz registrado exitosamente',
+      data: nuevoAprendiz
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error('Error en createAprendizController:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno al registrar el aprendiz'
+    })
+  } finally {
+    client.release()
+  }
+}
+
+export const bulkCreateAprendicesController = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    const { aprendices } = req.body
+
+    if (!Array.isArray(aprendices) || aprendices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Debe enviar una lista de aprendices válida'
+      })
+    }
+
+    const detalles: Array<{
+      documento: string
+      nombre?: string
+      apellido?: string
+      estado: 'creado' | 'ya_registrado' | 'error'
+      motivo?: string
+    }> = []
+
+    let creados = 0
+    let yaRegistrados = 0
+    let errores = 0
+
+    for (const item of aprendices) {
+      const doc = String(item.documento || '').trim()
+      const nom = String(item.nombre || '').trim()
+      const ape = String(item.apellido || '').trim()
+      const esMon = Boolean(item.es_monitor)
+
+      if (!doc || !nom || !ape) {
+        errores++
+        detalles.push({
+          documento: doc || 'DESCONOCIDO',
+          nombre: nom,
+          apellido: ape,
+          estado: 'error',
+          motivo: 'Faltan campos obligatorios (documento, nombre o apellido)'
+        })
+        continue
+      }
+
+      try {
+        const check = await client.query('SELECT id_aprendiz FROM aprendiz WHERE documento = $1', [doc])
+        if (check.rowCount && check.rowCount > 0) {
+          yaRegistrados++
+          detalles.push({
+            documento: doc,
+            nombre: nom,
+            apellido: ape,
+            estado: 'ya_registrado',
+            motivo: 'El aprendiz ya existe en el sistema'
+          })
+          continue
+        }
+
+        await client.query(
+          `INSERT INTO aprendiz (documento, nombre, apellido, es_monitor, estado, fecha_registro)
+           VALUES ($1, $2, $3, $4, true, NOW())`,
+          [doc, nom, ape, esMon]
+        )
+
+        creados++
+        detalles.push({
+          documento: doc,
+          nombre: nom,
+          apellido: ape,
+          estado: 'creado',
+          motivo: 'Registrado satisfactoriamente'
+        })
+      } catch (err: any) {
+        errores++
+        detalles.push({
+          documento: doc,
+          nombre: nom,
+          apellido: ape,
+          estado: 'error',
+          motivo: err.message || 'Error al insertar en la base de datos'
+        })
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Proceso masivo finalizado: ${creados} creados, ${yaRegistrados} ya registrados, ${errores} con error`,
+      data: {
+        summary: {
+          total: aprendices.length,
+          creados,
+          yaRegistrados,
+          errores
+        },
+        detalles
+      }
+    })
+  } catch (error) {
+    console.error('Error en bulkCreateAprendicesController:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno al procesar importación masiva de aprendices'
+    })
+  } finally {
+    client.release()
+  }
+}
+
+export const updateAprendizController = async (req: Request, res: Response) => {
+  try {
+    const { id_aprendiz } = req.params
+    const { documento, nombre, apellido, es_monitor, estado } = req.body
+
+    const check = await pool.query('SELECT id_aprendiz, documento FROM aprendiz WHERE id_aprendiz = $1', [id_aprendiz])
+    if (check.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Aprendiz no encontrado'
+      })
+    }
+
+    if (documento && documento !== check.rows[0].documento) {
+      const docCheck = await pool.query('SELECT id_aprendiz FROM aprendiz WHERE documento = $1 AND id_aprendiz != $2', [documento, id_aprendiz])
+      if (docCheck.rowCount && docCheck.rowCount > 0) {
+        return res.status(409).json({
+          success: false,
+          message: `El documento ${documento} ya pertenece a otro aprendiz`
+        })
+      }
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE aprendiz
+       SET documento = COALESCE($1, documento),
+           nombre = COALESCE($2, nombre),
+           apellido = COALESCE($3, apellido),
+           es_monitor = COALESCE($4, es_monitor),
+           estado = COALESCE($5, estado)
+       WHERE id_aprendiz = $6
+       RETURNING id_aprendiz, documento, nombre, apellido, es_monitor, estado`,
+      [documento, nombre, apellido, es_monitor, estado, id_aprendiz]
+    )
+
+    return res.json({
+      success: true,
+      message: 'Aprendiz actualizado con éxito',
+      data: rows[0]
+    })
+  } catch (error) {
+    console.error('Error en updateAprendizController:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Error al actualizar el aprendiz'
+    })
+  }
+}
+
+export const toggleAprendizStatusController = async (req: Request, res: Response) => {
+  try {
+    const { id_aprendiz } = req.params
+
+    const { rows } = await pool.query(
+      `UPDATE aprendiz
+       SET estado = NOT COALESCE(estado, true)
+       WHERE id_aprendiz = $1
+       RETURNING id_aprendiz, estado, nombre, apellido`,
+      [id_aprendiz]
+    )
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Aprendiz no encontrado'
+      })
+    }
+
+    const nuevoEstado = rows[0].estado ? 'activo' : 'inactivo'
+    return res.json({
+      success: true,
+      message: `El aprendiz ahora está ${nuevoEstado}`,
+      data: rows[0]
+    })
+  } catch (error) {
+    console.error('Error en toggleAprendizStatusController:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Error al cambiar estado del aprendiz'
+    })
+  }
+}
+
+export const deleteAprendizController = async (req: Request, res: Response) => {
+  const client = await pool.connect()
+  try {
+    const { id_aprendiz } = req.params
+
+    const check = await client.query('SELECT id_aprendiz, nombre, apellido FROM aprendiz WHERE id_aprendiz = $1', [id_aprendiz])
+    if (check.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Aprendiz no encontrado'
+      })
+    }
+
+    // Verificar si tiene historial en detalles_ingreso
+    const historyCheck = await client.query('SELECT COUNT(*) AS total FROM detalles_ingreso WHERE id_aprendiz = $1', [id_aprendiz])
+    const totalIngresos = parseInt(historyCheck.rows[0].total, 10)
+
+    if (totalIngresos > 0) {
+      // Tiene historial: Realizar soft-delete desactivando estado para no violar integridad histórica
+      await client.query('UPDATE aprendiz SET estado = false WHERE id_aprendiz = $1', [id_aprendiz])
+      return res.json({
+        success: true,
+        message: `El aprendiz tiene ${totalIngresos} registro(s) de acceso histórico(s) en el CTA. Se ha desactivado del sistema para preservar la integridad histórica.`,
+        data: { id_aprendiz, action: 'deactivated' }
+      })
+    }
+
+    await client.query('BEGIN')
+
+    // Limpiar relaciones no transaccionales
+    await client.query('DELETE FROM aprendiz_formacion WHERE id_aprendiz = $1', [id_aprendiz])
+    await client.query('DELETE FROM aprendiz_computador WHERE id_aprendiz = $1', [id_aprendiz])
+    await client.query('DELETE FROM aprendiz_vehiculo WHERE id_aprendiz = $1', [id_aprendiz])
+    await client.query('DELETE FROM aprendiz WHERE id_aprendiz = $1', [id_aprendiz])
+
+    await client.query('COMMIT')
+
+    return res.json({
+      success: true,
+      message: 'Aprendiz eliminado exitosamente del sistema',
+      data: { id_aprendiz, action: 'deleted' }
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error('Error en deleteAprendizController:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Error al eliminar el aprendiz'
+    })
+  } finally {
+    client.release()
+  }
+}
+
 export const toggleMonitorController = async (req: Request, res: Response) => {
   try {
     const { id_aprendiz } = req.params

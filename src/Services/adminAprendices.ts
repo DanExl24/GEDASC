@@ -169,3 +169,119 @@ export const desvincularFormacionAdmin = async (token: string, idAprendiz: strin
 
   return response.json()
 }
+
+export interface CreateAprendizPayload {
+  documento: string
+  nombre: string
+  apellido: string
+  es_monitor?: boolean
+  id_formacion?: number | null
+}
+
+export interface UpdateAprendizPayload {
+  documento?: string
+  nombre?: string
+  apellido?: string
+  es_monitor?: boolean
+  estado?: boolean
+}
+
+export interface BulkAprendizItem {
+  documento: string
+  nombre: string
+  apellido: string
+  es_monitor?: boolean
+}
+
+export interface BulkCreateAprendicesResponse {
+  summary: {
+    total: number
+    creados: number
+    yaRegistrados: number
+    errores: number
+  }
+  detalles: Array<{
+    documento: string
+    nombre?: string
+    apellido?: string
+    estado: 'creado' | 'ya_registrado' | 'error'
+    motivo?: string
+  }>
+}
+
+export const createAdminAprendiz = async (token: string, payload: CreateAprendizPayload) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices`, {
+    method: 'POST',
+    headers: {
+      ...buildHeaders(token),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || 'Error al registrar aprendiz')
+  }
+  return data
+}
+
+export const bulkCreateAdminAprendices = async (token: string, aprendices: BulkAprendizItem[]): Promise<BulkCreateAprendicesResponse> => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/masivo`, {
+    method: 'POST',
+    headers: {
+      ...buildHeaders(token),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ aprendices })
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || 'Error al procesar registro masivo de aprendices')
+  }
+  return data.data
+}
+
+export const updateAdminAprendiz = async (token: string, idAprendiz: string | number, payload: UpdateAprendizPayload) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/${idAprendiz}`, {
+    method: 'PUT',
+    headers: {
+      ...buildHeaders(token),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || 'Error al actualizar aprendiz')
+  }
+  return data
+}
+
+export const toggleAdminAprendizStatus = async (token: string, idAprendiz: string | number) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/${idAprendiz}/toggle-status`, {
+    method: 'PATCH',
+    headers: buildHeaders(token)
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || 'Error al cambiar estado del aprendiz')
+  }
+  return data
+}
+
+export const deleteAdminAprendiz = async (token: string, idAprendiz: string | number) => {
+  const response = await fetch(`${API_URL}/api/admin/aprendices/${idAprendiz}`, {
+    method: 'DELETE',
+    headers: buildHeaders(token)
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || 'Error al eliminar aprendiz')
+  }
+  return data
+}

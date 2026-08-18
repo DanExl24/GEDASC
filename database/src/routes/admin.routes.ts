@@ -3,6 +3,11 @@ const router = Router()
 
 import {
   getAllAprendicesController,
+  createAprendizController,
+  bulkCreateAprendicesController,
+  updateAprendizController,
+  deleteAprendizController,
+  toggleAprendizStatusController,
   getIngressEgressController,
   deleteIngresoController,
   deleteSalidaController,
@@ -51,7 +56,10 @@ import {
   createHorarioSchema,
   createFormacionSchema,
   createCeladorSchema,
-  updateCeladorSchema
+  updateCeladorSchema,
+  createAprendizSchema,
+  updateAprendizSchema,
+  bulkCreateAprendicesSchema
 } from '../schemas/admin.schema'
 
 router.post('/simularHora', validateRequest({ body: simularHoraSchema }), setSimulationTimeController)
@@ -61,6 +69,11 @@ router.use(authMiddleware)
 router.use(requireRole(['ADMIN']))
 
 router.get('/aprendices', getAllAprendicesController)
+router.post('/aprendices', validateRequest({ body: createAprendizSchema }), createAprendizController)
+router.post('/aprendices/masivo', validateRequest({ body: bulkCreateAprendicesSchema }), bulkCreateAprendicesController)
+router.put('/aprendices/:id_aprendiz', validateRequest({ body: updateAprendizSchema }), updateAprendizController)
+router.patch('/aprendices/:id_aprendiz/toggle-status', toggleAprendizStatusController)
+router.delete('/aprendices/:id_aprendiz', deleteAprendizController)
 router.post('/aprendices/toggleMonitor/:id_aprendiz', toggleMonitorController)
 router.get('/aprendices/:id_aprendiz/formaciones', getFormacionesAprendizController)
 router.post('/aprendices/:id_aprendiz/formaciones', asignarFormacionController)

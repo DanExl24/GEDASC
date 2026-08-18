@@ -110,3 +110,62 @@ export const deleteRecordSchema = z.object({
   date: z.string(),
   observation: z.string().optional()
 })
+
+export const createAprendizSchema = z.object({
+  documento: z
+    .string()
+    .trim()
+    .min(5, 'El documento debe tener al menos 5 caracteres')
+    .max(20, 'El documento no puede exceder 20 caracteres')
+    .regex(/^[0-9a-zA-Z]+$/, 'El documento debe contener solo letras y números'),
+  nombre: z
+    .string()
+    .trim()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(100, 'El nombre no puede exceder 100 caracteres'),
+  apellido: z
+    .string()
+    .trim()
+    .min(2, 'El apellido debe tener al menos 2 caracteres')
+    .max(100, 'El apellido no puede exceder 100 caracteres'),
+  es_monitor: z.boolean().default(false),
+  id_formacion: z.coerce.number().positive().optional().nullable()
+})
+
+export const updateAprendizSchema = z.object({
+  documento: z
+    .string()
+    .trim()
+    .min(5, 'El documento debe tener al menos 5 caracteres')
+    .max(20, 'El documento no puede exceder 20 caracteres')
+    .regex(/^[0-9a-zA-Z]+$/, 'El documento debe contener solo letras y números')
+    .optional(),
+  nombre: z
+    .string()
+    .trim()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(100, 'El nombre no puede exceder 100 caracteres')
+    .optional(),
+  apellido: z
+    .string()
+    .trim()
+    .min(2, 'El apellido debe tener al menos 2 caracteres')
+    .max(100, 'El apellido no puede exceder 100 caracteres')
+    .optional(),
+  es_monitor: z.boolean().optional(),
+  estado: z.boolean().optional()
+})
+
+export const bulkCreateAprendicesSchema = z.object({
+  aprendices: z
+    .array(
+      z.object({
+        documento: z.string().trim().min(3),
+        nombre: z.string().trim().min(1),
+        apellido: z.string().trim().min(1),
+        es_monitor: z.boolean().optional()
+      })
+    )
+    .min(1, 'Debe enviar al menos un aprendiz para importar')
+})
+

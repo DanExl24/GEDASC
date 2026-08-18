@@ -88,19 +88,32 @@
       <section class="rounded-[28px] border border-emerald-200 bg-white shadow-[0_18px_45px_rgba(15,107,63,0.08)]">
         <div class="flex flex-col gap-3 border-b border-emerald-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-senaColor">Resultados</p>
-            <h2 class="mt-1 font-robotoSlab text-[1.45rem] font-bold text-slate-900">Aprendices registrados</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-senaColor">Gestión de Aprendices</p>
+            <h2 class="mt-1 font-robotoSlab text-[1.45rem] font-bold text-slate-900">Directorio Maestro CTA</h2>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              @click="openCreateAprendiz"
+              class="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-md hover:shadow-lg cursor-pointer"
+            >
+              <span>+</span>
+              <span>Registrar Aprendiz</span>
+            </button>
+            <button
+              type="button"
+              @click="openImportGeneral"
+              class="px-3.5 py-2.5 rounded-2xl border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <span>📥</span>
+              <span>Importar Masivo (.xlsx / .json)</span>
+            </button>
             <BaseButtonOpen
               text="Gestionar Asociaciones"
               variant="green"
-              class-button="rounded-2xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition"
+              class-button="rounded-2xl px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider shadow-sm transition"
               @click="openAsociacionesModal()"
             />
-            <p class="text-sm text-slate-500">
-              {{ inactiveDays > 0 ? `Filtro activo: ${inactiveDays} dias o mas sin asistir.` : 'Sin filtro de inactividad aplicado.' }}
-            </p>
           </div>
         </div>
 
@@ -117,13 +130,13 @@
             <table class="w-full border-separate border-spacing-0 font-quicksand">
               <thead>
                 <tr class="bg-slate-900 text-center">
-                  <th class="rounded-l-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Nombre</th>
-                  <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Apellido</th>
+                  <th class="rounded-l-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100 text-left">Aprendiz</th>
                   <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Documento</th>
+                  <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100 text-left">Formación / Ficha</th>
                   <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Actividad</th>
-                  <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Sin asistir</th>
                   <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Monitor</th>
-                  <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Maquinas</th>
+                  <th class="bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Estado</th>
+                  <th class="rounded-r-2xl bg-slate-900 px-4 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-100">Acciones</th>
                 </tr>
               </thead>
 
@@ -133,9 +146,32 @@
                   :key="aprendiz.id_aprendiz"
                   class="text-center align-middle transition odd:bg-white even:bg-slate-50/80 hover:bg-emerald-50/70 [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-4 [&>td]:py-4 [&>td]:text-sm [&>td]:text-slate-700"
                 >
-                  <td class="font-semibold text-slate-900">{{ aprendiz.nombre }}</td>
-                  <td>{{ aprendiz.apellido }}</td>
-                  <td>{{ aprendiz.documento }}</td>
+                  <td class="text-left font-semibold text-slate-900">
+                    <div>
+                      <p class="font-bold text-slate-900 text-sm">{{ aprendiz.nombre }} {{ aprendiz.apellido }}</p>
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        <span
+                          v-if="aprendiz.es_monitor"
+                          class="inline-flex rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-purple-700 ring-1 ring-inset ring-purple-700/10"
+                        >
+                          Monitor
+                        </span>
+                        <span
+                          v-if="Number(aprendiz.total_formaciones) > 1"
+                          class="inline-flex rounded-md bg-pink-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-pink-700 ring-1 ring-inset ring-pink-700/10"
+                        >
+                          Doble Formación
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="font-mono font-semibold text-slate-800">{{ aprendiz.documento }}</td>
+                  <td class="text-left max-w-[200px]">
+                    <p class="text-xs font-bold text-slate-800 truncate" :title="String(aprendiz.programa || '')">{{ aprendiz.programa || 'Sin programa' }}</p>
+                    <p v-if="aprendiz.formacion && aprendiz.formacion !== 'Sin ficha'" class="text-[11px] font-bold text-purple-700">
+                      Ficha: {{ aprendiz.formacion }}
+                    </p>
+                  </td>
                   <td>
                     <div class="space-y-1 text-left">
                       <p class="font-semibold text-slate-900">{{ formatActivity(aprendiz.horas_reales, aprendiz.total_sesiones) }}</p>
@@ -143,48 +179,69 @@
                     </div>
                   </td>
                   <td>
-                    <span
-                      :class="aprendiz.inactiveDays >= 7 ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-senaColor'"
-                      class="inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]"
+                    <button
+                      type="button"
+                      @click="handleToggleMonitor(aprendiz)"
+                      class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                      :class="aprendiz.es_monitor ? 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100' : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100'"
+                      title="Haz clic para alternar rol de monitor"
                     >
-                      {{ formatInactivity(aprendiz.inactiveDays, aprendiz.ultima_visita) }}
-                    </span>
+                      <span>{{ aprendiz.es_monitor ? '★ Monitor' : '☆ No' }}</span>
+                    </button>
                   </td>
                   <td>
-                    <span
-                      v-if="aprendiz.es_monitor"
-                      class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]"
+                    <button
+                      type="button"
+                      @click="handleToggleStatus(aprendiz)"
+                      class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                      :class="aprendiz.estado !== false ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100'"
+                      title="Haz clic para alternar estado activo/inactivo"
                     >
-                      Monitor
-                    </span>
-                    <span
-                      v-else
-                      class="inline-flex rounded-full border border-slate-200 bg-slate-50 text-slate-400 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]"
-                    >
-                      No
-                    </span>
+                      <span class="w-1.5 h-1.5 rounded-full" :class="aprendiz.estado !== false ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                      <span>{{ aprendiz.estado !== false ? 'Activo' : 'Inactivo' }}</span>
+                    </button>
                   </td>
                   <td>
-                    <div class="flex flex-col gap-1 items-center">
-                      <BaseButtonOpen
-                        text="Equipos"
-                        variant="ghost"
-                        class-button="min-h-0 px-0 py-0 font-semibold shadow-none text-xs"
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        @click="handleEditAprendiz(aprendiz)"
+                        class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition cursor-pointer shadow-sm"
+                        title="Editar datos del aprendiz"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
                         @click="openMachinesModal(aprendiz)"
-                      />
-                      <BaseButtonOpen
-                        text="Asociaciones"
-                        variant="ghost"
-                        class-button="min-h-0 px-0 py-0 font-semibold shadow-none text-xs text-emerald-600"
+                        class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition cursor-pointer shadow-sm"
+                        title="Ver máquinas del aprendiz"
+                      >
+                        💻
+                      </button>
+                      <button
+                        type="button"
                         @click="openAsociacionesModal(aprendiz)"
-                      />
+                        class="p-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 transition cursor-pointer shadow-sm"
+                        title="Administrar fichas académicas"
+                      >
+                        🎓
+                      </button>
+                      <button
+                        type="button"
+                        @click="handleDeleteAprendiz(aprendiz)"
+                        class="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer shadow-sm"
+                        title="Eliminar aprendiz"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </td>
                 </tr>
 
                 <tr v-if="filteredAprendices.length === 0">
-                  <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">
-                    No hay aprendices para los filtros actuales.
+                  <td colspan="7" class="px-4 py-8 text-center text-sm text-slate-500">
+                    No hay aprendices que coincidan con los filtros actuales.
                   </td>
                 </tr>
               </tbody>
@@ -284,6 +341,19 @@
       :token="auth.token || ''"
       @update="loadAprendices"
     />
+
+    <!-- MODAL DE CREACIÓN / EDICIÓN INDIVIDUAL -->
+    <ModalAprendizForm
+      ref="aprendizFormModalRef"
+      :formaciones-options="formacionesOptions"
+      @saved="loadAprendices"
+    />
+
+    <!-- MODAL DE IMPORTACIÓN MASIVA GENERAL -->
+    <ModalImportAprendicesGeneral
+      ref="importGeneralModalRef"
+      @imported="loadAprendices"
+    />
   </div>
 </template>
 
@@ -297,15 +367,22 @@ import ExitButton from '@/components/UI/ExitButton.vue'
 import SearchBar from '@/components/UI/SearchBar.vue'
 import HeaderView from '@/layouts/HeaderView.vue'
 import ModalAsociaciones from '@/components/AprendizUI/Modals/ModalAsociaciones.vue'
+import ModalAprendizForm from '@/components/Modals/ModalAprendizForm.vue'
+import ModalImportAprendicesGeneral from '@/components/Modals/ModalImportAprendicesGeneral.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useNotifications } from '@/composables/useNotifications'
 import {
   getAdminAprendices,
   getAdminMachinesByAprendiz,
   getAdminTrack,
+  toggleAdminMonitor,
+  toggleAdminAprendizStatus,
+  deleteAdminAprendiz,
   type AdminAprendizRow,
   type AdminMachineRecord,
   type AdminTrackRow,
 } from '@/Services/adminAprendices'
+import { getAllFormaciones, type FormacionCompleta } from '@/Services/adminAcademic'
 
 type SummaryCard = {
   label: string
@@ -330,20 +407,34 @@ type AprendizWithActivity = AdminAprendizRow & {
 }
 
 const auth = useAuthStore()
+const { addNotification } = useNotifications()
+
 const search = ref('')
 const inactiveDaysInput = ref('')
 const isLoading = ref(false)
 const loadError = ref('')
 const aprendices = ref<AprendizWithActivity[]>([])
+const formacionesList = ref<FormacionCompleta[]>([])
+
 const machinesModal = ref<{
   openModal: () => void
   closeModal: () => void
 } | null>(null)
 const asociacionesModal = ref<InstanceType<typeof ModalAsociaciones> | null>(null)
+const aprendizFormModalRef = ref<InstanceType<typeof ModalAprendizForm> | null>(null)
+const importGeneralModalRef = ref<InstanceType<typeof ModalImportAprendicesGeneral> | null>(null)
+
 const selectedAprendiz = ref<AprendizWithActivity | null>(null)
 const selectedMachines = ref<AdminMachineRecord[]>([])
 const machinesLoading = ref(false)
 const machinesError = ref('')
+
+const formacionesOptions = computed(() => {
+  return formacionesList.value.map((f) => ({
+    value: f.id_formacion,
+    label: `Ficha #${f.id_formacion} - ${f.nombre} (${f.jornada || ''})`
+  }))
+})
 
 const inactiveDays = computed(() => {
   const parsed = Number.parseInt(inactiveDaysInput.value, 10)
@@ -479,17 +570,6 @@ const formatDaysActive = (inactiveDaysValue: number, lastVisit: string | null) =
   return `${inactiveDaysValue} dias de inasistencia`
 }
 
-const formatInactivity = (days: number, lastVisit: string | null) => {
-  if (!lastVisit || !Number.isFinite(days)) {
-    return 'Sin registros'
-  }
-
-  if (days === 0) return 'Activo en el CTA'
-  if (days === 1) return '1 dia'
-
-  return `${days} dias`
-}
-
 const machineBadgeClass = (machine: AdminMachineRecord) =>
   getMachineRole(machine) === 'PRINCIPAL'
     ? 'border-emerald-200 bg-emerald-50 text-senaColor'
@@ -508,15 +588,13 @@ const loadAprendices = async () => {
   loadError.value = ''
 
   try {
-    const [aprendicesData, trackData] = await Promise.all([
+    const [aprendicesData, trackData, formacionesData] = await Promise.all([
       getAdminAprendices(auth.token),
-      getAdminTrack(auth.token)
+      getAdminTrack(auth.token),
+      getAllFormaciones(auth.token).catch(() => [])
     ])
 
-    console.log('Admin aprendices raw response', {
-      aprendicesData,
-      trackData
-    })
+    formacionesList.value = formacionesData || []
 
     const trackMap = new Map(
       trackData.map((item: AdminTrackRow) => [
@@ -543,8 +621,6 @@ const loadAprendices = async () => {
         inactiveDays: calculateInactiveDays(lastVisit)
       }
     })
-
-    console.log('Admin aprendices merged rows', aprendices.value)
   } catch (error) {
     console.error(error)
     loadError.value = error instanceof Error
@@ -552,6 +628,62 @@ const loadAprendices = async () => {
       : 'No fue posible cargar los aprendices administrativos.'
   } finally {
     isLoading.value = false
+  }
+}
+
+const openCreateAprendiz = () => {
+  aprendizFormModalRef.value?.openCreate()
+}
+
+const openImportGeneral = () => {
+  importGeneralModalRef.value?.open()
+}
+
+const handleEditAprendiz = (aprendiz: AprendizWithActivity) => {
+  aprendizFormModalRef.value?.openEdit(aprendiz)
+}
+
+const handleToggleMonitor = async (aprendiz: AprendizWithActivity) => {
+  if (!auth.token) return
+  const nextValue = !aprendiz.es_monitor
+  try {
+    await toggleAdminMonitor(auth.token, String(aprendiz.id_aprendiz), nextValue)
+    aprendiz.es_monitor = nextValue
+    addNotification(`Rol de monitor ${nextValue ? 'asignado' : 'retirado'} a ${aprendiz.nombre}`, 'success')
+  } catch (error: unknown) {
+    console.error(error)
+    const msg = error instanceof Error ? error.message : 'Error al cambiar rol de monitor'
+    addNotification(msg, 'error')
+  }
+}
+
+const handleToggleStatus = async (aprendiz: AprendizWithActivity) => {
+  if (!auth.token) return
+  try {
+    const res = await toggleAdminAprendizStatus(auth.token, aprendiz.id_aprendiz)
+    aprendiz.estado = res?.data?.estado !== undefined ? res.data.estado : !aprendiz.estado
+    addNotification(res?.message || 'Estado actualizado', 'success')
+  } catch (error: unknown) {
+    console.error(error)
+    const msg = error instanceof Error ? error.message : 'Error al cambiar estado'
+    addNotification(msg, 'error')
+  }
+}
+
+const handleDeleteAprendiz = async (aprendiz: AprendizWithActivity) => {
+  if (!auth.token) return
+  if (!confirm(`¿Está seguro de que desea eliminar al aprendiz ${aprendiz.nombre} ${aprendiz.apellido} (Doc: ${aprendiz.documento})?`)) {
+    return
+  }
+
+  try {
+    const res = await deleteAdminAprendiz(auth.token, aprendiz.id_aprendiz)
+    addNotification(res?.message || 'Aprendiz procesado con éxito', 'success')
+    await loadAprendices()
+  } catch (error: unknown) {
+    console.error(error)
+    const msg = error instanceof Error ? error.message : 'Error al eliminar el aprendiz'
+    addNotification(msg, 'error')
   }
 }
 
@@ -565,11 +697,7 @@ const openMachinesModal = async (aprendiz: AprendizWithActivity) => {
   machinesModal.value?.openModal()
 
   try {
-    selectedMachines.value = await getAdminMachinesByAprendiz(auth.token, aprendiz.id_aprendiz)
-    console.log('Admin machines by aprendiz response', {
-      aprendiz,
-      machines: selectedMachines.value
-    })
+    selectedMachines.value = await getAdminMachinesByAprendiz(auth.token, String(aprendiz.id_aprendiz))
   } catch (error) {
     console.error(error)
     machinesError.value = error instanceof Error
@@ -579,8 +707,6 @@ const openMachinesModal = async (aprendiz: AprendizWithActivity) => {
     machinesLoading.value = false
   }
 }
-
-
 
 const openAsociacionesModal = (aprendiz?: AprendizWithActivity) => {
   asociacionesModal.value?.open(aprendiz)
