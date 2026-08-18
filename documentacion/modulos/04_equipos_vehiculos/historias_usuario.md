@@ -178,12 +178,16 @@ Proporciona la vista [`AssetsHistoryView.vue`](file:///c:/Users/alejo/Downloads/
 - Un interruptor superior permite conmutar entre *Computadores* (`GET /api/HistorialComputadores/historial`) y *Vehículos* (`GET /api/HistorialVehiculos/historial`).
 - La tabla de computadores muestra: Marca, Serial, DNI del Aprendiz, Hora de Ingreso, Hora de Salida y Botón de Detalles.
 - La tabla de vehículos muestra: Tipo, Marca, Placa, DNI del Aprendiz, Hora de Ingreso, Hora de Salida y Botón de Detalles.
-- El botón de detalles abre [`ModalAssetOwnerDetails.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/AprendizUI/Modals/ModalAssetOwnerDetails.vue) mostrando: Datos completos del aprendiz titular, datos del receptor (si fue préstamo) e imágenes de las firmas digitales de ingreso y retiro.
+- El botón de detalles abre [`ModalAssetOwnerDetails.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/AprendizUI/Modals/ModalAssetOwnerDetails.vue) mostrando:
+  - Información completa del titular (Nombre, Apellido, Programa formativo, Ficha, Horario y Jornada).
+  - Indicador de estado del activo (*RETIRADO DEL CENTRO* o *DENTRO DEL CENTRO*).
+  - **Tarjeta Firma de Ingreso**: Hora exacta de ingreso y evidencia de la firma digital capturada en portería.
+  - **Tarjeta Firma de Salida**: Hora exacta de salida/retiro y evidencia de la firma de retiro, o badge de *Activo Dentro del CTA* en caso de sesión activa sin retirar.
 
 ## Metadatos
 - **Prioridad**: Alta
 - **Roles involucrados**: `CELADOR`, `ADMIN`
-- **Reglas de negocio relacionadas**: `RN-ACT-007`
+- **Reglas de negocio relacionadas**: `RN-ACT-007`, `RN-ACT-008`
 - **Endpoints relacionados**: `GET /api/HistorialComputadores/historial`, `GET /api/HistorialVehiculos/historial`, `GET /api/HistorialComputadores/propietario/:id_detallemaquina`, `GET /api/HistorialVehiculos/propietario/:id_detallemaquina`
 - **Componentes frontend relacionados**: `src/views/AssetsHistoryView.vue`, `src/components/AprendizUI/AssetsHistoryTable.vue`, `src/components/AprendizUI/Modals/ModalAssetOwnerDetails.vue`
 - **Controllers/Services relacionados**: `database/src/controllers/computer.controller.ts`, `database/src/controllers/vehicle.controller.ts`

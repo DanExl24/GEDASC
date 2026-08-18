@@ -48,9 +48,9 @@ Incorpora características de alta seguridad:
 | `GET` | `/api/registroIngresos/maquinaPrincipal/:id_aprendiz` | Consulta la máquina principal registrada para el aprendiz | `CELADOR`, `ADMIN` |
 | `POST` | `/api/registroSalidas/retirarEquipo/:id_detallemaquina` | Registra la firma de salida del activo y actualiza su estado a 'retirado' | `CELADOR`, `ADMIN` |
 | `GET` | `/api/HistorialComputadores/historial` | Consulta el historial consolidado de computadores con filtros | `CELADOR`, `ADMIN` |
-| `GET` | `/api/HistorialComputadores/propietario/:id_detallemaquina`| Obtiene datos del propietario y firma de ingreso del computador | `CELADOR`, `ADMIN` |
+| `GET` | `/api/HistorialComputadores/propietario/:id_detallemaquina`| Obtiene datos del propietario, firmas duales (ingreso y salida), horarios y estado del computador | `CELADOR`, `ADMIN` |
 | `GET` | `/api/HistorialVehiculos/historial` | Consulta el historial consolidado de vehículos con filtros | `CELADOR`, `ADMIN` |
-| `GET` | `/api/HistorialVehiculos/propietario/:id_detallemaquina` | Obtiene datos del propietario y firma de ingreso del vehículo | `CELADOR`, `ADMIN` |
+| `GET` | `/api/HistorialVehiculos/propietario/:id_detallemaquina` | Obtiene datos del propietario, firmas duales (ingreso y salida), horarios y estado del vehículo | `CELADOR`, `ADMIN` |
 
 ---
 

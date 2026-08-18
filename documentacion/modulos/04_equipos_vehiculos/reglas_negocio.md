@@ -77,3 +77,15 @@
 - **Archivos donde se implementa**: [`database/src/controllers/computer.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/computer.controller.ts), [`database/src/controllers/vehicle.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/vehicle.controller.ts).
 - **Endpoints relacionados**: `GET /api/HistorialComputadores/propietario/:id_detallemaquina`, `GET /api/HistorialVehiculos/propietario/:id_detallemaquina`.
 - **Historias de usuario relacionadas**: `HU-ACT-007`.
+
+### RN-ACT-008: Evidencia Dual de Custodia (Firmas de Ingreso y Retiro)
+- **Descripción**: Al consultar el detalle de un movimiento de activo en el módulo de gestión de máquinas, el sistema debe proveer obligatoriamente la evidencia gráfica completa del ciclo de custodia:
+  1. Firma digital de ingreso y hora de entrada (`hora_ingreso`).
+  2. Firma digital de salida/retiro y hora efectiva de retiro (`hora_salida`), calculada dinámicamente a partir de la hora de retiro específica del equipo (`hora_retiro_equipo`) o la salida general de la sesión (`detalles_salida.hora_salida`).
+  3. Si el activo aún no ha sido retirado (`estado_equipo = 'dentro'`), el sistema debe indicarlo visualmente sin fallos por firmas nulas.
+- **Motivo**: Garantizar el respaldo probatorio institucional ante cualquier reclamo o auditoría de seguridad sobre equipos y vehículos en el CTA.
+- **Módulos afectados**: `04_equipos_vehiculos`, `05_historial_reportes`, `06_administracion_monitoreo`.
+- **Archivos donde se implementa**: [`database/src/controllers/computer.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/computer.controller.ts), [`database/src/controllers/vehicle.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/vehicle.controller.ts), [`src/components/AprendizUI/Modals/ModalAssetOwnerDetails.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/components/AprendizUI/Modals/ModalAssetOwnerDetails.vue).
+- **Endpoints relacionados**: `GET /api/HistorialComputadores/propietario/:id_detallemaquina`, `GET /api/HistorialVehiculos/propietario/:id_detallemaquina`.
+- **Historias de usuario relacionadas**: `HU-ACT-007`.
+
