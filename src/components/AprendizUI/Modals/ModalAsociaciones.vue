@@ -292,9 +292,10 @@ const vincular = async () => {
     newFormationId.value = ''
     await loadFormations()
     emit('update')
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error)
-    addNotification(error.message || 'No se pudo vincular la formación', 'warning')
+    const msg = error instanceof Error ? error.message : 'No se pudo vincular la formación'
+    addNotification(msg, 'warning')
   }
 }
 

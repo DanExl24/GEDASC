@@ -145,8 +145,8 @@ const handleSubmit = async () => {
 
     emit('updated')
     close()
-  } catch (err: any) {
-    errorMessage.value = err.message || 'Error de conexión con el servidor'
+  } catch (err: unknown) {
+    errorMessage.value = err instanceof Error ? err.message : 'Error de conexión con el servidor'
   } finally {
     loading.value = false
   }
