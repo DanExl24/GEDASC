@@ -81,3 +81,13 @@
 - **Endpoints relacionados**: `DELETE /api/admin/formaciones/:id_formacion/aprendices/todos`.
 - **Historias de usuario relacionadas**: `HU-ACAD-004`.
 
+---
+
+### RN-ACAD-008: Bloqueo Estricto por Conflicto de Cruce de Horario en Doble Formación
+- **Descripción**: Al actualizar las horas y días de un horario (`PUT /api/admin/horarios/:id_horario`) o reasignar el horario de una ficha (`PUT /api/admin/formaciones/:id_formacion`), el backend verifica si algún aprendiz matriculado en la cohorte posee otra formación activa que coincida en día de la semana y franja horaria (`hora_inicio < hora_fin_otra AND hora_fin > hora_inicio_otra`). En caso de detectarse solapamiento, la operación se rechaza con `HTTP 409 Conflict`, detallando el aprendiz, las fichas y los horarios en conflicto.
+- **Motivo**: Prevenir inconsistencias académicas institucionales donde un aprendiz quede matriculado en dos ambientes presenciales simultáneos en el mismo rango de horas.
+- **Módulos afectados**: `07_gestion_academica`, `06_administracion_monitoreo`.
+- **Archivos donde se implementa**: [`database/src/controllers/admin.controller.ts`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/database/src/controllers/admin.controller.ts), [`src/views/AdminHorariosView.vue`](file:///c:/Users/alejo/Downloads/primerProyecto/GEDASC/src/views/AdminHorariosView.vue).
+- **Endpoints relacionados**: `PUT /api/admin/horarios/:id_horario`, `PUT /api/admin/formaciones/:id_formacion`.
+- **Historias de usuario relacionadas**: `HU-ACAD-002`, `HU-ACAD-003`.
+

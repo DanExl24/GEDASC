@@ -39,8 +39,11 @@ Capacidades principales:
 | `GET` | `/api/admin/programas` | Lista los programas curriculares registrados | `ADMIN` |
 | `POST` | `/api/admin/programas` | Crea un nuevo programa curricular | `ADMIN` |
 | `PUT` | `/api/admin/programas/:id_programa` | Actualiza un programa curricular existente | `ADMIN` |
+| `DELETE` | `/api/admin/programas/:id_programa` | Elimina un programa curricular sin fichas asociadas | `ADMIN` |
 | `GET` | `/api/admin/horarios` | Obtiene el catálogo de horarios con sus días asociados | `ADMIN` |
 | `POST` | `/api/admin/horarios` | Crea un nuevo horario y normaliza sus días en `horario_dia` | `ADMIN` |
+| `PUT` | `/api/admin/horarios/:id_horario` | Actualiza horas y días de un horario validando cruces de horario | `ADMIN` |
+| `DELETE` | `/api/admin/horarios/:id_horario` | Elimina un horario si no está asignado a fichas activas | `ADMIN` |
 | `GET` | `/api/admin/formaciones` | Consulta las fichas de formación con su programa y horario | `ADMIN` |
 | `POST` | `/api/admin/formaciones` | Registra una nueva ficha de formación | `ADMIN` |
 | `PUT` | `/api/admin/formaciones/:id_formacion` | Actualiza los datos o el horario de una ficha | `ADMIN` |
