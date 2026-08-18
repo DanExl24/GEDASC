@@ -2,7 +2,8 @@
   <BaseModal
     ref="modalRef"
     :title="`Vinculación Masiva de Aprendices - Ficha #${ficha?.id_formacion || ''}`"
-    body-class="relative max-h-[80vh] overflow-y-auto space-y-5 px-6 py-6 font-quicksand"
+    modal-class="w-full max-w-3xl lg:max-w-4xl max-h-[92vh] sm:max-h-[88vh] overflow-hidden flex flex-col rounded-[28px] border border-emerald-100 bg-white shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+    body-class="flex-1 min-h-0 overflow-y-auto space-y-5 px-6 py-6 font-quicksand"
   >
     <!-- CABECERA: INFO DE LA FICHA -->
     <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -175,7 +176,7 @@
       </div>
 
       <!-- BOTONES DE ACCIÓN -->
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <div class="sticky -bottom-6 bg-white/95 backdrop-blur-sm pt-4 pb-4 -mx-6 px-6 border-t border-slate-100 flex items-center justify-end gap-3 z-20 shadow-[0_-8px_20px_rgba(0,0,0,0.03)]">
         <button
           type="button"
           @click="close"
@@ -283,11 +284,11 @@
       </div>
 
       <!-- BOTÓN DE CIERRE -->
-      <div class="flex items-center justify-end pt-4 border-t border-slate-100">
+      <div class="sticky -bottom-6 bg-white/95 backdrop-blur-sm pt-4 pb-4 -mx-6 px-6 border-t border-slate-100 flex items-center justify-end z-20 shadow-[0_-8px_20px_rgba(0,0,0,0.03)]">
         <button
           type="button"
           @click="finishAndClose"
-          class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition shadow-sm cursor-pointer"
+          class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition shadow-sm cursor-pointer"
         >
           Finalizar y Volver
         </button>

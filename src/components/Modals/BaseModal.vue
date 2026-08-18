@@ -55,15 +55,17 @@ modalClass: `
   w-full
   max-w-2xl
   max-h-[90vh]
-  sm:max-h-[85vh]
+  sm:max-h-[88vh]
   overflow-hidden
+  flex
+  flex-col
   rounded-[28px]
   border border-emerald-100
   bg-white
   shadow-[0_30px_80px_rgba(0,0,0,0.35)]
 `,
-  headerClass: 'relative flex items-center justify-center border-b border-emerald-100 bg-[linear-gradient(90deg,#ffffff_0%,#f3fbf5_40%,#e2f4e6_100%)] px-6 py-5 text-center font-robotoSlab text-xl font-bold text-slate-800',
-  bodyClass: 'relative max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto px-6 py-6',
+  headerClass: 'shrink-0 relative flex items-center justify-center border-b border-emerald-100 bg-[linear-gradient(90deg,#ffffff_0%,#f3fbf5_40%,#e2f4e6_100%)] px-6 py-5 text-center font-robotoSlab text-xl font-bold text-slate-800',
+  bodyClass: 'flex-1 min-h-0 relative space-y-4 overflow-y-auto px-6 py-6',
   closeIconClass: 'absolute right-5 h-[30px] cursor-pointer rounded-full bg-white/80 p-1 shadow-sm'
 })
 
