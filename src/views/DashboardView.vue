@@ -466,12 +466,12 @@ const getBarWidth = (value: number, max: number) => {
 }
 
 onMounted(async () => {
-  if (isAdmin.value && auth.token) {
+  if (isAdmin.value && auth.isAuthenticated) {
     adminLoading.value = true
 
     try {
       const [adminStatsData, baseStatsData] = await Promise.all([
-        getAdminDashboardStats(auth.token),
+        getAdminDashboardStats(),
         getEstadisticas()
       ])
       quarterStats.value = adminStatsData.quarterStats

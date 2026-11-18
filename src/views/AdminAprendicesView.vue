@@ -459,7 +459,7 @@ const getMachineRole = (machine: AdminMachineRecord) =>
   machine.pc?.estado || machine.vh?.estado || 'SECUNDARIO'
 
 const loadAprendices = async () => {
-  if (!auth.token) {
+  if (!auth.isAuthenticated) {
     loadError.value = 'No hay sesion activa para consultar aprendices administrativos.'
     return
   }
@@ -469,8 +469,8 @@ const loadAprendices = async () => {
 
   try {
     const [aprendicesData, trackData] = await Promise.all([
-      getAdminAprendices(auth.token),
-      getAdminTrack(auth.token)
+      getAdminAprendices(),
+      getAdminTrack()
     ])
 
     console.log('Admin aprendices raw response', {
@@ -516,7 +516,7 @@ const loadAprendices = async () => {
 }
 
 const openMachinesModal = async (aprendiz: AprendizWithActivity) => {
-  if (!auth.token) return
+  if (!auth.isAuthenticated) return
 
   selectedAprendiz.value = aprendiz
   selectedMachines.value = []
@@ -525,7 +525,7 @@ const openMachinesModal = async (aprendiz: AprendizWithActivity) => {
   machinesModal.value?.openModal()
 
   try {
-    selectedMachines.value = await getAdminMachinesByAprendiz(auth.token, aprendiz.id_aprendiz)
+    selectedMachines.value = await getAdminMachinesByAprendiz(aprendiz.id_aprendiz)
     console.log('Admin machines by aprendiz response', {
       aprendiz,
       machines: selectedMachines.value

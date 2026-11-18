@@ -7,7 +7,7 @@ let socket: Socket | null = null;
 
 export const connectSocket = () => {
   if (!socket) {
-    socket = io(SOCKET_URL);
+    socket = io(SOCKET_URL, { withCredentials: true });
   }
 
   return socket;

@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt, { JwtPayload } from 'jsonwebtoken'
+import { JWT_ALGORITHM, SESSION_COOKIE_NAME } from '../config/security'
+import { parseCookies } from '../utils/cookies'
 
-type UserToken = JwtPayload & {
+export type UserToken = JwtPayload & {
   id: string
+  email: string
   rol: 'ADMIN' | 'CELADOR'
 }
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: UserToken
 }
 
@@ -15,31 +18,54 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers.authorization?.split(' ')[1]
+  const cookies = parseCookies(req.headers.cookie)
+  const token = cookies[SESSION_COOKIE_NAME]
 
   if (!token) {
-    return res.status(401).json({ message: 'No token' })
+    return res.status(401).json({
+      success: false,
+      message: 'No autenticado',
+    })
+  }
+
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error de configuración de autenticación',
+    })
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as UserToken
+    const decoded = jwt.verify(token, secret, {
+      algorithms: [JWT_ALGORITHM],
+    }) as UserToken
     req.user = decoded
-    next()
+    return next()
   } catch {
-    return res.status(401).json({ message: 'Token inválido' })
+    return res.status(401).json({
+      success: false,
+      message: 'Sesión inválida o expirada',
+    })
   }
 }
 
 export const requireRole = (roles: ('ADMIN' | 'CELADOR')[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({ message: 'No autenticado' })
+      return res.status(401).json({
+        success: false,
+        message: 'No autenticado',
+      })
     }
 
     if (!roles.includes(req.user.rol)) {
-      return res.status(403).json({ message: 'No tienes permisos' })
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos',
+      })
     }
 
-    next()
+    return next()
   }
 }

@@ -1,4 +1,4 @@
-import { API_URL } from '@/config/network'
+import { apiFetch } from '@/Services/apiClient'
 
 type ApiEnvelope<T> = {
   success: boolean
@@ -60,26 +60,23 @@ export interface AdminMachineRecord {
   }
 }
 
-const buildHeaders = (token: string) => ({
-  Authorization: `Bearer ${token}`
-})
-
 const ensureSuccess = async <T>(response: Response): Promise<T> => {
   const text = await response.text()
 
-  const payload = JSON.parse(text)
+  const payload = JSON.parse(text) as ApiEnvelope<T>
+  if (!response.ok || !payload.success || payload.data === undefined) {
+    throw new Error(payload.message || 'No fue posible completar la consulta administrativa.')
+  }
   return payload.data
 }
 
-export const getAdminAprendices = async (token: string) => {
-  const response = await fetch(`${API_URL}/api/admin/aprendices`, {
-    headers: buildHeaders(token)
-  })
+export const getAdminAprendices = async () => {
+  const response = await apiFetch('/api/admin/aprendices')
 
   return ensureSuccess<AdminAprendizRow[]>(response)
 }
 
-export const getAdminTrack = async (token: string, search = '') => {
+export const getAdminTrack = async (search = '') => {
   const params = new URLSearchParams()
 
   if (search.trim()) {
@@ -87,17 +84,13 @@ export const getAdminTrack = async (token: string, search = '') => {
   }
 
   const query = params.toString()
-  const response = await fetch(`${API_URL}/api/admin/track${query ? `?${query}` : ''}`, {
-    headers: buildHeaders(token)
-  })
+  const response = await apiFetch(`/api/admin/track${query ? `?${query}` : ''}`)
 
   return ensureSuccess<AdminTrackRow[]>(response)
 }
 
-export const getAdminMachinesByAprendiz = async (token: string, idAprendiz: string) => {
-  const response = await fetch(`${API_URL}/api/admin/allMachines/${idAprendiz}`, {
-    headers: buildHeaders(token)
-  })
+export const getAdminMachinesByAprendiz = async (idAprendiz: string) => {
+  const response = await apiFetch(`/api/admin/allMachines/${idAprendiz}`)
 
   const data = await ensureSuccess<AdminMachineRecord[]>(response)
 
@@ -109,10 +102,8 @@ export const getAdminMachinesByAprendiz = async (token: string, idAprendiz: stri
   })
 }
 
-export const getAdminExits = async (token: string) => {
-  const response = await fetch(`${API_URL}/api/admin/statsExits`, {
-    headers: buildHeaders(token)
-  })
+export const getAdminExits = async () => {
+  const response = await apiFetch('/api/admin/statsExits')
 
   return ensureSuccess<AdminExitRow[]>(response)
 }

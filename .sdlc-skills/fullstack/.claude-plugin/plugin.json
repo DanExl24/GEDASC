@@ -1,0 +1,19 @@
+{
+  "name": "fullstack",
+  "version": "0.2.0",
+  "description": "Skills que cruzan frontend y backend: reconciliación de contratos API ↔ cliente, topología del repositorio, diagnóstico de flujos entre capas, un orquestador para construir funcionalidades encadenando skills y un orquestador de auditorías conjunto. Define los handoffs entre skills y el contexto compartido .sdlc/context.md.",
+  "author": {
+    "name": "DanExl24"
+  },
+  "license": "MIT",
+  "keywords": [
+    "fullstack",
+    "contracts",
+    "openapi",
+    "monorepo",
+    "architecture",
+    "e2e",
+    "audit",
+    "feature"
+  ]
+}

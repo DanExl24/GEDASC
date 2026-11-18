@@ -111,31 +111,30 @@ const router = createRouter({
 const isMobile = () => window.innerWidth <= 768;
 
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  if (isMobile() && auth.token && !to.path.startsWith("/mobile-view") && !to.meta.guestOnly) {
-    return next("/mobile-view");
-  }
-  next();
-});
-
-router.beforeEach((to, from, next) => {
-  const auth = useAuthStore()
-
-  if (to.meta.guestOnly && auth.token) {
-    return next('/dashboard')
+  if (!auth.initialized) {
+    await auth.init()
   }
 
-  if (to.meta.requiresAuth && !auth.token) {
-    return next('/login')
+  if (to.meta.guestOnly && auth.isAuthenticated) {
+    return '/dashboard'
+  }
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return '/login'
   }
 
   if (to.meta.role && auth.user?.rol !== to.meta.role) {
-    return next('/dashboard')
+    return '/dashboard'
   }
 
-  next()
+  if (isMobile() && auth.isAuthenticated && !to.path.startsWith('/mobile-view') && !to.meta.guestOnly) {
+    return '/mobile-view'
+  }
+
+  return true
 })
 
 export default router

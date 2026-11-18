@@ -1,4 +1,5 @@
 import { API_URL } from '@/config/network'
+import { apiFetch } from '@/Services/apiClient'
 import { normalizeVehicleType } from '@/utils/vehicleType'
 
 type ApiEnvelope<T> = {
@@ -86,10 +87,6 @@ export interface BorrowedVehicleRow {
   horaIngreso: string | null
 }
 
-const buildHeaders = (token: string) => ({
-  Authorization: `Bearer ${token}`
-})
-
 const buildBorrowedUrl = (path: string, dates?: string) => {
   const url = new URL(`${API_URL}${path}`)
 
@@ -110,14 +107,14 @@ const ensureSuccess = async <T>(response: Response): Promise<T> => {
   return payload.data
 }
 
-export const getAdminBorrowedAssets = async (token: string, dates?: string) => {
+export const getAdminBorrowedAssets = async (dates?: string) => {
   const [computersData, vehiclesData] = await Promise.all([
-    fetch(buildBorrowedUrl('/api/admin/borrowed/computers', dates), {
-      headers: buildHeaders(token)
-    }).then((response) => ensureSuccess<BorrowComputerApiRow[]>(response)),
-    fetch(buildBorrowedUrl('/api/admin/borrowed/vehicles', dates), {
-      headers: buildHeaders(token)
-    }).then((response) => ensureSuccess<BorrowVehicleApiRow[]>(response))
+    apiFetch(buildBorrowedUrl('/api/admin/borrowed/computers', dates)).then((response) =>
+      ensureSuccess<BorrowComputerApiRow[]>(response)
+    ),
+    apiFetch(buildBorrowedUrl('/api/admin/borrowed/vehicles', dates)).then((response) =>
+      ensureSuccess<BorrowVehicleApiRow[]>(response)
+    )
   ])
 
   console.log('Admin borrowed assets raw response', {

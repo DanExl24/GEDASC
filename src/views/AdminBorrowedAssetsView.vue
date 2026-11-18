@@ -403,7 +403,7 @@ const summaryCards = computed<SummaryCard[]>(() => [
 ])
 
 const loadBorrowedAssets = async () => {
-  if (!auth.token) {
+  if (!auth.isAuthenticated) {
     loadError.value = 'No hay sesion activa para consultar prestamos administrativos.'
     return
   }
@@ -412,7 +412,7 @@ const loadBorrowedAssets = async () => {
   loadError.value = ''
 
   try {
-    const data = await getAdminBorrowedAssets(auth.token, selectedDateFilter.value)
+    const data = await getAdminBorrowedAssets(selectedDateFilter.value)
     computers.value = data.computers
     vehicles.value = data.vehicles
   } catch (error) {

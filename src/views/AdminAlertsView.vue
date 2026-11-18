@@ -143,7 +143,7 @@ const inactivityAlertsCount = computed(() =>
 )
 
 const loadAlerts = async () => {
-  if (!auth.token) {
+  if (!auth.isAuthenticated) {
     loadError.value = 'No hay sesion activa para consultar alertas administrativas.'
     return
   }
@@ -152,7 +152,7 @@ const loadAlerts = async () => {
   loadError.value = ''
 
   try {
-    alerts.value = await getAdminAlerts(auth.token)
+    alerts.value = await getAdminAlerts()
   } catch (error) {
     console.error(error)
     loadError.value = error instanceof Error

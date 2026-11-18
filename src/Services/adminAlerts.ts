@@ -1,7 +1,6 @@
 import { getAdminBorrowedAssets } from '@/Services/adminBorrowedAssets'
 import { getAdminAprendices, getAdminTrack, getAdminExits } from '@/Services/adminAprendices'
 import type { AdminAlertItem, InconsistentExit } from '@/types/adminAlerts.types'
-import { API_URL } from '@/config/network'
 const formatDateLabel = (value: Date) =>
   new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'medium',
@@ -25,12 +24,12 @@ const calculateInactiveDays = (lastVisit: string | null) => {
   )
 }
 
-export const getAdminAlerts = async (token: string) => {
+export const getAdminAlerts = async () => {
   const [borrowedAssets, aprendicesData, trackData, exitsData] = await Promise.all([
-    getAdminBorrowedAssets(token),
-    getAdminAprendices(token),
-    getAdminTrack(token),
-    getAdminExits(token)
+    getAdminBorrowedAssets(),
+    getAdminAprendices(),
+    getAdminTrack(),
+    getAdminExits()
   ])
   console.log(exitsData)
   const nowLabel = formatDateLabel(new Date())

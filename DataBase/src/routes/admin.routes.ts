@@ -25,12 +25,13 @@ import {
   getAdminStatsController
 } from '../controllers/admin.controller'
 
-import { authMiddleware } from '../middlewares/admin.middleware'
-import { requireRole } from '../middlewares/admin.middleware'
+import { authMiddleware, requireRole } from '../middlewares/admin.middleware'
+import { csrfProtection } from '../middlewares/csrf.middleware'
 
 
 router.use(authMiddleware)
 router.use(requireRole(['ADMIN']))
+router.use(csrfProtection)
 
 router.get('/aprendices', getAllAprendicesController)
 

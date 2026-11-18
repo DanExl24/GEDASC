@@ -1,0 +1,10 @@
+{
+  "name": "backend",
+  "version": "0.4.4",
+  "description": "Skills de backend (Node/TypeScript, Python, Java/Spring) que construyen y auditan: arquitectura, diseño de API, capa HTTP, dominio, acceso a datos y concurrencia, esquema y migraciones, autenticación, autorización, seguridad de API, mensajería, integraciones, caché, observabilidad, rendimiento, testing, tooling, privacidad y un orquestador de auditorías.",
+  "author": {
+    "name": "DanExl24"
+  },
+  "license": "MIT",
+  "keywords": ["backend", "api", "node", "python", "java", "spring", "database", "sql", "migrations", "audit"]
+}

@@ -59,7 +59,7 @@ import { useAuthStore } from '@/stores/auth'
 const auth = useAuthStore()
 
 const handleLogout = async () => {
-  auth.logout()
+  await auth.logout()
 
   try {
     await router.replace('/login')

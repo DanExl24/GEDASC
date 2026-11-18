@@ -2,6 +2,7 @@ import express from 'express'
 import http from "http";
 import { Server } from "socket.io";
 import cors from 'cors'
+import { createCorsOptions } from './config/security'
 import { initIO } from "./sockets/io";
 import dotenv from 'dotenv'
 dotenv.config()
@@ -23,9 +24,11 @@ import initSockets from "./sockets/index"
 const app = express()
 const server = http.createServer(app)
 
+const corsOptions = createCorsOptions()
+
 // ✅ SOLO UNA instancia
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: corsOptions
 })
 
 io.on("connection", (socket) => {
@@ -86,8 +89,8 @@ initIO(io)
 initSockets(io)
 
 // middlewares
+app.use(cors(corsOptions))
 app.use(express.json())
-app.use(cors())
 
 // rutas
 app.get('/', (req, res) => {

@@ -1,4 +1,4 @@
-import { API_URL } from '@/config/network'
+import { apiFetch } from '@/Services/apiClient'
 
 export type AdminDateFilter =
   | 'TODAY'
@@ -31,11 +31,6 @@ type DeletePayload = {
   observation: string
 }
 
-const buildHeaders = (token: string, withJson = false) => ({
-  Authorization: `Bearer ${token}`,
-  ...(withJson ? { 'Content-Type': 'application/json' } : {})
-})
-
 const ensureSuccess = async <T>(response: Response): Promise<T> => {
   const payload = await response.json() as ApiEnvelope<T>
 
@@ -47,7 +42,6 @@ const ensureSuccess = async <T>(response: Response): Promise<T> => {
 }
 
 export const getAdminIngressEgress = async (
-  token: string,
   filters: { search?: string; date?: AdminDateFilter } = {}
 ) => {
   const params = new URLSearchParams()
@@ -61,21 +55,18 @@ export const getAdminIngressEgress = async (
   }
 
   const query = params.toString()
-  const response = await fetch(`${API_URL}/api/admin/ingresos${query ? `?${query}` : ''}`, {
-    headers: buildHeaders(token)
-  })
+  const response = await apiFetch(`/api/admin/ingresos${query ? `?${query}` : ''}`)
 
   return ensureSuccess<AdminIngressEgressRecord[]>(response)
 }
 
 const deleteAdminRecord = async (
-  token: string,
   path: string,
   payload: DeletePayload
 ) => {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await apiFetch(path, {
     method: 'DELETE',
-    headers: buildHeaders(token, true),
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
 
@@ -87,13 +78,11 @@ const deleteAdminRecord = async (
 }
 
 export const deleteAdminIngreso = async (
-  token: string,
   idAprendiz: number,
   payload: DeletePayload
-) => deleteAdminRecord(token, `/api/admin/ingresos/${idAprendiz}`, payload)
+) => deleteAdminRecord(`/api/admin/ingresos/${idAprendiz}`, payload)
 
 export const deleteAdminSalida = async (
-  token: string,
   idAprendiz: number,
   payload: DeletePayload
-) => deleteAdminRecord(token, `/api/admin/salidas/${idAprendiz}`, payload)
+) => deleteAdminRecord(`/api/admin/salidas/${idAprendiz}`, payload)

@@ -333,7 +333,7 @@ const getIsoDate = (value: string | null) => {
 }
 
 const loadRecords = async () => {
-  if (!auth.token) {
+  if (!auth.isAuthenticated) {
     errorMessage.value = 'No hay sesion activa para consultar registros administrativos.'
     return
   }
@@ -342,7 +342,7 @@ const loadRecords = async () => {
   errorMessage.value = ''
 
   try {
-    records.value = await getAdminIngressEgress(auth.token, {
+    records.value = await getAdminIngressEgress({
       search: search.value,
       date: dateFilter.value
     })
@@ -374,7 +374,7 @@ const closeDeleteModal = () => {
 }
 
 const handleDelete = async () => {
-  if (!auth.token || !selectedRecord.value) return
+  if (!auth.isAuthenticated || !selectedRecord.value) return
 
   deleteForm.date = getIsoDate(selectedRecord.value.hora_ingreso)
 
@@ -387,13 +387,13 @@ const handleDelete = async () => {
 
   try {
     if (selectedAction.value === 'ingreso') {
-      await deleteAdminIngreso(auth.token, selectedRecord.value.id_aprendiz, {
+      await deleteAdminIngreso(selectedRecord.value.id_aprendiz, {
         verification: deleteForm.verification.trim(),
         date: deleteForm.date,
         observation: deleteForm.observation.trim()
       })
     } else {
-      await deleteAdminSalida(auth.token, selectedRecord.value.id_aprendiz, {
+      await deleteAdminSalida(selectedRecord.value.id_aprendiz, {
         verification: deleteForm.verification.trim(),
         date: deleteForm.date,
         observation: deleteForm.observation.trim()

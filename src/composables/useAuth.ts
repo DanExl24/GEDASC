@@ -1,25 +1,33 @@
-import { API_URL } from '@/config/network'
-import { useAuthStore } from '@/stores/auth'
+import { apiFetch } from '@/Services/apiClient'
+import { useAuthStore, type AuthUser } from '@/stores/auth'
 
-const API = API_URL
+type LoginResponse = {
+  success: boolean
+  data?: {
+    user: AuthUser
+    csrfToken?: string
+  }
+  message?: string
+}
 
 export const useAuth = () => {
   const auth = useAuthStore()
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await fetch(`${API}/api/auth/login`, {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       })
 
-      const data = await res.json()
+      const data = (await res.json()) as LoginResponse
 
-      if (!data.success) return false
+      if (!res.ok || !data.success || !data.data?.user) {
+        return false
+      }
 
-      auth.setAuth(data.data.token, data.data.user)
-
+      auth.setSession(data.data.user, data.data.csrfToken)
       return true
     } catch (err) {
       console.error(err)
@@ -27,8 +35,8 @@ export const useAuth = () => {
     }
   }
 
-  const logout = () => {
-    auth.logout()
+  const logout = async () => {
+    await auth.logout()
   }
 
   const hasRole = (roles: ('ADMIN' | 'CELADOR')[]) => {
@@ -39,6 +47,6 @@ export const useAuth = () => {
     login,
     logout,
     hasRole,
-    auth
+    auth,
   }
 }
